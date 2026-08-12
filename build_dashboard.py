@@ -92,7 +92,18 @@ def interp_targets(p):
 def main(ledger_path, out_path):
     ledger = json.load(open(ledger_path))
     ledger.setdefault('history', []); ledger.setdefault('closed', [])
-    stake = ledger['meta']['stake_per_position_usd']
+    port = ledger['meta'].get('portfolio', {})
+    bands = port.get('band_stakes', {})
+    cash = ledger['meta'].setdefault('book_cash', {})
+    def band_stake(p):
+        book = p.get('book', 'core'); sc = p.get('score_total', 50)
+        base = bands.get(book, 30)
+        if isinstance(base, dict):
+            base = base['strong'] if sc >= 70 else (base['spec'] if sc < 50 else base['standard'])
+        avail = cash.get(book, 0)
+        st = round(min(base, avail), 2)
+        cash[book] = round(avail - st, 2)
+        return st
     now = datetime.now(timezone.utc)
     stamp = now.strftime('%b %d, %Y %H:%M UTC')
     today = now.strftime('%Y-%m-%d')
@@ -114,8 +125,10 @@ def main(ledger_path, out_path):
             p['flag_price'] = y['price']; p['flag_date'] = today
             p['spy_flag_price'] = spy_now
             p.setdefault('stop_pct', -25); p.setdefault('status', 'open')
+            p['stake'] = band_stake(p)
+        stake = p.get('stake') or 0
         interp_targets(p)
-        p['shares'] = round(stake / p['flag_price'], 4)
+        p['shares'] = round(stake / p['flag_price'], 6) if stake else 0
         p['value'] = round(p['shares'] * p['current_price'], 2)
         p['pl'] = round(p['value'] - stake, 2)
         p['pl_pct'] = round(100 * (p['current_price'] / p['flag_price'] - 1), 2)
@@ -135,27 +148,30 @@ def main(ledger_path, out_path):
             p['direction_outcome'] = 'hit' if hit else 'miss'
             p['status'] = 'closed'; p['exit_price'] = p['current_price']
             p['exit_date'] = today; p['exit_reason'] = f"5-day eval: {p['direction']} {'✓' if hit else '✗'} ({move:+.1f}%)"
+            cash[p.get('book','core')] = round(cash.get(p.get('book','core'),0) + p['value'], 2)
             ledger['closed'].append(p); time.sleep(0.3); continue
         # stop enforcement
         if p['current_price'] <= p['stop_price']:
             p['status'] = 'closed'; p['exit_price'] = p['current_price']
             p['exit_date'] = today; p['exit_reason'] = f"stop {p['stop_pct']}%"
+            cash[p.get('book','core')] = round(cash.get(p.get('book','core'),0) + p['value'], 2)
             ledger['closed'].append(p)
         else:
             still_open.append(p)
         time.sleep(0.3)
     ledger['positions'] = still_open
 
-    total_val = sum(p.get('value', stake) for p in still_open)
+    total_val = sum(p.get('value', 0) for p in still_open)
     closed_pl = sum(p.get('pl', 0) for p in ledger['closed'])
-    invested = stake * len(still_open)
-    spy_val = sum(stake * (spy_now / p['spy_flag_price']) if p.get('spy_flag_price') else stake
+    invested = round(sum(p.get('stake', 0) for p in still_open), 2)
+    total_cash = round(sum(cash.values()), 2)
+    spy_val = sum((p.get('stake', 0)) * (spy_now / p['spy_flag_price']) if p.get('spy_flag_price') else p.get('stake', 0)
                   for p in still_open)
     opt_stats = update_options(ledger, today)
     calls = [p for p in still_open + ledger['closed'] if p.get('direction')]
     resolved = [p for p in calls if p.get('direction_outcome')]
     hits = sum(1 for p in resolved if p['direction_outcome'] == 'hit')
-    snap = {'date': today, 'value': round(total_val + closed_pl, 2), 'spy_value': round(spy_val, 2),
+    snap = {'date': today, 'value': round(total_val + total_cash, 2), 'spy_value': round(spy_val + total_cash, 2),
             'invested': invested, 'n_open': len(still_open), 'n_closed': len(ledger['closed'])}
     ledger['history'] = [h for h in ledger['history'] if h['date'] != today] + [snap]
     ledger['meta']['last_scan'] = stamp
@@ -165,11 +181,14 @@ def main(ledger_path, out_path):
                        'history': ledger['history'], 'meta': ledger['meta'],
                        'watchlist': ledger.get('watchlist', []),
                        'invested': invested, 'total_val': total_val, 'closed_pl': closed_pl,
+                       'cash': cash, 'total_cash': total_cash, 'portfolio': port,
                        'spy_val': round(spy_val, 2), 'stamp': stamp,
                        'options': ledger['options_positions'], 'closed_options': ledger['closed_options'],
                        'opt_stats': opt_stats,
                        'dir_stats': {'n': len(resolved), 'hits': hits, 'open_calls': len(calls) - len(resolved)}})
-    open(out_path, 'w').write(HTML.replace('__DATA__', data))
+    html = HTML.replace('__DATA__', data)
+    html = html.replace('__FINNHUB_KEY__', ledger['meta'].get('finnhub_key', ''))
+    open(out_path, 'w').write(html)
     print(f"OK open={len(still_open)} closed={len(ledger['closed'])} value=${total_val:,.2f} "
           f"calls={len(calls)} resolved={len(resolved)}")
 
@@ -258,7 +277,7 @@ const BOOKS=[['overview','Overview'],['core','Core'],['vol24','24h Volatility'],
 let tab='overview', sortKey='score_total', sortDir=-1;
 const by=b=>D.positions.filter(p=>(p.book||'core')===b);
 
-document.getElementById('stamp').textContent='Last scan '+D.stamp+' · '+D.positions.length+' open / '+D.closed.length+' closed · paper $1k stakes · weekday auto-scan';
+function setStamp(){document.getElementById('stamp').textContent='Last scan '+D.stamp+' · '+D.positions.length+' open / '+D.closed.length+' closed · $1,000 paper portfolio · weekday auto-scan'+(liveStamp?' · LIVE quotes '+liveStamp:'');}
 
 function scoreBadge(p){
  const s=p.score_total,col=s>=70?css('--up'):(s<50?css('--warn'):css('--muted'));
@@ -284,7 +303,7 @@ function posTable(list,opts){
  const showDir=opts.dir,showTgt=opts.tgt;
  const cols=[['Position',null],['Score','score_total']]
   .concat(showDir?[['Call',null]]:[])
-  .concat([['Flagged','flag_date'],['Flag','flag_price'],['Now','current_price'],['Day','day_pct'],['P/L %','pl_pct'],['Alpha','alpha_pct']])
+  .concat([['Stake','stake'],['Flag','flag_price'],['Now','current_price'],['Day','day_pct'],['P/L %','pl_pct'],['Alpha','alpha_pct']])
   .concat(showTgt?[['3m tgt',null],['6m tgt',null],['12m tgt',null]]:[])
   .concat([['Stop','stop_price'],['3 mo',null]]);
  const rows=[...list].sort((a,b)=>{if(!sortKey)return 0;const av=a[sortKey],bv=b[sortKey];return(typeof av==='string'?String(av).localeCompare(bv):av-bv)*sortDir;})
@@ -292,7 +311,7 @@ function posTable(list,opts){
    <td><span class="tk">${p.ticker}</span><span class="tag">${p.news_tag}</span>${p.review_due?'<span class="review">review</span>':''}<br><span class="nm">${p.name}</span></td>
    <td>${scoreBadge(p)}</td>
    ${showDir?`<td>${dirCell(p)}</td>`:''}
-   <td>${p.flag_date}</td><td>${fmt$(p.flag_price)}</td><td>${fmt$(p.current_price)}</td>
+   <td>${fmt$(p.stake||0)}</td><td>${fmt$(p.flag_price)}</td><td>${fmt$(p.current_price)}</td>
    <td class="${cls(p.day_pct)}">${fmtP(p.day_pct)}</td>
    <td class="${cls(p.pl_pct)}">${fmtP(p.pl_pct)}</td>
    <td class="${cls(p.alpha_pct)}"><b>${fmtP(p.alpha_pct)}</b></td>
@@ -310,7 +329,7 @@ function curveSvg(){
  const mn=Math.min(...vals)*0.998,mx=Math.max(...vals)*1.002;
  const x=i=>padL+i/(H.length-1)*(W-padL-8), y=v=>padT+(mx-v)/(mx-mn)*(Hh-padT-padB);
  let s=`<svg width="${W}" height="${Hh}">`;
- [mn,(mn+mx)/2,mx].forEach(g=>{s+=`<line x1="${padL}" x2="${W-4}" y1="${y(g)}" y2="${y(g)}" stroke="${css('--grid')}"/><text x="${padL-5}" y="${y(g)+3}" text-anchor="end">$${(g/1000).toFixed(1)}k</text>`;});
+ [mn,(mn+mx)/2,mx].forEach(g=>{s+=`<line x1="${padL}" x2="${W-4}" y1="${y(g)}" y2="${y(g)}" stroke="${css('--grid')}"/><text x="${padL-5}" y="${y(g)+3}" text-anchor="end">$${Math.round(g)}</text>`;});
  s+=`<polyline points="${H.map((h,i)=>x(i)+','+y(h.spy_value)).join(' ')}" fill="none" stroke="${css('--muted')}" stroke-width="2"/>`;
  s+=`<polyline points="${H.map((h,i)=>x(i)+','+y(h.value)).join(' ')}" fill="none" stroke="${css('--s1')}" stroke-width="2"/>`;
  H.forEach((h,i)=>{if(i%Math.ceil(H.length/8)===0||i===H.length-1)s+=`<text x="${x(i)}" y="${Hh-3}" text-anchor="middle">${h.date.slice(5)}</text>`;});
@@ -345,56 +364,116 @@ function overview(){
  const alphaAvg=D.positions.length?D.positions.reduce((s,p)=>s+p.alpha_pct,0)/D.positions.length:0;
  const ds=D.dir_stats;
  const hitTxt=ds.n?`${ds.hits}/${ds.n} (${Math.round(100*ds.hits/ds.n)}%)`:'0 resolved';
+ const cap=(D.portfolio&&D.portfolio.capital)||1000;
+ const pv=D.total_val+D.total_cash;
  const kpis=[
-  ['Open / invested',D.positions.length+' pos','$'+D.invested.toLocaleString()],
-  ['Value + realized',fmt$(D.total_val+D.closed_pl),D.closed.length?fmt$(D.closed_pl)+' realized':''],
-  ['Total P/L',`<span class="${cls(totPL)}">${fmt$(totPL)}</span>`,`<span class="${cls(totPL)}">${fmtP(D.invested?100*totPL/D.invested:0)}</span>`],
+  ['Portfolio value',fmt$(pv),'started $'+cap.toLocaleString()+' · '+D.positions.length+' pos'],
+  ['Invested / cash',fmt$(D.invested),fmt$(D.total_cash)+' cash'],
+  ['Total P/L',`<span class="${cls(pv-cap)}">${fmt$(pv-cap)}</span>`,`<span class="${cls(pv-cap)}">${fmtP(100*(pv-cap)/cap)}</span>`],
   ['Avg alpha vs SPY',`<span class="${cls(alphaAvg)}">${fmtP(alphaAvg)}</span>`,'per open position'],
   ['Direction hit rate',hitTxt,ds.open_calls+' call(s) pending'],
   ['Options book',`<span class="${cls(D.opt_stats.total_pl)}">${fmt$(D.opt_stats.total_pl)}</span>`,fmt$(D.opt_stats.spent)+' premium at risk'],
  ].map(([l,v,s])=>`<div class="tile"><div class="lbl">${l}</div><div class="val">${v}</div><div class="sm">${s}</div></div>`).join('');
+ const alloc=(D.portfolio&&D.portfolio.allocations)||{};
  const bookRows=['core','vol24','penny','longterm'].map(b=>{
-  const l=by(b);if(!l.length)return'';
-  const pl=l.reduce((s,p)=>s+p.pl,0), al=l.reduce((s,p)=>s+p.alpha_pct,0)/l.length;
-  return`<tr><td style="text-align:left">${{core:'Core',vol24:'24h Volatility',penny:'Penny',longterm:'Long-term'}[b]}</td><td>${l.length}</td><td class="${cls(pl)}">${fmt$(pl)}</td><td class="${cls(al)}">${fmtP(al)}</td></tr>`;
+  const l=by(b);if(!l.length&&!alloc[b])return'';
+  const inv=l.reduce((s2,p)=>s2+(p.stake||0),0), val=l.reduce((s2,p)=>s2+p.value,0);
+  const csh=(D.cash&&D.cash[b])||0, pl=val-inv, wt=100*(val+csh)/pv;
+  return`<tr><td style="text-align:left">${{core:'Core',vol24:'24h Volatility',penny:'Penny',longterm:'Long-term'}[b]}</td><td>${l.length}</td><td>${fmt$(alloc[b]||0)}</td><td>${fmt$(inv)}</td><td>${fmt$(csh)}</td><td>${fmt$(val+csh)}</td><td class="${cls(pl)}">${fmt$(pl)}</td><td>${wt.toFixed(1)}%</td></tr>`;
  }).join('');
+ const holdings=[...D.positions].sort((a,b)=>b.value-a.value).slice(0,8).map(p=>
+  `<tr><td style="text-align:left"><span class="tk">${p.ticker}</span> <span class="tag">${p.book}</span></td><td>${fmt$(p.stake||0)}</td><td>${fmt$(p.value)}</td><td class="${cls(p.pl)}">${fmt$(p.pl)}</td><td>${(100*p.value/pv).toFixed(1)}%</td></tr>`).join('');
  return`<div class="kpis">${kpis}</div>
  <div class="panel"><h2>Active world signals</h2><div class="signals">${SIGNALS.map(([t,b])=>`<div class="sig"><b>${t}</b><span>${b}</span></div>`).join('')}</div></div>
  <div class="panel"><h2>Portfolio vs same-day SPY stakes</h2>
   <div class="legend"><span><i style="background:${css('--s1')}"></i>Scanner</span><span><i style="background:${css('--muted')}"></i>SPY</span></div>${curveSvg()}</div>
  <div class="panel"><h2>Alpha since flag, all books</h2>${alphaBars()}</div>
- <div class="panel"><h2>Books</h2><div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Book</th><th>Open</th><th>P/L</th><th>Avg alpha</th></tr></thead><tbody>${bookRows}</tbody></table></div></div>
+ <div class="panel"><h2>Portfolio allocation — $1,000 across four books, weighted by conviction (options pool separate)</h2><div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Book</th><th>Pos</th><th>Allocated</th><th>Invested</th><th>Cash</th><th>Value</th><th>P/L</th><th>Weight</th></tr></thead><tbody>${bookRows}</tbody></table></div>
+ <h2 style="margin-top:12px">Largest holdings</h2><div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Position</th><th>Stake</th><th>Value</th><th>P/L</th><th>% of portfolio</th></tr></thead><tbody>${holdings}</tbody></table></div></div>
  <div class="panel"><h2>Watchlist</h2><ul class="watch">${D.watchlist.map(w=>`<li><b>${w.ticker}</b> — ${w.note}</li>`).join('')}</ul></div>`;
 }
 function optionsView(){
  const os=D.opt_stats;
+ const realized=D.closed_options.reduce((t,o)=>t+(o.pl||0),0);
  const kpi=[
-  ['Premium at risk',fmt$(os.spent),os.open+' open / '+os.resolved+' resolved'],
-  ['Open mark (bid)',fmt$(os.open_value),'vs cost of open'],
-  ['Book P/L',`<span class="${cls(os.total_pl)}">${fmt$(os.total_pl)}</span>`,''],
+  ['Open contracts',D.options.length+' pos','$'+D.options.reduce((t,o)=>t+o.cost,0).toFixed(0)+' at risk'],
+  ['Open P/L'+(liveStamp?' (live est)':''),`<span class="${cls(D.options.reduce((t,o)=>t+(o.pl||0),0))}">${fmt$(D.options.reduce((t,o)=>t+(o.pl||0),0))}</span>`,'mark: '+(liveStamp?'model est':'CBOE bid')],
+  ['Realized (closed)',`<span class="${cls(realized)}">${fmt$(realized)}</span>`,os.resolved+' resolved'],
   ['Win rate',os.resolved?`${os.wins}/${os.resolved} (${Math.round(100*os.wins/os.resolved)}%)`:'0 resolved','kill: P/L<0 after 20'],
- ].map(([l,v,s])=>`<div class="tile"><div class="lbl">${l}</div><div class="val">${v}</div><div class="sm">${s}</div></div>`).join('');
- const row=o=>`<tr class="main">
-  <td><span class="tk">${o.underlying}</span> <span class="tag">${o.type.toUpperCase()} $${o.strike}</span><br><span class="nm">${o.contract}</span></td>
-  <td><span class="nm">${o.source_call}</span></td>
-  <td>${o.expiry.slice(5)}</td><td>${o.entry_date.slice(5)}</td>
-  <td>${fmt$(o.entry_ask)}</td><td>${o.current_bid!=null?fmt$(o.current_bid):'—'}</td>
-  <td class="pos">${o.target_premium!=null?fmt$(o.target_premium):'—'}</td>
-  <td class="neg">${o.stop_premium!=null?fmt$(o.stop_premium):'—'}</td>
-  <td>${o.contracts_n}</td><td>${fmt$(o.cost)}</td><td>${fmt$(o.value||0)}</td>
-  <td class="${cls(o.pl||0)}">${fmt$(o.pl||0)}</td><td class="${cls(o.pl_pct||0)}">${fmtP(o.pl_pct||0)}</td>
-  <td style="color:var(--muted)">${o.status==='closed'?(o.exit_reason||'closed'):('exit '+o.exit_by.slice(5))}</td></tr>
-  <tr class="thesis"><td colspan="14">${o.note||''} <span class="nm">(OI ${o.oi} · IV ${(o.iv*100).toFixed(0)}% at entry · bought at ask, marked at bid)</span></td></tr>`;
- const openT=D.options.length?`<div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Contract</th><th>Source call</th><th>Exp</th><th>Entered</th><th>Ask in</th><th>Bid now</th><th>Target</th><th>Stop</th><th>#</th><th>Cost</th><th>Value</th><th>P/L $</th><th>P/L %</th><th>Status</th></tr></thead><tbody>${D.options.map(row).join('')}</tbody></table></div>`:'<div class="empty">No open contracts.</div>';
- const closedT=D.closed_options.length?`<h2 style="margin-top:12px">Resolved</h2><div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Contract</th><th>Source call</th><th>Exp</th><th>Entered</th><th>Ask in</th><th>Exit bid</th><th>Target</th><th>Stop</th><th>#</th><th>Cost</th><th>Value</th><th>P/L $</th><th>P/L %</th><th>Reason</th></tr></thead><tbody>${D.closed_options.map(row).join('')}</tbody></table></div>`:'';
+ ].map(([l,v,s2])=>`<div class="tile"><div class="lbl">${l}</div><div class="val">${v}</div><div class="sm">${s2}</div></div>`).join('');
+ const row=o=>{
+  const live=o.live_est!=null;
+  const mark=live?o.live_est:o.current_bid;
+  return`<tr class="main">
+  <td><span class="tk">${o.underlying}</span> <span class="tag">${o.type.toUpperCase()} $${o.strike} · exp ${o.expiry.slice(5)}</span><br><span class="nm">${o.contract}${o.source_call?' · '+o.source_call:''}</span></td>
+  <td style="font-size:15px;font-weight:650">${o.contracts_n}</td>
+  <td>${fmt$(o.entry_ask)}<br><span class="nm">cost ${fmt$(o.cost)}</span></td>
+  <td class="pos" style="font-weight:650">${fmt$(o.target_premium)}</td>
+  <td class="neg" style="font-weight:650">${fmt$(o.stop_premium)}</td>
+  <td>${mark!=null?fmt$(mark):'—'}${live?' <span class="tag" title="model estimate from live stock price + entry IV; official mark is scan-time CBOE bid">est</span>':''}</td>
+  <td class="${cls(o.pl||0)}" style="font-weight:650">${fmt$(o.pl||0)}<br><span class="${cls(o.pl_pct||0)}" style="font-size:11px">${fmtP(o.pl_pct||0)}</span></td>
+  <td style="color:var(--muted)">${o.status==='closed'?(o.exit_reason||'closed'):('exit by '+o.exit_by.slice(5))}</td></tr>`;
+ };
+ const head='<thead><tr><th style="text-align:left">Contract</th><th>Qty</th><th>Entry</th><th>Target</th><th>Stop</th><th>Mark</th><th>P/L</th><th>Status</th></tr></thead>';
+ const openT=D.options.length?`<div style="overflow-x:auto"><table>${head}<tbody>${D.options.map(row).join('')}</tbody></table></div>`:'<div class="empty">No open contracts.</div>';
+ const closedT=D.closed_options.length?`<h2 style="margin-top:14px">Exited — realized results (permanent record)</h2><div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Contract</th><th>Qty</th><th>Entry</th><th>Exit bid</th><th>Realized $</th><th>Realized %</th><th>Exit date</th><th>Reason</th></tr></thead><tbody>${D.closed_options.map(o=>`<tr><td style="text-align:left"><span class="tk">${o.underlying}</span> <span class="tag">${o.type.toUpperCase()} $${o.strike}</span><br><span class="nm">${o.contract}</span></td><td>${o.contracts_n}</td><td>${fmt$(o.entry_ask)}</td><td>${fmt$(o.exit_bid!=null?o.exit_bid:o.current_bid)}</td><td class="${cls(o.pl)}" style="font-weight:650">${fmt$(o.pl)}</td><td class="${cls(o.pl_pct)}">${fmtP(o.pl_pct)}</td><td>${o.exit_date||''}</td><td style="color:var(--muted)">${o.exit_reason||''}</td></tr>`).join('')}</tbody></table></div>`:'';
  return`<div class="kpis">${kpi}</div>
- <div class="panel"><h2>Why this book expects to lose</h2><div class="sig" style="border-color:var(--warn)"><span>This project's own 811-day study of 1–2 day OTM buying found a median of −100% in every structure and a break-even ceiling even with perfect exits. The one open door: a real <b>direction</b> edge. So this book only mirrors 24h-volatility direction calls, sized under $200 each, and exists to measure whether that edge (if it appears) survives the premium. If total P/L is negative after 20 resolved positions, the book closes for good.</span></div></div>
+ <div class="panel"><h2>Rules of this book</h2><div class="sig" style="border-color:var(--warn)"><span>Buys OTM contracts (2–10%) on catalyst-driven movers with a stated direction, only when the chain is liquid (OI ≥ 500, spread ≤ 20% of ask) and total cost < $200. Target = 2× entry ask · stop = 0.5× ask · forced exit after 2 trading days or at expiry — first trigger wins. Prior study says the expected result is losing the premium; the book exists to measure it, and closes permanently if P/L is negative after 20 resolved positions.</span></div></div>
  <div class="panel">${openT}${closedT}</div>`;
 }
 function closedView(){
  if(!D.closed.length)return'<div class="panel"><div class="empty">None yet. Positions close at stops, at 5-day direction evaluations, or on thesis invalidation.</div></div>';
  return'<div class="panel"><div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Position</th><th>Book</th><th>Flagged</th><th>Flag</th><th>Exited</th><th>Exit</th><th>P/L %</th><th>Reason</th></tr></thead><tbody>'+
   D.closed.map(p=>`<tr><td style="text-align:left"><span class="tk">${p.ticker}</span></td><td>${p.book||'core'}</td><td>${p.flag_date}</td><td>${fmt$(p.flag_price)}</td><td>${p.exit_date||''}</td><td>${fmt$(p.exit_price||p.current_price)}</td><td class="${cls(p.pl_pct)}">${fmtP(p.pl_pct)}</td><td style="color:var(--muted)">${p.exit_reason||''}</td></tr>`).join('')+'</tbody></table></div></div>';
+}
+// ---- live quotes (Finnhub, browser-side; enabled when a key is baked in) ----
+const FKEY='__FINNHUB_KEY__';
+let liveStamp=null;
+async function liveTick(){
+ if(!FKEY||FKEY.startsWith('__'))return;
+ try{
+  const tickers=[...new Set(D.positions.map(p=>p.ticker))].concat(['SPY']);
+  const qs=await Promise.all(tickers.map(t=>
+   fetch('https://finnhub.io/api/v1/quote?symbol='+t+'&token='+FKEY).then(r=>r.json()).catch(()=>null)));
+  const map={};tickers.forEach((t,i)=>{if(qs[i]&&qs[i].c)map[t]=qs[i];});
+  const spy=map['SPY'];
+  let touched=0;
+  D.positions.forEach(p=>{
+   const q=map[p.ticker];if(!q)return;touched++;
+   p.current_price=q.c;
+   if(q.pc)p.day_pct=+(100*(q.c/q.pc-1)).toFixed(2);
+   p.value=+(p.shares*q.c).toFixed(2);
+   p.pl=+(p.value-(p.stake||0)).toFixed(2);
+   p.pl_pct=+((q.c/p.flag_price-1)*100).toFixed(2);
+   if(spy&&p.spy_flag_price){
+    const sr=100*(spy.c/p.spy_flag_price-1);
+    p.spy_ret_pct=+sr.toFixed(2);
+    p.alpha_pct=+(p.pl_pct-sr).toFixed(2);
+   }
+   if(p.spark&&p.spark.length)p.spark[p.spark.length-1]=q.c;
+  });
+  // model-estimate open option premiums from live underlying (entry IV, r=4%)
+  const ncdf=x=>{const t=1/(1+0.2316419*Math.abs(x));const d=0.3989423*Math.exp(-x*x/2);let pr=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return x>0?1-pr:pr;};
+  D.options.forEach(o=>{
+   const q=map[o.underlying];if(!q||!o.iv)return;
+   const S=q.c,K=o.strike;
+   const T=Math.max((new Date(o.expiry+'T20:00:00Z')-new Date())/(365.25*864e5),1e-4);
+   const v=Math.max(o.iv,0.05),r=0.04;
+   const d1=(Math.log(S/K)+(r+v*v/2)*T)/(v*Math.sqrt(T)),d2=d1-v*Math.sqrt(T);
+   let prem=o.type==='call'?S*ncdf(d1)-K*Math.exp(-r*T)*ncdf(d2):K*Math.exp(-r*T)*ncdf(-d2)-S*ncdf(-d1);
+   prem=Math.max(prem,0);
+   o.live_est=+prem.toFixed(2);
+   o.value=+(prem*100*o.contracts_n).toFixed(2);
+   o.pl=+(o.value-o.cost).toFixed(2);
+   o.pl_pct=+(100*o.pl/o.cost).toFixed(1);
+   touched++;
+  });
+  if(touched){
+   D.total_val=D.positions.reduce((s,p)=>s+p.value,0);
+   liveStamp=new Date().toLocaleTimeString();
+   setStamp();render();
+  }
+ }catch(e){/* keep scan-time values on any failure */}
 }
 function render(){
  document.getElementById('tabs').innerHTML=BOOKS.map(([id,n])=>{
@@ -408,9 +487,10 @@ function render(){
  else if(tab==='closed')v.innerHTML=closedView();
  else v.innerHTML='<div class="panel">'+posTable(by(tab),{dir:tab==='vol24',tgt:tab!=='vol24'})+'</div>';
  document.querySelectorAll('.sortable th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(!k)return;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=-1;}render();});
- document.getElementById('foot').innerHTML='Paper stakes only — $1,000 per flag, no fees/slippage. Scores and 12m bull/base/bear targets are fixed at flag time and never revised; 3m/6m targets are √-time interpolations of the 12m range. Alpha = return minus same-day SPY. 24h-volatility direction calls are graded automatically after 5 trading days; the hit rate is shown un-cherry-picked and the feature dies if it can’t beat a coin flip over 30 calls. Penny book is listed-exchange only, $0.50–$5.00. Long-term book uses written criteria (founder-led, category creator, large TAM) — with the stated caveat that "find the next Tesla" carries survivorship bias. Prices via Yahoo Finance. Research tool, not investment advice.';
+ document.getElementById('foot').innerHTML='Paper portfolio — $1,000 total across the stock books, weighted by conviction score within each book; exits return cash to the book. Options are a separate pool, max $250 per trade. No fees/slippage. Scores and 12m bull/base/bear targets are fixed at flag time and never revised; 3m/6m targets are √-time interpolations of the 12m range. Alpha = return minus same-day SPY. 24h-volatility direction calls are graded automatically after 5 trading days; the hit rate is shown un-cherry-picked and the feature dies if it can’t beat a coin flip over 30 calls. Penny book is listed-exchange only, $0.50–$5.00. Long-term book uses written criteria (founder-led, category creator, large TAM) — with the stated caveat that "find the next Tesla" carries survivorship bias. Prices via Yahoo Finance. Research tool, not investment advice.';
 }
-render();
+setStamp();render();
+liveTick();setInterval(liveTick,60000);
 window.addEventListener('resize',render);
 </script></body></html>
 '''
