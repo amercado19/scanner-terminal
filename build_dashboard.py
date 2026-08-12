@@ -182,6 +182,7 @@ def main(ledger_path, out_path):
                        'watchlist': ledger.get('watchlist', []),
                        'invested': invested, 'total_val': total_val, 'closed_pl': closed_pl,
                        'cash': cash, 'total_cash': total_cash, 'portfolio': port,
+                       'signals': ledger['meta'].get('signals', []),
                        'spy_val': round(spy_val, 2), 'stamp': stamp,
                        'options': ledger['options_positions'], 'closed_options': ledger['closed_options'],
                        'opt_stats': opt_stats,
@@ -204,22 +205,22 @@ HTML = r'''<!DOCTYPE html>
 <link rel="manifest" href='data:application/manifest+json,{&quot;name&quot;: &quot;Scanner Terminal&quot;, &quot;short_name&quot;: &quot;Scanner&quot;, &quot;display&quot;: &quot;standalone&quot;, &quot;background_color&quot;: &quot;#0d0d0d&quot;, &quot;theme_color&quot;: &quot;#0d0d0d&quot;, &quot;icons&quot;: [{&quot;src&quot;: &quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAFAUlEQVR42u3dzU0bURRA4TejbN0Be7wgdJAOsqaHUAIFUAL0kDUdpAPwguzTwRTgLKJEDsI28//eu99ZRUpEJOucd+/YnqFJK7PZbPYJYem6rlnz/28Ij8hBNKRH5Bga4iNyCA3xETmEhviIHEJDfEQOoSU/SmUK91ryI3IEDfEReSVqyY/I06AlPyJH0JIfkSNoyY/IEbReKkSmnaokoMQp0JIfkSNoyY/IEbgGgGsApz+iTgETACaA0x9Rp4AJABPA6Y+oU8AEgAng9EfUKWACwAQAQgdg/UHUNcgEgAkACAAISGP/hwkAZMDV3asJAPKnlNLufrvI//vJS48op70JgKJEX2IKmADI8jRfagVyEYxR7B/26eXiskj5BYDJmCqCJeUXAIo9uQUAAQkAJBYAKohgrXAEgNCTQAAIjQAwC30+HFtzWggAq8pvAoD8AkDt8h9bc9a+WPZlOHyI/cPpLw1//vXz6N+9XFym9JDS7nab3YQwATC//Ac/5/DEz+GtUgFgEfmPRSAAFEtf+XPa/QWA1eR3DQDyCwDkFwDILwCQXwAgvwBAfgEgE059baEG+QWA0PILAKHlFwBCyy8AhJZfAAgtvwAQHgEg7OkvAAy6j1cAqF5+KxBCE+H0T8lTIYrl8F7d5rax+pgAIL8AYO8XAOz9AoDVRwAgvwDIb+8XAJz+AnD6k18A5Ce/AOz9EIC9H74LlDnnns//3r859Swf8psAVcn/FvILgPwQAJz+AghE7c/wFADILwCQXwBY8KJ3yO2WS/48AWD2038qaXOTPyUfhFl9Rso79uZ8EwD2fgEgp70/ElagHvy4vv735y/Pz1Xv/SYArD4CAPkFAHu/awDkydqnf4lvfZoAVh8IgPwQgL1fALD3CwAZEfmX1i1+Eb/ZbPZehv85/MR3CGM+JZ5L/tLfrTEBCpF/zM/wMCsBFC//HD/L6iMAez9mwSfBGYtPfgGEFR9WoPDyO/1NgLCnPvkFEHbd2d1vU5OaQc8HfQ+fAQigGPHfijs2AvILYHG+ff0+SvyPCFz640hcBJP/rPwwAYgPAeT8OBLiC8CJT3wBkJ/4AiA++QVA/Menmz/XK146AUQUHwIgPorAB2HkD01WN8XnejP6UPFzfIQ6Ml2BproZvY90Q25KceILIEv5+0RAfIS9CJ5j1YEAqhOf/AIgPgQQSf7d/Xay6xHvAAmgKPEPxV3z7VgIYDB9P8R6K/85gXP/NakIGsBU4kMA1ctPfFQRgFMfIQMgPsIGYN1ByACIj5ABDFl3Hp9u3IqI8gPI8cYU7/0LIKT4EEC26w5QdABXd6/pG/ERMQA3pyBkAL6jj5ABLCG+d2qQZQBLrDvkR19mfy7Q2N+TlZLv4WM+Zn8yXJ+vJfgKA0JcBBMfYSbAKcF391vyo/4AnPoIH8Bf4Z36CDsBiI/cyOrx6ECYawAgiwC6rmu8DIhI13WNCQArECAAIGoArgMQcf83AWACeAkgAGsQAq4/JgBMgGNlALWf/iYATIBzhQC1nv4mAEyAj5YC1Hb6mwAwAfoWA9Ry+p+dACJAzfJ/aAUSAWqV3zUAXANMVRJQ2unfawKIALXJ33sFEgFqkn/QNYAIUIv8KaU0SmYP1UKp4g+eAKYBapF/dAAiQMnyj16BrEQoVfxZAhACShF/1gCEgNzFXyQAISD368vFL2DFgLWlXzUAQWBN4d/yG87pYmf8jLwZAAAAAElFTkSuQmCC&quot;, &quot;sizes&quot;: &quot;192x192&quot;, &quot;type&quot;: &quot;image/png&quot;}, {&quot;src&quot;: &quot;data:image/png;base64,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&quot;, &quot;sizes&quot;: &quot;512x512&quot;, &quot;type&quot;: &quot;image/png&quot;}]}'>
 <style>
 :root[data-theme="dark"]{color-scheme:dark;
- --surface:#1a1a19;--page:#0d0d0d;--ink:#ffffff;--ink2:#c3c2b7;--muted:#898781;
- --grid:#2c2c2a;--axis:#383835;--border:rgba(255,255,255,.10);
- --s1:#3987e5;--up:#0ca30c;--down:#d03b3b;--warn:#fab219;}
+ --surface:#111511;--page:#070907;--ink:#f2fff2;--ink2:#b7c9b7;--muted:#7d8f7d;
+ --grid:#1c241c;--axis:#2a382a;--border:rgba(84,240,120,.14);
+ --s1:#54f078;--up:#54f078;--down:#ff5252;--warn:#ffd23e;}
 :root[data-theme="light"]{color-scheme:light;
  --surface:#fcfcfb;--page:#f9f9f7;--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;
  --grid:#e1e0d9;--axis:#c3c2b7;--border:rgba(11,11,11,.10);
  --s1:#2a78d6;--up:#006300;--down:#d03b3b;--warn:#c98500;}
 *{box-sizing:border-box;margin:0}
 body{font:13px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--page);color:var(--ink);padding:14px 16px 34px}
-h1{font-size:16px;font-weight:650;letter-spacing:.01em}
+h1{font-size:16px;font-weight:700;letter-spacing:.04em}h1 b{color:var(--s1)}
 .sub{color:var(--muted);font-size:11.5px;margin-top:2px}
 header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px;flex-wrap:wrap}
 .toggle{border:1px solid var(--border);background:var(--surface);color:var(--ink2);border-radius:7px;padding:4px 10px;cursor:pointer;font-size:12px}
 .tabs{display:flex;gap:2px;border-bottom:1px solid var(--axis);margin-bottom:12px;flex-wrap:wrap}
 .tab{padding:7px 14px;font-size:12.5px;color:var(--ink2);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent}
-.tab.on{color:var(--ink);border-bottom-color:var(--s1);font-weight:650}
+.tab.on{color:var(--s1);border-bottom-color:var(--s1);font-weight:650}
 .tab .n{color:var(--muted);font-size:11px;margin-left:4px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(138px,1fr));gap:8px;margin-bottom:12px}
 .tile{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 12px}
@@ -257,10 +258,23 @@ svg text{font:10px system-ui,sans-serif;fill:var(--muted)}
 .foot{color:var(--muted);font-size:11px;margin-top:12px;line-height:1.55}
 .watch li{margin:2px 0 2px 15px;font-size:12px;color:var(--ink2)}
 .empty{color:var(--muted);font-size:12px;padding:6px 0}
+.chip{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.05em;border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:1px}
+.chip.bullish{color:var(--up);border:1px solid var(--up)}
+.chip.bearish{color:var(--down);border:1px solid var(--down)}
+.chip.neutral{color:var(--muted);border:1px solid var(--muted)}
+.sigcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:9px}
+.scard{border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:color-mix(in srgb,var(--s1) 3%,transparent)}
+.scard .dir{font-size:14px;font-weight:800;letter-spacing:.06em}
+.scard table{margin-top:6px}
+.scard td{padding:2px 0;border:none;font-size:12px}
+.scard td:first-child{color:var(--muted);text-align:left}
+.pipe{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:11px;color:var(--ink2)}
+.pipe b{color:var(--s1)}
+.pipe .arr{color:var(--muted)}
 .view{display:none}.view.on{display:block}
 </style></head><body>
 <header>
- <div><h1>SCANNER TERMINAL</h1><div class="sub" id="stamp"></div></div>
+ <div><h1>SCANNER <b>TERMINAL</b></h1><div class="sub" id="stamp"></div></div>
  <button class="toggle" onclick="flip()">Light / dark</button>
 </header>
 <div class="tabs" id="tabs"></div>
@@ -273,7 +287,7 @@ const fmtP=v=>(v>0?'+':'')+v.toFixed(2)+'%';
 const cls=v=>v>0.001?'pos':(v<-0.001?'neg':'');
 const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 function flip(){const r=document.documentElement;r.setAttribute('data-theme',r.getAttribute('data-theme')==='dark'?'light':'dark');render();}
-const BOOKS=[['overview','Overview'],['core','Core'],['vol24','24h Volatility'],['options','Options'],['penny','Penny'],['longterm','Long-term'],['closed','Closed']];
+const BOOKS=[['overview','Overview'],['core','Core'],['vol24','24h Volatility'],['options','Options'],['penny','Penny'],['longterm','Long-term'],['journal','Journal'],['closed','Closed']];
 let tab='overview', sortKey='score_total', sortDir=-1;
 const by=b=>D.positions.filter(p=>(p.book||'core')===b);
 
@@ -383,8 +397,44 @@ function overview(){
  }).join('');
  const holdings=[...D.positions].sort((a,b)=>b.value-a.value).slice(0,8).map(p=>
   `<tr><td style="text-align:left"><span class="tk">${p.ticker}</span> <span class="tag">${p.book}</span></td><td>${fmt$(p.stake||0)}</td><td>${fmt$(p.value)}</td><td class="${cls(p.pl)}">${fmt$(p.pl)}</td><td>${(100*p.value/pv).toFixed(1)}%</td></tr>`).join('');
+ const sigs=(D.signals&&D.signals.length)?D.signals:SIGNALS.map(([t,b])=>({title:t,body:b,sentiment:'neutral',sector:''}));
+ const cards=[];
+ by('vol24').forEach(p=>cards.push({t:p.ticker,dir:p.direction,entry:p.flag_price,target:null,stop:p.stop_price,note:'graded '+p.eval_date.slice(5)}));
+ D.options.forEach(o=>cards.push({t:o.underlying,dir:o.type==='call'?'bull':'bear',entry:o.entry_ask,target:o.target_premium,stop:o.stop_premium,note:'option · exit '+o.exit_by.slice(5),opt:true}));
+ const cardHtml=cards.map(c=>{
+  const rr=c.target!=null?((c.target-c.entry)/(c.entry-c.stop)).toFixed(1):null;
+  return`<div class="scard"><span class="tk">${c.t}</span><span class="dir ${c.dir==='bull'?'pos':'neg'}" style="float:right">${c.dir==='bull'?'LONG':'SHORT'}</span>
+  <table><tr><td>Entry</td><td style="text-align:right">${fmt$(c.entry)}</td></tr>
+  ${c.target!=null?`<tr><td>Target</td><td style="text-align:right" class="pos">${fmt$(c.target)}</td></tr>`:''}
+  <tr><td>Stop</td><td style="text-align:right" class="neg">${fmt$(c.stop)}</td></tr>
+  ${rr?`<tr><td>R:R</td><td style="text-align:right"><b>${rr}</b></td></tr>`:''}</table>
+  <div class="nm" style="margin-top:4px">${c.note}</div></div>`;
+ }).join('');
+ // performance summary + drawdown from real (small) history — no fabricated numbers
+ const realized=[...D.closed,...D.closed_options];
+ const wins=realized.filter(t=>t.pl>0), losses=realized.filter(t=>t.pl<=0);
+ const gw=wins.reduce((s2,t)=>s2+t.pl,0), gl=Math.abs(losses.reduce((s2,t)=>s2+t.pl,0));
+ const pf=gl>0?(gw/gl).toFixed(2):(gw>0?'∞':'—');
+ const H=D.history; let maxdd=0,peak=-1e9;
+ H.forEach(h=>{peak=Math.max(peak,h.value);maxdd=Math.min(maxdd,h.value/peak-1);});
+ const small=realized.length<20?' <span class="nm">(n='+realized.length+' — too small to trust)</span>':'';
+ const perf=[
+  ['Resolved trades',realized.length,''],['Win rate',realized.length?Math.round(100*wins.length/realized.length)+'%':'—',''],
+  ['Profit factor',pf,''],['Expectancy',realized.length?fmt$(realized.reduce((s2,t)=>s2+t.pl,0)/realized.length):'—','per trade'],
+  ['Max drawdown',`<span class="${maxdd<0?'neg':''}">${(100*maxdd).toFixed(1)}%</span>`,H.length+' days of history'],
+ ].map(([l,v,s2])=>`<div class="tile"><div class="lbl">${l}</div><div class="val">${v}</div><div class="sm">${s2}</div></div>`).join('');
+ let ddSvg='';
+ if(H.length>=2){
+  const W=Math.min(document.body.clientWidth-60,1100),Hh=110,padL=50,padB=16,padT=6;
+  let pk=-1e9;const dd=H.map(h=>{pk=Math.max(pk,h.value);return h.value/pk-1;});
+  const mn=Math.min(...dd,-0.001);
+  const x=i=>padL+i/(H.length-1)*(W-padL-8),y=v=>padT+(0-v)/(0-mn)*(Hh-padT-padB);
+  ddSvg=`<svg width="${W}" height="${Hh}"><line x1="${padL}" x2="${W-4}" y1="${y(0)}" y2="${y(0)}" stroke="${css('--axis')}"/><text x="${padL-5}" y="${y(0)+3}" text-anchor="end">0%</text><text x="${padL-5}" y="${y(mn)+3}" text-anchor="end">${(100*mn).toFixed(1)}%</text><polyline points="${dd.map((v,i)=>x(i)+','+y(v)).join(' ')}" fill="none" stroke="${css('--down')}" stroke-width="2"/></svg>`;
+ }
  return`<div class="kpis">${kpis}</div>
- <div class="panel"><h2>Active world signals</h2><div class="signals">${SIGNALS.map(([t,b])=>`<div class="sig"><b>${t}</b><span>${b}</span></div>`).join('')}</div></div>
+ <div class="panel"><h2>Live signals — entry / target / stop</h2>${cards.length?`<div class="sigcards">${cardHtml}</div>`:'<div class="empty">No open direction calls.</div>'}</div>
+ <div class="panel"><h2>Active world signals</h2><div class="signals">${sigs.map(g=>`<div class="sig"><b>${g.title}<span class="chip ${g.sentiment}">${g.sentiment.toUpperCase()}</span>${g.sector?`<span class="tag">${g.sector}</span>`:''}</b><span>${g.body}</span></div>`).join('')}</div></div>
+ <div class="panel"><h2>System performance — real numbers, no marketing${small}</h2><div class="kpis">${perf}</div>${ddSvg?`<h2 style="margin-top:10px">Drawdown</h2>${ddSvg}`:''}</div>
  <div class="panel"><h2>Portfolio vs same-day SPY stakes</h2>
   <div class="legend"><span><i style="background:${css('--s1')}"></i>Scanner</span><span><i style="background:${css('--muted')}"></i>SPY</span></div>${curveSvg()}</div>
  <div class="panel"><h2>Alpha since flag, all books</h2>${alphaBars()}</div>
@@ -420,6 +470,27 @@ function optionsView(){
  return`<div class="kpis">${kpi}</div>
  <div class="panel"><h2>Rules of this book</h2><div class="sig" style="border-color:var(--warn)"><span>Buys OTM contracts (2–10%) on catalyst-driven movers with a stated direction, only when the chain is liquid (OI ≥ 500, spread ≤ 20% of ask) and total cost < $200. Target = 2× entry ask · stop = 0.5× ask · forced exit after 2 trading days or at expiry — first trigger wins. Prior study says the expected result is losing the premium; the book exists to measure it, and closes permanently if P/L is negative after 20 resolved positions.</span></div></div>
  <div class="panel">${openT}${closedT}</div>`;
+}
+function journalView(){
+ const trades=[...D.closed.map(t=>({...t,kind:'stock',label:t.ticker,entry:t.flag_price,exit:t.exit_price,date:t.exit_date,book:t.book||'core'})),
+               ...D.closed_options.map(o=>({...o,kind:'option',label:o.underlying+' '+o.type.toUpperCase()+' $'+o.strike,entry:o.entry_ask,exit:o.exit_bid!=null?o.exit_bid:o.current_bid,date:o.exit_date,book:'options'}))]
+  .sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+ const wins=trades.filter(t=>t.pl>0),losses=trades.filter(t=>t.pl<=0);
+ const gw=wins.reduce((s2,t)=>s2+t.pl,0),gl=Math.abs(losses.reduce((s2,t)=>s2+t.pl,0));
+ const kpi=[
+  ['Total realized P/L',`<span class="${cls(trades.reduce((s2,t)=>s2+t.pl,0))}">${fmt$(trades.reduce((s2,t)=>s2+t.pl,0))}</span>`,trades.length+' closed trades'],
+  ['Win rate',trades.length?Math.round(100*wins.length/trades.length)+'% ('+wins.length+'/'+trades.length+')':'—',''],
+  ['Profit factor',gl>0?(gw/gl).toFixed(2):(gw>0?'∞':'—'),''],
+  ['Avg win / avg loss',(wins.length?fmt$(gw/wins.length):'—')+' / '+(losses.length?fmt$(-gl/losses.length):'—'),''],
+ ].map(([l,v,s2])=>`<div class="tile"><div class="lbl">${l}</div><div class="val">${v}</div><div class="sm">${s2}</div></div>`).join('');
+ const byBook={};trades.forEach(t=>{byBook[t.book]=byBook[t.book]||{n:0,pl:0};byBook[t.book].n++;byBook[t.book].pl+=t.pl;});
+ const worst=Object.entries(byBook).sort((a,b)=>a[1].pl-b[1].pl)[0];
+ const breakdown=Object.entries(byBook).map(([b,v])=>`<tr><td style="text-align:left">${b}</td><td>${v.n}</td><td class="${cls(v.pl)}">${fmt$(v.pl)}</td></tr>`).join('');
+ const rows=trades.map(t=>`<tr><td style="text-align:left"><span class="tk">${t.label}</span> <span class="tag">${t.kind}</span></td><td>${t.book}</td><td>${t.flag_date||t.entry_date||''}</td><td>${t.date||''}</td><td>${fmt$(t.entry)}</td><td>${fmt$(t.exit||0)}</td><td class="${cls(t.pl)}" style="font-weight:650">${fmt$(t.pl)}</td><td class="${cls(t.pl_pct)}">${fmtP(t.pl_pct)}</td><td style="color:var(--muted)">${t.exit_reason||t.direction_outcome||''}</td></tr>`).join('');
+ return`<div class="kpis">${kpi}</div>
+ ${worst&&worst[1].pl<0?`<div class="panel"><h2>Biggest weakness (so far)</h2><div class="sig" style="border-color:var(--down)"><span>The <b>${worst[0]}</b> book accounts for ${fmt$(worst[1].pl)} of realized losses across ${worst[1].n} trade(s). Its kill rule decides its fate — not vibes.</span></div></div>`:''}
+ <div class="panel"><h2>Breakdown by book</h2><div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Book</th><th>Trades</th><th>Realized P/L</th></tr></thead><tbody>${breakdown||''}</tbody></table></div></div>
+ <div class="panel"><h2>Every realized trade — permanent record</h2>${trades.length?`<div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Trade</th><th>Book</th><th>Entered</th><th>Exited</th><th>Entry</th><th>Exit</th><th>P/L $</th><th>P/L %</th><th>Reason</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="empty">No closed trades yet.</div>'}</div>`;
 }
 function closedView(){
  if(!D.closed.length)return'<div class="panel"><div class="empty">None yet. Positions close at stops, at 5-day direction evaluations, or on thesis invalidation.</div></div>';
@@ -477,13 +548,14 @@ async function liveTick(){
 }
 function render(){
  document.getElementById('tabs').innerHTML=BOOKS.map(([id,n])=>{
-  const c=id==='overview'?'':id==='closed'?D.closed.length:id==='options'?D.options.length:by(id).length;
+  const c=id==='overview'?'':id==='closed'?D.closed.length:id==='options'?D.options.length:id==='journal'?(D.closed.length+D.closed_options.length):by(id).length;
   return`<button class="tab ${tab===id?'on':''}" data-t="${id}">${n}${c!==''?`<span class="n">${c}</span>`:''}</button>`;
  }).join('');
  document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{tab=b.dataset.t;render();});
  const v=document.getElementById('views');
  if(tab==='overview')v.innerHTML=overview();
  else if(tab==='options')v.innerHTML=optionsView();
+ else if(tab==='journal')v.innerHTML=journalView();
  else if(tab==='closed')v.innerHTML=closedView();
  else v.innerHTML='<div class="panel">'+posTable(by(tab),{dir:tab==='vol24',tgt:tab!=='vol24'})+'</div>';
  document.querySelectorAll('.sortable th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(!k)return;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=-1;}render();});
