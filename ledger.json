@@ -1,0 +1,1232 @@
+{
+ "meta": {
+  "name": "News + IPO Scanner",
+  "created": "2026-08-11",
+  "stake_per_position_usd": 1000,
+  "mode": "paper",
+  "notes": "Flag price = market price at scan time on flag date. Shares are fractional (1000/flag_price). P/L is hypothetical; no fees/slippage modeled. This is a measurement instrument for the news+IPO thesis, not a live strategy.",
+  "last_scan": "Aug 12, 2026 15:02 UTC",
+  "benchmark": "SPY",
+  "score_rubric": "catalyst/30 momentum/25 liquidity/15 risk/15(higher=safer) valuation/15; set at flag time",
+  "exit_rules": "auto-close if price <= flag*(1+stop_pct/100); review_date forces thesis re-check",
+  "books": {
+   "core": "News+IPO flags",
+   "vol24": "24h volatility, direction call, 5-day eval",
+   "penny": "$0.50–$5 listed only",
+   "longterm": "Written criteria, 1–3y horizon"
+  },
+  "direction_rule": "vol24 calls evaluated at eval_date: hit if sign(move since flag) matches call; running hit rate on dashboard; feature killed if <=50% after 30 calls",
+  "options_rules": "Options book mirrors vol24 direction calls only (per 0dte-otm-findings: direction is the sole claim that could beat the variance premium). OTM 2-10%, nearest weekly, BUY at ask, mark/exit at bid (spread cost included). Total cost per position < $200 (contracts = floor(199/(ask*100))). Target sale = 2x entry ask; stop = 0.5x entry ask (bid < stop closes). Exit at first of: target hit, stop hit, 2 trading days, expiry. KILL RULE: book closes if total P/L < 0 after 20 resolved positions. Expected outcome per prior study: median -100% per trade; this book measures whether any direction edge survives premium."
+ },
+ "positions": [
+  {
+   "ticker": "SPCX",
+   "name": "SpaceX",
+   "category": "IPO",
+   "flag_date": "2026-08-11",
+   "flag_price": 133.29,
+   "ref_label": "IPO offer (Jun 12, 2026)",
+   "ref_price": 135,
+   "news_tag": "Space / defense",
+   "thesis": "Largest IPO in history ($1.75T valuation, $85.7B raised) digesting below its $161 day-one close. Starlink growth and defense contracts are the catalyst stream; post-IPO lockup supply is the risk.",
+   "current_price": 138.77,
+   "prev_close": 150,
+   "shares": 7.5024,
+   "value": 1041.11,
+   "pl": 41.11,
+   "pl_pct": 4.11,
+   "day_pct": 4.11,
+   "vs_ref_pct": 2.8,
+   "status": "open",
+   "spy_flag_price": 770.56,
+   "score": {
+    "catalyst": 22,
+    "momentum": 15,
+    "liquidity": 15,
+    "risk": 8,
+    "valuation": 6
+   },
+   "score_total": 66,
+   "stop_pct": -25,
+   "review_date": "2026-11-10",
+   "spy_ret_pct": 0.2,
+   "alpha_pct": 3.91,
+   "stop_price": 99.97,
+   "review_due": false,
+   "book": "core",
+   "t12": {
+    "bull": 220,
+    "base": 160,
+    "bear": 100
+   },
+   "targets": {
+    "t3": {
+     "bull": 176.64,
+     "base": 146.64,
+     "bear": 116.64
+    },
+    "t6": {
+     "bull": 194.6,
+     "base": 152.18,
+     "bear": 109.75
+    },
+    "t12i": {
+     "bull": 220,
+     "base": 160,
+     "bear": 100
+    }
+   }
+  },
+  {
+   "ticker": "SKHY",
+   "name": "SK hynix (US listing)",
+   "category": "IPO",
+   "flag_date": "2026-08-11",
+   "flag_price": 141.65,
+   "ref_label": "US IPO (Jul 10, 2026)",
+   "ref_price": 149,
+   "news_tag": "AI memory / HBM",
+   "thesis": "HBM memory is the supply bottleneck of the AI buildout. Fresh US listing at $149; trades roughly flat vs offer while AI capex headlines keep coming. TSM strength corroborates the chip-cycle signal.",
+   "current_price": 152.84,
+   "prev_close": 170,
+   "shares": 7.0597,
+   "value": 1079,
+   "pl": 79,
+   "pl_pct": 7.9,
+   "day_pct": 7.9,
+   "vs_ref_pct": 2.6,
+   "status": "open",
+   "spy_flag_price": 770.56,
+   "score": {
+    "catalyst": 24,
+    "momentum": 12,
+    "liquidity": 14,
+    "risk": 10,
+    "valuation": 9
+   },
+   "score_total": 69,
+   "stop_pct": -25,
+   "review_date": "2026-11-10",
+   "spy_ret_pct": 0.2,
+   "alpha_pct": 7.7,
+   "stop_price": 106.24,
+   "review_due": false,
+   "book": "core",
+   "t12": {
+    "bull": 230,
+    "base": 170,
+    "bear": 105
+   },
+   "targets": {
+    "t3": {
+     "bull": 185.82,
+     "base": 155.82,
+     "bear": 123.33
+    },
+    "t6": {
+     "bull": 204.12,
+     "base": 161.7,
+     "bear": 115.73
+    },
+    "t12i": {
+     "bull": 230,
+     "base": 170,
+     "bear": 105
+    }
+   }
+  },
+  {
+   "ticker": "APMD",
+   "name": "Apnimed",
+   "category": "IPO",
+   "flag_date": "2026-08-11",
+   "flag_price": 24.87,
+   "ref_label": "IPO $16 (Jul 30, 2026)",
+   "ref_price": 16,
+   "news_tag": "Biotech",
+   "thesis": "Best performer of the 2026 IPO cohort (+~55% vs offer). First oral drug candidate for obstructive sleep apnea — huge untreated market. Biotech leadership is the strongest sector signal in this year's IPO tape.",
+   "current_price": 24.78,
+   "prev_close": 22,
+   "shares": 40.2091,
+   "value": 996.38,
+   "pl": -3.62,
+   "pl_pct": -0.36,
+   "day_pct": -0.36,
+   "vs_ref_pct": 54.9,
+   "status": "open",
+   "spy_flag_price": 770.56,
+   "score": {
+    "catalyst": 25,
+    "momentum": 20,
+    "liquidity": 8,
+    "risk": 7,
+    "valuation": 7
+   },
+   "score_total": 67,
+   "stop_pct": -35,
+   "review_date": "2026-11-10",
+   "spy_ret_pct": 0.2,
+   "alpha_pct": -0.56,
+   "stop_price": 16.17,
+   "review_due": false,
+   "book": "core",
+   "t12": {
+    "bull": 45,
+    "base": 30,
+    "bear": 14
+   },
+   "targets": {
+    "t3": {
+     "bull": 34.94,
+     "base": 27.44,
+     "bear": 19.44
+    },
+    "t6": {
+     "bull": 39.1,
+     "base": 28.5,
+     "bear": 17.18
+    },
+    "t12i": {
+     "bull": 45,
+     "base": 30,
+     "bear": 14
+    }
+   }
+  },
+  {
+   "ticker": "SCTX",
+   "name": "Scribe Therapeutics",
+   "category": "IPO",
+   "flag_date": "2026-08-11",
+   "flag_price": 23.44,
+   "ref_label": "IPO $15 (Jul 23, 2026)",
+   "ref_price": 15,
+   "news_tag": "Gene editing",
+   "thesis": "CRISPR-by-design platform, +~55% vs offer in three weeks. Rides the same 2026 biotech-IPO strength as Apnimed; higher science risk, earlier pipeline.",
+   "current_price": 23.6,
+   "prev_close": 21.48,
+   "shares": 42.6621,
+   "value": 1006.83,
+   "pl": 6.83,
+   "pl_pct": 0.68,
+   "day_pct": 0.68,
+   "vs_ref_pct": 57.3,
+   "status": "open",
+   "spy_flag_price": 770.56,
+   "score": {
+    "catalyst": 20,
+    "momentum": 21,
+    "liquidity": 7,
+    "risk": 6,
+    "valuation": 6
+   },
+   "score_total": 60,
+   "stop_pct": -35,
+   "review_date": "2026-11-10",
+   "spy_ret_pct": 0.2,
+   "alpha_pct": 0.48,
+   "stop_price": 15.24,
+   "review_due": false,
+   "book": "core",
+   "t12": {
+    "bull": 42,
+    "base": 28,
+    "bear": 12
+   },
+   "targets": {
+    "t3": {
+     "bull": 32.72,
+     "base": 25.72,
+     "bear": 17.72
+    },
+    "t6": {
+     "bull": 36.56,
+     "base": 26.66,
+     "bear": 15.35
+    },
+    "t12i": {
+     "bull": 42,
+     "base": 28,
+     "bear": 12
+    }
+   }
+  },
+  {
+   "ticker": "IOND",
+   "name": "Ionic Digital",
+   "category": "IPO",
+   "flag_date": "2026-08-11",
+   "flag_price": 59.1,
+   "ref_label": "IPO $53 (Jul 28, 2026)",
+   "ref_price": 53,
+   "news_tag": "Crypto infra",
+   "thesis": "Crypto-mining/infrastructure listing up ~12% vs offer. Crypto stocks led Monday's movers, but options markets are positioned for an August BTC pullback — this position tests whether equity flow beats that caution.",
+   "current_price": 63.3,
+   "prev_close": 50,
+   "shares": 16.9205,
+   "value": 1071.07,
+   "pl": 71.07,
+   "pl_pct": 7.11,
+   "day_pct": 7.11,
+   "vs_ref_pct": 19.4,
+   "status": "open",
+   "spy_flag_price": 770.56,
+   "score": {
+    "catalyst": 15,
+    "momentum": 12,
+    "liquidity": 8,
+    "risk": 7,
+    "valuation": 8
+   },
+   "score_total": 50,
+   "stop_pct": -25,
+   "review_date": "2026-11-10",
+   "spy_ret_pct": 0.2,
+   "alpha_pct": 6.91,
+   "stop_price": 44.33,
+   "review_due": false,
+   "book": "core",
+   "t12": {
+    "bull": 95,
+    "base": 65,
+    "bear": 38
+   },
+   "targets": {
+    "t3": {
+     "bull": 77.05,
+     "base": 62.05,
+     "bear": 48.55
+    },
+    "t6": {
+     "bull": 84.49,
+     "base": 63.27,
+     "bear": 44.18
+    },
+    "t12i": {
+     "bull": 95,
+     "base": 65,
+     "bear": 38
+    }
+   }
+  },
+  {
+   "ticker": "STDN",
+   "name": "Standard Nuclear",
+   "category": "IPO",
+   "flag_date": "2026-08-11",
+   "flag_price": 12.08,
+   "ref_label": "IPO $15 (Jul 16, 2026)",
+   "ref_price": 15,
+   "news_tag": "Nuclear / AI power",
+   "thesis": "Busted IPO (-45% at the July low) that has bounced ~47% off the bottom. The AI-datacenter power crunch keeps nuclear in the news cycle. Highest-risk flag on the board — this tests the busted-IPO-rebound pattern.",
+   "current_price": 11.44,
+   "prev_close": 13.5,
+   "shares": 82.7815,
+   "value": 947.02,
+   "pl": -52.98,
+   "pl_pct": -5.3,
+   "day_pct": -5.3,
+   "vs_ref_pct": -23.7,
+   "status": "open",
+   "spy_flag_price": 770.56,
+   "score": {
+    "catalyst": 18,
+    "momentum": 16,
+    "liquidity": 6,
+    "risk": 4,
+    "valuation": 5
+   },
+   "score_total": 49,
+   "stop_pct": -35,
+   "review_date": "2026-11-10",
+   "spy_ret_pct": 0.2,
+   "alpha_pct": -5.5,
+   "stop_price": 7.85,
+   "review_due": false,
+   "book": "core",
+   "t12": {
+    "bull": 28,
+    "base": 15,
+    "bear": 6
+   },
+   "targets": {
+    "t3": {
+     "bull": 20.04,
+     "base": 13.54,
+     "bear": 9.04
+    },
+    "t6": {
+     "bull": 23.34,
+     "base": 14.14,
+     "bear": 7.78
+    },
+    "t12i": {
+     "bull": 28,
+     "base": 15,
+     "bear": 6
+    }
+   }
+  },
+  {
+   "ticker": "CRWV",
+   "name": "CoreWeave",
+   "category": "IPO-2025",
+   "flag_date": "2026-08-11",
+   "flag_price": 90.32,
+   "ref_label": "IPO $40 (Mar 2025)",
+   "ref_price": 40,
+   "news_tag": "AI infrastructure",
+   "thesis": "The 2025 IPO that worked: AI GPU cloud with a ~$99B backlog and OpenAI/Meta contracts. Tests whether IPO winners keep winning once seasoned.",
+   "current_price": 106.541,
+   "prev_close": 114.7,
+   "shares": 11.0717,
+   "value": 1179.59,
+   "pl": 179.59,
+   "pl_pct": 17.96,
+   "day_pct": 17.96,
+   "vs_ref_pct": 166.4,
+   "status": "open",
+   "spy_flag_price": 770.56,
+   "score": {
+    "catalyst": 23,
+    "momentum": 14,
+    "liquidity": 14,
+    "risk": 9,
+    "valuation": 6
+   },
+   "score_total": 66,
+   "stop_pct": -25,
+   "review_date": "2026-11-10",
+   "spy_ret_pct": 0.2,
+   "alpha_pct": 17.76,
+   "stop_price": 67.74,
+   "review_due": false,
+   "book": "core",
+   "t12": {
+    "bull": 160,
+    "base": 110,
+    "bear": 60
+   },
+   "targets": {
+    "t3": {
+     "bull": 125.16,
+     "base": 100.16,
+     "bear": 75.16
+    },
+    "t6": {
+     "bull": 139.59,
+     "base": 104.24,
+     "bear": 68.88
+    },
+    "t12i": {
+     "bull": 160,
+     "base": 110,
+     "bear": 60
+    }
+   }
+  },
+  {
+   "ticker": "CRCL",
+   "name": "Circle Internet Group",
+   "category": "IPO-2025",
+   "flag_date": "2026-08-11",
+   "flag_price": 71.16,
+   "ref_label": "IPO $31 (Jun 2025)",
+   "ref_price": 31,
+   "news_tag": "Stablecoins",
+   "thesis": "USDC issuer earning Treasury yield on reserves. Stablecoin regulation and crypto-payments adoption are recurring world-news catalysts; rate cuts are the main headwind to its interest income.",
+   "current_price": 69.47,
+   "prev_close": 131.76,
+   "shares": 14.0528,
+   "value": 976.25,
+   "pl": -23.75,
+   "pl_pct": -2.37,
+   "day_pct": -2.37,
+   "vs_ref_pct": 124.1,
+   "status": "open",
+   "spy_flag_price": 770.56,
+   "score": {
+    "catalyst": 20,
+    "momentum": 16,
+    "liquidity": 13,
+    "risk": 9,
+    "valuation": 8
+   },
+   "score_total": 66,
+   "stop_pct": -25,
+   "review_date": "2026-11-10",
+   "spy_ret_pct": 0.2,
+   "alpha_pct": -2.57,
+   "stop_price": 53.37,
+   "review_due": false,
+   "book": "core",
+   "t12": {
+    "bull": 130,
+    "base": 85,
+    "bear": 50
+   },
+   "targets": {
+    "t3": {
+     "bull": 100.58,
+     "base": 78.08,
+     "bear": 60.58
+    },
+    "t6": {
+     "bull": 112.77,
+     "base": 80.95,
+     "bear": 56.2
+    },
+    "t12i": {
+     "bull": 130,
+     "base": 85,
+     "bear": 50
+    }
+   }
+  },
+  {
+   "ticker": "KOS",
+   "name": "Kosmos Energy",
+   "category": "News",
+   "flag_date": "2026-08-11",
+   "flag_price": 2.56,
+   "ref_label": "Pre-spike close",
+   "ref_price": null,
+   "news_tag": "Venezuela / oil",
+   "thesis": "Jumped 13% Monday as the Venezuela blockade aftermath tightens heavy-crude supply. Small-cap offshore producer = high beta to any further supply disruption. Pure world-news flag.",
+   "current_price": 2.49,
+   "prev_close": 2.88,
+   "shares": 390.625,
+   "value": 972.66,
+   "pl": -27.34,
+   "pl_pct": -2.73,
+   "day_pct": -2.73,
+   "vs_ref_pct": null,
+   "status": "open",
+   "spy_flag_price": 770.56,
+   "score": {
+    "catalyst": 21,
+    "momentum": 18,
+    "liquidity": 9,
+    "risk": 6,
+    "valuation": 10
+   },
+   "score_total": 64,
+   "stop_pct": -25,
+   "review_date": "2026-11-10",
+   "spy_ret_pct": 0.2,
+   "alpha_pct": -2.93,
+   "stop_price": 1.92,
+   "review_due": false,
+   "book": "core",
+   "t12": {
+    "bull": 4.5,
+    "base": 3.2,
+    "bear": 1.8
+   },
+   "targets": {
+    "t3": {
+     "bull": 3.53,
+     "base": 2.88,
+     "bear": 2.18
+    },
+    "t6": {
+     "bull": 3.93,
+     "base": 3.01,
+     "bear": 2.02
+    },
+    "t12i": {
+     "bull": 4.5,
+     "base": 3.2,
+     "bear": 1.8
+    }
+   }
+  },
+  {
+   "ticker": "TSM",
+   "name": "Taiwan Semiconductor",
+   "category": "News",
+   "flag_date": "2026-08-11",
+   "flag_price": 422.06,
+   "ref_label": null,
+   "ref_price": null,
+   "news_tag": "AI chips / Taiwan",
+   "thesis": "Moved on Monday's tape as AI capex headlines continue. The world's chip chokepoint: benefits from every AI announcement, carries every Taiwan-strait headline as tail risk. The control-adjacent large-cap on the board.",
+   "current_price": 430.01,
+   "prev_close": 404.54,
+   "shares": 2.3693,
+   "value": 1018.82,
+   "pl": 18.82,
+   "pl_pct": 1.88,
+   "day_pct": 1.88,
+   "vs_ref_pct": null,
+   "status": "open",
+   "spy_flag_price": 770.56,
+   "score": {
+    "catalyst": 19,
+    "momentum": 15,
+    "liquidity": 15,
+    "risk": 12,
+    "valuation": 10
+   },
+   "score_total": 71,
+   "stop_pct": -15,
+   "review_date": "2026-11-10",
+   "spy_ret_pct": 0.2,
+   "alpha_pct": 1.68,
+   "stop_price": 358.75,
+   "review_due": false,
+   "book": "core",
+   "t12": {
+    "bull": 560,
+    "base": 480,
+    "bear": 340
+   },
+   "targets": {
+    "t3": {
+     "bull": 491.03,
+     "base": 451.03,
+     "bear": 381.03
+    },
+    "t6": {
+     "bull": 519.6,
+     "base": 463.03,
+     "bear": 364.03
+    },
+    "t12i": {
+     "bull": 560,
+     "base": 480,
+     "bear": 340
+    }
+   }
+  },
+  {
+   "ticker": "NIQ",
+   "name": "NIQ Global Intelligence",
+   "category": "News",
+   "book": "vol24",
+   "flag_date": "2026-08-11",
+   "flag_price": 16.58,
+   "ref_label": null,
+   "ref_price": null,
+   "news_tag": "Earnings +42%",
+   "thesis": "Beat and raised for the fifth straight quarter on AI-native analytics; +42% on 10M shares. Call: BULL — post-earnings-announcement drift favors continuation over 5 days.",
+   "score": {
+    "catalyst": 26,
+    "momentum": 22,
+    "liquidity": 12,
+    "risk": 8,
+    "valuation": 8
+   },
+   "score_total": 76,
+   "stop_pct": -15,
+   "review_date": "2026-08-18",
+   "status": "open",
+   "direction": "bull",
+   "eval_date": "2026-08-18",
+   "current_price": 16.4,
+   "spy_flag_price": 770.56,
+   "shares": 60.3136,
+   "value": 989.14,
+   "pl": -10.86,
+   "pl_pct": -1.09,
+   "spy_ret_pct": 0.2,
+   "alpha_pct": -1.29,
+   "stop_price": 14.09,
+   "day_pct": -1.09,
+   "vs_ref_pct": null,
+   "review_due": false
+  },
+  {
+   "ticker": "ONON",
+   "name": "On Holding",
+   "category": "News",
+   "book": "vol24",
+   "flag_date": "2026-08-11",
+   "flag_price": 30.91,
+   "ref_label": null,
+   "ref_price": null,
+   "news_tag": "Earnings −20%",
+   "thesis": "Gapped down 20% on 42M shares after results. Call: BEAR — downside post-earnings drift; sportswear peers weak. Invalidated if it reclaims the gap.",
+   "score": {
+    "catalyst": 24,
+    "momentum": 18,
+    "liquidity": 13,
+    "risk": 9,
+    "valuation": 9
+   },
+   "score_total": 73,
+   "stop_pct": -15,
+   "review_date": "2026-08-18",
+   "status": "open",
+   "direction": "bear",
+   "eval_date": "2026-08-18",
+   "current_price": 30.775,
+   "spy_flag_price": 770.56,
+   "shares": 32.352,
+   "value": 995.63,
+   "pl": -4.37,
+   "pl_pct": -0.44,
+   "spy_ret_pct": 0.2,
+   "alpha_pct": -0.64,
+   "stop_price": 26.27,
+   "day_pct": -0.44,
+   "vs_ref_pct": null,
+   "review_due": false
+  },
+  {
+   "ticker": "FRMI",
+   "name": "Fermi Inc.",
+   "category": "News",
+   "book": "vol24",
+   "flag_date": "2026-08-11",
+   "flag_price": 7.12,
+   "ref_label": null,
+   "ref_price": null,
+   "news_tag": "$6.5B AI lease",
+   "thesis": "Signed a $6.5B AI-campus lease that could triple contracted revenue; +21% on 49M shares. Call: BULL — contracted-revenue news, not hype, and the 2026 busted-IPO base gives room.",
+   "score": {
+    "catalyst": 25,
+    "momentum": 20,
+    "liquidity": 11,
+    "risk": 5,
+    "valuation": 5
+   },
+   "score_total": 66,
+   "stop_pct": -15,
+   "review_date": "2026-08-18",
+   "status": "open",
+   "direction": "bull",
+   "eval_date": "2026-08-18",
+   "current_price": 7.31,
+   "spy_flag_price": 770.56,
+   "shares": 140.4494,
+   "value": 1026.69,
+   "pl": 26.69,
+   "pl_pct": 2.67,
+   "spy_ret_pct": 0.2,
+   "alpha_pct": 2.47,
+   "stop_price": 6.05,
+   "day_pct": 2.67,
+   "vs_ref_pct": null,
+   "review_due": false
+  },
+  {
+   "ticker": "HTZ",
+   "name": "Hertz Global",
+   "category": "Penny",
+   "book": "penny",
+   "flag_date": "2026-08-11",
+   "flag_price": 2.45,
+   "ref_label": null,
+   "ref_price": null,
+   "news_tag": "Q2 beat + squeeze",
+   "thesis": "Q2 revenue beat (Aug 7) plus 587k-contract options frenzy and retail momentum. Speculative squeeze mechanics, not fundamentals — treated as such.",
+   "score": {
+    "catalyst": 18,
+    "momentum": 20,
+    "liquidity": 12,
+    "risk": 5,
+    "valuation": 6
+   },
+   "score_total": 61,
+   "stop_pct": -35,
+   "review_date": "2026-11-10",
+   "status": "open",
+   "t12": {
+    "bull": 5,
+    "base": 3.2,
+    "bear": 1.4
+   },
+   "current_price": 2.417,
+   "spy_flag_price": 770.56,
+   "targets": {
+    "t3": {
+     "bull": 3.73,
+     "base": 2.83,
+     "bear": 1.93
+    },
+    "t6": {
+     "bull": 4.25,
+     "base": 2.98,
+     "bear": 1.71
+    },
+    "t12i": {
+     "bull": 5,
+     "base": 3.2,
+     "bear": 1.4
+    }
+   },
+   "shares": 408.1633,
+   "value": 986.53,
+   "pl": -13.47,
+   "pl_pct": -1.35,
+   "spy_ret_pct": 0.2,
+   "alpha_pct": -1.55,
+   "stop_price": 1.59,
+   "day_pct": -1.35,
+   "vs_ref_pct": null,
+   "review_due": false
+  },
+  {
+   "ticker": "PLUG",
+   "name": "Plug Power",
+   "category": "Penny",
+   "book": "penny",
+   "flag_date": "2026-08-11",
+   "flag_price": 2.22,
+   "ref_label": null,
+   "ref_price": null,
+   "news_tag": "Hydrogen restructuring",
+   "thesis": "Most-active tape (145M shares) at $2.22 after restructuring; down 92% over 5 years. Pure turnaround lottery ticket — flagged to test whether penny momentum means anything.",
+   "score": {
+    "catalyst": 12,
+    "momentum": 14,
+    "liquidity": 12,
+    "risk": 4,
+    "valuation": 7
+   },
+   "score_total": 49,
+   "stop_pct": -35,
+   "review_date": "2026-11-10",
+   "status": "open",
+   "t12": {
+    "bull": 4.5,
+    "base": 2.6,
+    "bear": 1.2
+   },
+   "current_price": 2.202,
+   "spy_flag_price": 770.56,
+   "targets": {
+    "t3": {
+     "bull": 3.36,
+     "base": 2.41,
+     "bear": 1.71
+    },
+    "t6": {
+     "bull": 3.83,
+     "base": 2.49,
+     "bear": 1.5
+    },
+    "t12i": {
+     "bull": 4.5,
+     "base": 2.6,
+     "bear": 1.2
+    }
+   },
+   "shares": 450.4505,
+   "value": 991.89,
+   "pl": -8.11,
+   "pl_pct": -0.81,
+   "spy_ret_pct": 0.2,
+   "alpha_pct": -1.01,
+   "stop_price": 1.44,
+   "day_pct": -0.81,
+   "vs_ref_pct": null,
+   "review_due": false
+  },
+  {
+   "ticker": "GERN",
+   "name": "Geron",
+   "category": "Penny",
+   "book": "penny",
+   "flag_date": "2026-08-11",
+   "flag_price": 1.63,
+   "ref_label": null,
+   "ref_price": null,
+   "news_tag": "Commercial-stage biotech",
+   "thesis": "Approved drug (Rytelo) with real revenue at a $1B cap; +10% day amid biotech strength. The least lottery-like of the penny book.",
+   "score": {
+    "catalyst": 14,
+    "momentum": 15,
+    "liquidity": 9,
+    "risk": 5,
+    "valuation": 8
+   },
+   "score_total": 51,
+   "stop_pct": -35,
+   "review_date": "2026-11-10",
+   "status": "open",
+   "t12": {
+    "bull": 3.5,
+    "base": 2.1,
+    "bear": 0.9
+   },
+   "current_price": 1.635,
+   "spy_flag_price": 770.56,
+   "targets": {
+    "t3": {
+     "bull": 2.56,
+     "base": 1.86,
+     "bear": 1.26
+    },
+    "t6": {
+     "bull": 2.95,
+     "base": 1.96,
+     "bear": 1.11
+    },
+    "t12i": {
+     "bull": 3.5,
+     "base": 2.1,
+     "bear": 0.9
+    }
+   },
+   "shares": 613.4969,
+   "value": 1003.07,
+   "pl": 3.07,
+   "pl_pct": 0.31,
+   "spy_ret_pct": 0.2,
+   "alpha_pct": 0.11,
+   "stop_price": 1.06,
+   "day_pct": 0.31,
+   "vs_ref_pct": null,
+   "review_due": false
+  },
+  {
+   "ticker": "RKLB",
+   "name": "Rocket Lab",
+   "category": "Longterm",
+   "book": "longterm",
+   "flag_date": "2026-08-11",
+   "flag_price": 80.01,
+   "ref_label": null,
+   "ref_price": null,
+   "news_tag": "Space infrastructure",
+   "thesis": "Founder-led (Beck); only credible SpaceX alternative at small/medium launch plus vertically-integrated space systems; Neutron is the 5x catalyst. Criteria: founder-led ✓, category ✓, TAM ✓.",
+   "score": {
+    "catalyst": 24,
+    "momentum": 15,
+    "liquidity": 12,
+    "risk": 8,
+    "valuation": 6
+   },
+   "score_total": 65,
+   "stop_pct": -40,
+   "review_date": "2027-08-11",
+   "status": "open",
+   "t12": {
+    "bull": 140,
+    "base": 95,
+    "bear": 45
+   },
+   "current_price": 80.07,
+   "spy_flag_price": 770.56,
+   "targets": {
+    "t3": {
+     "bull": 110,
+     "base": 87.5,
+     "bear": 62.51
+    },
+    "t6": {
+     "bull": 122.43,
+     "base": 90.61,
+     "bear": 55.25
+    },
+    "t12i": {
+     "bull": 140,
+     "base": 95,
+     "bear": 45
+    }
+   },
+   "shares": 12.4984,
+   "value": 1000.75,
+   "pl": 0.75,
+   "pl_pct": 0.07,
+   "spy_ret_pct": 0.2,
+   "alpha_pct": -0.13,
+   "stop_price": 48.01,
+   "day_pct": 0.07,
+   "vs_ref_pct": null,
+   "review_due": false
+  },
+  {
+   "ticker": "ASTS",
+   "name": "AST SpaceMobile",
+   "category": "Longterm",
+   "book": "longterm",
+   "flag_date": "2026-08-11",
+   "flag_price": 71.63,
+   "ref_label": null,
+   "ref_price": null,
+   "news_tag": "Direct-to-device satellite",
+   "thesis": "Satellite-to-ordinary-phone broadband; carrier deals (AT&T/Verizon/Vodafone) validate. Binary outcome: constellation economics work or they do not. The most Tesla-2013-shaped risk profile on the board.",
+   "score": {
+    "catalyst": 25,
+    "momentum": 15,
+    "liquidity": 11,
+    "risk": 5,
+    "valuation": 5
+   },
+   "score_total": 61,
+   "stop_pct": -40,
+   "review_date": "2027-08-11",
+   "status": "open",
+   "t12": {
+    "bull": 160,
+    "base": 90,
+    "bear": 30
+   },
+   "current_price": 72.66,
+   "spy_flag_price": 770.56,
+   "targets": {
+    "t3": {
+     "bull": 115.81,
+     "base": 80.81,
+     "bear": 50.81
+    },
+    "t6": {
+     "bull": 134.12,
+     "base": 84.62,
+     "bear": 42.19
+    },
+    "t12i": {
+     "bull": 160,
+     "base": 90,
+     "bear": 30
+    }
+   },
+   "shares": 13.9606,
+   "value": 1014.38,
+   "pl": 14.38,
+   "pl_pct": 1.44,
+   "spy_ret_pct": 0.2,
+   "alpha_pct": 1.24,
+   "stop_price": 42.98,
+   "day_pct": 1.44,
+   "vs_ref_pct": null,
+   "review_due": false
+  },
+  {
+   "ticker": "OKLO",
+   "name": "Oklo",
+   "category": "Longterm",
+   "book": "longterm",
+   "flag_date": "2026-08-11",
+   "flag_price": 47.01,
+   "ref_label": null,
+   "ref_price": null,
+   "news_tag": "SMR nuclear / AI power",
+   "thesis": "Small modular reactors aimed at AI datacenter power; Altman-linked; pre-revenue so this is optionality on the power crunch becoming policy. Highest risk of the long-term book.",
+   "score": {
+    "catalyst": 22,
+    "momentum": 15,
+    "liquidity": 10,
+    "risk": 4,
+    "valuation": 4
+   },
+   "score_total": 55,
+   "stop_pct": -40,
+   "review_date": "2027-08-11",
+   "status": "open",
+   "t12": {
+    "bull": 110,
+    "base": 60,
+    "bear": 18
+   },
+   "current_price": 45.644,
+   "spy_flag_price": 770.56,
+   "targets": {
+    "t3": {
+     "bull": 78.5,
+     "base": 53.5,
+     "bear": 32.5
+    },
+    "t6": {
+     "bull": 91.55,
+     "base": 56.2,
+     "bear": 26.5
+    },
+    "t12i": {
+     "bull": 110,
+     "base": 60,
+     "bear": 18
+    }
+   },
+   "shares": 21.2721,
+   "value": 970.94,
+   "pl": -29.06,
+   "pl_pct": -2.91,
+   "spy_ret_pct": 0.2,
+   "alpha_pct": -3.11,
+   "stop_price": 28.21,
+   "day_pct": -2.91,
+   "vs_ref_pct": null,
+   "review_due": false
+  },
+  {
+   "ticker": "TEM",
+   "name": "Tempus AI",
+   "category": "Longterm",
+   "book": "longterm",
+   "flag_date": "2026-08-11",
+   "flag_price": 55.69,
+   "ref_label": null,
+   "ref_price": null,
+   "news_tag": "AI precision medicine",
+   "thesis": "Founder-led (Lefkofsky); proprietary clinical+molecular data moat feeding AI diagnostics; the pick-and-shovel of AI medicine. Criteria: founder-led ✓, data moat ✓, real revenue ✓.",
+   "score": {
+    "catalyst": 22,
+    "momentum": 14,
+    "liquidity": 11,
+    "risk": 7,
+    "valuation": 6
+   },
+   "score_total": 60,
+   "stop_pct": -40,
+   "review_date": "2027-08-11",
+   "status": "open",
+   "t12": {
+    "bull": 120,
+    "base": 80,
+    "bear": 35
+   },
+   "current_price": 54.44,
+   "spy_flag_price": 770.56,
+   "targets": {
+    "t3": {
+     "bull": 87.84,
+     "base": 67.84,
+     "bear": 45.34
+    },
+    "t6": {
+     "bull": 101.16,
+     "base": 72.88,
+     "bear": 41.06
+    },
+    "t12i": {
+     "bull": 120,
+     "base": 80,
+     "bear": 35
+    }
+   },
+   "shares": 17.9565,
+   "value": 977.55,
+   "pl": -22.45,
+   "pl_pct": -2.24,
+   "spy_ret_pct": 0.2,
+   "alpha_pct": -2.44,
+   "stop_price": 33.41,
+   "day_pct": -2.24,
+   "vs_ref_pct": null,
+   "review_due": false
+  }
+ ],
+ "watchlist": [
+  {
+   "ticker": "JMKE",
+   "note": "Jersey Mike's IPO Jul 30 @ $23 — below offer, no news catalyst; not flagged"
+  },
+  {
+   "ticker": "QMLS",
+   "note": "QumulusAI -80% from IPO — falling knife, no flag until stabilization"
+  },
+  {
+   "ticker": "REF",
+   "note": "Reformation IPO Jul 30 @ $15 — consumer, thin thesis; watching"
+  },
+  {
+   "ticker": "FIG",
+   "note": "Figma — 2025 busted IPO; watch for AI-design catalyst"
+  },
+  {
+   "ticker": "ANTHR/OPENAI/STRAVA",
+   "note": "Filed 2026 IPOs (Anthropic, OpenAI, Strava) — flag at debut"
+  }
+ ],
+ "history": [
+  {
+   "date": "2026-08-11",
+   "value": 19999.99,
+   "spy_value": 20000,
+   "invested": 20000,
+   "n_open": 20,
+   "n_closed": 0
+  },
+  {
+   "date": "2026-08-12",
+   "value": 20245.3,
+   "spy_value": 20039.45,
+   "invested": 20000,
+   "n_open": 20,
+   "n_closed": 0
+  }
+ ],
+ "closed": [],
+ "options_positions": [
+  {
+   "contract": "NIQ260821C00017500",
+   "underlying": "NIQ",
+   "type": "call",
+   "strike": 17.5,
+   "expiry": "2026-08-21",
+   "source_call": "NIQ bull (earnings +42%)",
+   "entry_date": "2026-08-11",
+   "entry_ask": 0.2,
+   "entry_bid": 0.15,
+   "contracts_n": 9,
+   "cost": 180,
+   "exit_by": "2026-08-13",
+   "status": "open",
+   "oi": 0,
+   "iv": 0.46,
+   "note": "5.7% OTM. Thin chain (OI 0, 25% spread) — the spread alone must be overcome.",
+   "current_bid": 0.15,
+   "current_ask": 0.2,
+   "value": 135,
+   "pl": -45,
+   "pl_pct": -25,
+   "target_premium": 0.4,
+   "stop_premium": 0.1
+  },
+  {
+   "contract": "ONON260814P00030000",
+   "underlying": "ONON",
+   "type": "put",
+   "strike": 30,
+   "expiry": "2026-08-14",
+   "source_call": "ONON bear (earnings -20%)",
+   "entry_date": "2026-08-11",
+   "entry_ask": 0.15,
+   "entry_bid": 0.08,
+   "contracts_n": 13,
+   "cost": 195,
+   "exit_by": "2026-08-13",
+   "status": "open",
+   "oi": 1091,
+   "iv": 0.54,
+   "note": "4.0% OTM, best OI on the board. Post-earnings IV crush works against this even if direction is right.",
+   "current_bid": 0.14,
+   "current_ask": 0.22,
+   "value": 182,
+   "pl": -13,
+   "pl_pct": -6.7,
+   "target_premium": 0.3,
+   "stop_premium": 0.075
+  },
+  {
+   "contract": "FRMI260814C00008000",
+   "underlying": "FRMI",
+   "type": "call",
+   "strike": 8,
+   "expiry": "2026-08-14",
+   "source_call": "FRMI bull ($6.5B AI lease)",
+   "entry_date": "2026-08-11",
+   "entry_ask": 0.3,
+   "entry_bid": 0.25,
+   "contracts_n": 6,
+   "cost": 180,
+   "exit_by": "2026-08-13",
+   "status": "open",
+   "oi": 3665,
+   "iv": 2.09,
+   "note": "7.7% OTM. IV is 209% — the market has already priced a huge move; textbook \"paying most on the days you correctly identify as volatile\".",
+   "current_bid": 0.15,
+   "current_ask": 0.25,
+   "value": 90,
+   "pl": -90,
+   "pl_pct": -50,
+   "target_premium": 0.6,
+   "stop_premium": 0.15
+  }
+ ],
+ "closed_options": []
+}
