@@ -398,18 +398,51 @@ function overview(){
  const holdings=[...D.positions].sort((a,b)=>b.value-a.value).slice(0,8).map(p=>
   `<tr><td style="text-align:left"><span class="tk">${p.ticker}</span> <span class="tag">${p.book}</span></td><td>${fmt$(p.stake||0)}</td><td>${fmt$(p.value)}</td><td class="${cls(p.pl)}">${fmt$(p.pl)}</td><td>${(100*p.value/pv).toFixed(1)}%</td></tr>`).join('');
  const sigs=(D.signals&&D.signals.length)?D.signals:SIGNALS.map(([t,b])=>({title:t,body:b,sentiment:'neutral',sector:''}));
- const cards=[];
- by('vol24').forEach(p=>cards.push({t:p.ticker,dir:p.direction,entry:p.flag_price,target:null,stop:p.stop_price,note:'graded '+p.eval_date.slice(5)}));
- D.options.forEach(o=>cards.push({t:o.underlying,dir:o.type==='call'?'bull':'bear',entry:o.entry_ask,target:o.target_premium,stop:o.stop_premium,note:'option · exit '+o.exit_by.slice(5),opt:true}));
- const cardHtml=cards.map(c=>{
-  const rr=c.target!=null?((c.target-c.entry)/(c.entry-c.stop)).toFixed(1):null;
-  return`<div class="scard"><span class="tk">${c.t}</span><span class="dir ${c.dir==='bull'?'pos':'neg'}" style="float:right">${c.dir==='bull'?'LONG':'SHORT'}</span>
-  <table><tr><td>Entry</td><td style="text-align:right">${fmt$(c.entry)}</td></tr>
-  ${c.target!=null?`<tr><td>Target</td><td style="text-align:right" class="pos">${fmt$(c.target)}</td></tr>`:''}
-  <tr><td>Stop</td><td style="text-align:right" class="neg">${fmt$(c.stop)}</td></tr>
-  ${rr?`<tr><td>R:R</td><td style="text-align:right"><b>${rr}</b></td></tr>`:''}</table>
-  <div class="nm" style="margin-top:4px">${c.note}</div></div>`;
- }).join('');
+ function timingStock(p){
+  const dir=p.direction, pr=p.current_price, e=p.flag_price, st=p.stop_price;
+  const r=100*(pr/e-1), adverse=dir==='bull'?r:-r;
+  if((dir==='bull'&&pr<=st)||(dir==='bear'&&pr>=e*(1-p.stop_pct/100)*1.0&&false))return['INVALIDATED','neg'];
+  if(dir==='bull'&&pr<=st)return['INVALIDATED','neg'];
+  if(dir==='bear'&&r>=-p.stop_pct)return['INVALIDATED','neg'];
+  if(adverse<=-1)return['DISCOUNT — below entry','pos'];
+  if(adverse<=1.5)return['OPTIMAL — near entry','pos'];
+  if(adverse<=4)return['EXTENDED — chasing','warn'];
+  return['TOO LATE — moved '+(adverse>0?'+':'')+adverse.toFixed(1)+'%','neg'];
+ }
+ function timingOpt(o){
+  const est=o.live_est!=null?o.live_est:o.current_bid;
+  if(est==null)return['NO LIVE MARK','warn'];
+  if(est<=o.stop_premium)return['BROKEN — at/below stop','neg'];
+  if(est>=o.target_premium*0.9)return['TOO LATE — near target','neg'];
+  if(est<=o.entry_ask*1.15)return['OPTIMAL — near entry premium','pos'];
+  if(est<=o.entry_ask*1.5)return['EXTENDED — premium up '+Math.round(100*(est/o.entry_ask-1))+'%','warn'];
+  return['TOO LATE — premium up '+Math.round(100*(est/o.entry_ask-1))+'%','neg'];
+ }
+ const stockCards=by('vol24').map(p=>{
+  const [txt,cl]=timingStock(p);
+  return`<div class="scard"><span class="tk">${p.ticker}</span><span class="tag">STOCK CALL</span><span class="dir ${p.direction==='bull'?'pos':'neg'}" style="float:right">${p.direction==='bull'?'LONG':'SHORT'}</span>
+  <table><tr><td>Live price</td><td style="text-align:right"><b>${fmt$(p.current_price)}</b>${liveStamp?' <span class="chip bullish" style="font-size:8px">LIVE</span>':''}</td></tr>
+  <tr><td>Entry (flag)</td><td style="text-align:right">${fmt$(p.flag_price)}</td></tr>
+  <tr><td>Stop</td><td style="text-align:right" class="neg">${fmt$(p.stop_price)}</td></tr></table>
+  <div style="margin-top:6px"><span class="chip ${cl==='pos'?'bullish':cl==='neg'?'bearish':'neutral'}" style="margin-left:0">${txt}</span></div>
+  <div class="nm" style="margin-top:4px">stock position · graded ${p.eval_date.slice(5)}</div></div>`;
+ });
+ const optCards=D.options.map(o=>{
+  const [txt,cl]=timingOpt(o);
+  const u=D.positions.find(p=>p.ticker===o.underlying);
+  const est=o.live_est!=null?o.live_est:o.current_bid;
+  return`<div class="scard" style="border-color:color-mix(in srgb,var(--warn) 40%,var(--border))"><span class="tk">${o.underlying}</span><span class="tag" style="color:var(--warn);border-color:var(--warn)">OPTION</span><span class="dir ${o.type==='call'?'pos':'neg'}" style="float:right">${o.type==='call'?'LONG':'SHORT'}</span>
+  <div class="nm" style="margin-top:2px">${o.type.toUpperCase()} $${o.strike} exp ${o.expiry.slice(5)} · ${o.contracts_n} contract(s) = ${fmt$(o.cost)} of $250 budget</div>
+  <table>${u?`<tr><td>Stock live</td><td style="text-align:right"><b>${fmt$(u.current_price)}</b>${liveStamp?' <span class="chip bullish" style="font-size:8px">LIVE</span>':''}</td></tr>`:''}
+  <tr><td>Premium in</td><td style="text-align:right">${fmt$(o.entry_ask)}</td></tr>
+  <tr><td>Premium now</td><td style="text-align:right"><b>${est!=null?fmt$(est):'—'}</b>${o.live_est!=null?' <span class="nm">est</span>':''}</td></tr>
+  <tr><td>Target sale</td><td style="text-align:right" class="pos">${fmt$(o.target_premium)}</td></tr>
+  <tr><td>Stop loss</td><td style="text-align:right" class="neg">${fmt$(o.stop_premium)}</td></tr></table>
+  <div style="margin-top:6px"><span class="chip ${cl==='pos'?'bullish':cl==='neg'?'bearish':'neutral'}" style="margin-left:0">${txt}</span></div>
+  <div class="nm" style="margin-top:4px">forced exit ${o.exit_by.slice(5)} · R:R 2.0</div></div>`;
+ });
+ const cardHtml=stockCards.concat(optCards).join('');
+ const cards={length:stockCards.length+optCards.length};
  // performance summary + drawdown from real (small) history — no fabricated numbers
  const realized=[...D.closed,...D.closed_options];
  const wins=realized.filter(t=>t.pl>0), losses=realized.filter(t=>t.pl<=0);
@@ -432,7 +465,7 @@ function overview(){
   ddSvg=`<svg width="${W}" height="${Hh}"><line x1="${padL}" x2="${W-4}" y1="${y(0)}" y2="${y(0)}" stroke="${css('--axis')}"/><text x="${padL-5}" y="${y(0)+3}" text-anchor="end">0%</text><text x="${padL-5}" y="${y(mn)+3}" text-anchor="end">${(100*mn).toFixed(1)}%</text><polyline points="${dd.map((v,i)=>x(i)+','+y(v)).join(' ')}" fill="none" stroke="${css('--down')}" stroke-width="2"/></svg>`;
  }
  return`<div class="kpis">${kpis}</div>
- <div class="panel"><h2>Live signals — entry / target / stop</h2>${cards.length?`<div class="sigcards">${cardHtml}</div>`:'<div class="empty">No open direction calls.</div>'}</div>
+ <div class="panel"><h2>Live signals — stock calls vs option contracts (updates every 60s with live quotes)</h2>${cards.length?`<div class="sigcards">${cardHtml}</div>`:'<div class="empty">No open direction calls.</div>'}</div>
  <div class="panel"><h2>Active world signals</h2><div class="signals">${sigs.map(g=>`<div class="sig"><b>${g.title}<span class="chip ${g.sentiment}">${g.sentiment.toUpperCase()}</span>${g.sector?`<span class="tag">${g.sector}</span>`:''}</b><span>${g.body}</span></div>`).join('')}</div></div>
  <div class="panel"><h2>System performance — real numbers, no marketing${small}</h2><div class="kpis">${perf}</div>${ddSvg?`<h2 style="margin-top:10px">Drawdown</h2>${ddSvg}`:''}</div>
  <div class="panel"><h2>Portfolio vs same-day SPY stakes</h2>
