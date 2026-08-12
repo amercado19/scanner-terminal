@@ -14,8 +14,10 @@ Claude Cowork (Trading Bot project); the living copy updates every weekday at
 - `ledger.json` — all state: positions per book (core / vol24 / options / penny /
   longterm), conviction scores, targets, closed trades, daily history. (Spark
   price caches trimmed for the repo; they rebuild on the first run.)
-- `scanner_dashboard.html` — NOT committed; it is generated output. Run the
-  command below to produce it, then open it in any browser.
+- `scanner_dashboard.html` — the rendered terminal, exact copy from the cloud
+  scanner with the stock-theme icon embedded. Open in any browser; regenerate
+  any time with the command below.
+- `icon_preview.png` — the app icon (candlesticks + trend arrow).
 
 ## Run
 ```
