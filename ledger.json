@@ -5,7 +5,7 @@
   "stake_per_position_usd": null,
   "mode": "paper",
   "notes": "Flag price = market price at scan time on flag date. Shares are fractional (1000/flag_price). P/L is hypothetical; no fees/slippage modeled. This is a measurement instrument for the news+IPO thesis, not a live strategy.",
-  "last_scan": "Aug 12, 2026 20:25 UTC",
+  "last_scan": "Aug 12, 2026 20:34 UTC",
   "benchmark": "SPY",
   "score_rubric": "catalyst/30 momentum/25 liquidity/15 risk/15(higher=safer) valuation/15; set at flag time",
   "exit_rules": "auto-close if price <= flag*(1+stop_pct/100); review_date forces thesis re-check",
@@ -16,7 +16,7 @@
    "longterm": "Written criteria, 1\u20133y horizon"
   },
   "direction_rule": "vol24 calls evaluated at eval_date: hit if sign(move since flag) matches call; running hit rate on dashboard; feature killed if <=50% after 30 calls",
-  "options_rules": "Options book mirrors vol24 direction calls only (per 0dte-otm-findings: direction is the sole claim that could beat the variance premium). OTM 2-10%, nearest weekly, BUY at ask, mark/exit at bid (spread cost included). Options are a SEPARATE pool from the $1,000 stock portfolio. Max cost per trade $250 (contracts = floor(250/(ask*100))). Target sale = 2x entry ask; stop = 0.5x entry ask (bid < stop closes). Exit at first of: target hit, stop hit, 2 trading days, expiry. KILL RULE: book closes if total P/L < 0 after 20 resolved positions. Expected outcome per prior study: median -100% per trade; this book measures whether any direction edge survives premium.",
+  "options_rules": "Options book mirrors vol24 direction calls only (per 0dte-otm-findings: direction is the sole claim that could beat the variance premium). OTM 2-10%, nearest weekly, BUY at ask, mark/exit at bid (spread cost included). Options are a SEPARATE pool from the $1,000 stock portfolio. Max cost per trade $250 (contracts = floor(250/(ask*100))). Target sale = 6x entry ask, stop = 0.5x entry ask \u2014 a 10:1 profit-to-stop ratio set by Andres 2026-08-12 over advisory objection (target rarely reachable in a 2-day hold; most exits will be stop or clock). Contracts entered before 2026-08-12 keep their original 2x/0.5x terms. Exit at first of: target hit, stop hit, 2 trading days, expiry. KILL RULE: book closes if total P/L < 0 after 20 resolved positions. Expected outcome per prior study: median -100% per trade; this book measures whether any direction edge survives premium.",
   "finnhub_key": "d9ubm9hr01qs9cmc2nngd9ubm9hr01qs9cmc2no0",
   "portfolio": {
    "capital": 1000,
@@ -1014,9 +1014,6 @@
    "eval_date": "2026-08-18",
    "current_price": 16.81,
    "spark": [
-    8.44,
-    8.35,
-    8.24,
     8.32,
     8.35,
     8.16,
@@ -1045,12 +1042,15 @@
     11.15,
     11.0,
     10.74,
+    10.6,
+    10.63,
     10.43,
     10.75,
     11.07,
     11.7,
     11.97,
     11.38,
+    11.17,
     11.56,
     11.7,
     11.66,
@@ -1099,6 +1099,7 @@
    "eval_date": "2026-08-18",
    "current_price": 31.01,
    "spark": [
+    37.11,
     38.25,
     38.0,
     39.21,
@@ -1135,7 +1136,6 @@
     37.89,
     37.91,
     37.1,
-    36.24,
     37.95,
     37.61,
     38.19,
@@ -2013,7 +2013,7 @@
   {
    "date": "2026-08-12",
    "value": 1031.6,
-   "spy_value": 1002.48,
+   "spy_value": 1002.5,
    "invested": 999.98,
    "n_open": 20,
    "n_closed": 0

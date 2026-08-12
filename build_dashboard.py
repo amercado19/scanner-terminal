@@ -47,7 +47,7 @@ def update_options(ledger, today):
                 o['current_ask'] = q.get('ask') or 0.0
         except Exception as e:
             print(f"WARN option {o['contract']}: {e}", file=sys.stderr)
-        o.setdefault('target_premium', round(o['entry_ask'] * 2, 2))
+        o.setdefault('target_premium', round(o['entry_ask'] * 6, 2))  # 10:1 TP:SL per Andres 2026-08-12
         o.setdefault('stop_premium', round(o['entry_ask'] * 0.5, 3))
         bid = o.get('current_bid', 0.0)
         o['value'] = round(bid * 100 * o['contracts_n'], 2)
@@ -439,7 +439,7 @@ function overview(){
   <tr><td>Target sale</td><td style="text-align:right" class="pos">${fmt$(o.target_premium)}</td></tr>
   <tr><td>Stop loss</td><td style="text-align:right" class="neg">${fmt$(o.stop_premium)}</td></tr></table>
   <div style="margin-top:6px"><span class="chip ${cl==='pos'?'bullish':cl==='neg'?'bearish':'neutral'}" style="margin-left:0">${txt}</span></div>
-  <div class="nm" style="margin-top:4px">forced exit ${o.exit_by.slice(5)} · R:R 2.0</div></div>`;
+  <div class="nm" style="margin-top:4px">forced exit ${o.exit_by.slice(5)} · R:R ${((o.target_premium-o.entry_ask)/(o.entry_ask-o.stop_premium)).toFixed(1)}</div></div>`;
  });
  const cardHtml=stockCards.concat(optCards).join('');
  const cards={length:stockCards.length+optCards.length};
