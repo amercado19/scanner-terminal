@@ -5,7 +5,7 @@
   "stake_per_position_usd": null,
   "mode": "paper",
   "notes": "Flag price = market price at scan time on flag date. Shares are fractional (1000/flag_price). P/L is hypothetical; no fees/slippage modeled. This is a measurement instrument for the news+IPO thesis, not a live strategy.",
-  "last_scan": "Aug 13, 2026 13:00 UTC",
+  "last_scan": "Aug 13, 2026 13:14 UTC",
   "benchmark": "SPY",
   "score_rubric": "catalyst/30 momentum/25 liquidity/15 risk/15(higher=safer) valuation/15; set at flag time",
   "exit_rules": "auto-close if price <= flag*(1+stop_pct/100); review_date forces thesis re-check",
@@ -104,6 +104,42 @@
     "TSM"
    ],
    "unavailable": "finnhub upgrade/downgrade endpoint is 403 on free tier \u2014 use web search for analyst actions if needed"
+  },
+  "spy_model": {
+   "created": "2026-08-13",
+   "rule": "Composite 0-100 from five fixed components: trend/30 (SPY vs 20 & 50 DMA), momentum/25 (5-day return), volatility/20 (VIX level + 5-day change), breadth/15 (% of 8 sector ETFs above own 20-DMA), news/10 (bullish minus bearish world signals). >=60 BULLISH, <=40 BEARISH, else NEUTRAL. Weights are FROZEN as of 2026-08-13 and must never be re-tuned after seeing outcomes.",
+   "grading": "Every scan publishes a next-session direction call BEFORE the session. Graded on SPY close-to-close: hit if BULLISH and SPY up, or BEARISH and SPY down. NEUTRAL calls are recorded but not graded. This runs daily whether or not any option contract qualifies \u2014 direction skill is measured separately from option economics, per the 0dte-otm study conclusion.",
+   "kill": "If direction hit rate < 55% after 30 graded calls, no 1DTE structure can be profitable \u2014 stop the 1DTE book and record the finding."
+  },
+  "dte1_rules": {
+   "created": "2026-08-13",
+   "underlying": "SPY only",
+   "premium_band": "ask between $0.30 and $0.60 per contract (user-set 2026-08-13)",
+   "otm_band": "0.2%-1.5% OTM \u2014 the standard 2-10% gate is invalid at 1 day (SPY average daily move ~0.5%); this band matches the 0dte-otm study geometry",
+   "strike": "exactly ONE strike per day, nearest to the band midpoint that passes all gates",
+   "direction": "taken from the SPY composite bias; NEUTRAL days trade nothing",
+   "gates": "OI >= 500, spread <= 20% of ask, contracts = floor(250/(ask*100)), total cost <= $250, expiry = next session",
+   "exits": "target 6x ask / stop 0.5x ask (10:1) or expiry \u2014 1DTE means the clock is the dominant exit",
+   "prior": "The 811-day study found 0-2DTE SPY OTM has median -100% per trade and a break-even ceiling even with perfect exits. This book exists because SPY execution is nearly free (2-3% spreads, huge OI), so it isolates whether premium alone kills the trade. Same 20-position kill rule."
+  },
+  "whale": {
+   "next_13f_deadline": "2026-08-14",
+   "days_to_13f": 1,
+   "in_13f_window": true,
+   "notes": {
+    "13F (institutions >$100M)": "45 days after quarter end \u2014 Feb 14, May 15, Aug 14, Nov 14. Positions are up to 4.5 months stale; treat as sentiment, never as a trade signal.",
+    "Form 4 (insiders)": "within 2 business days of the trade \u2014 the most timely legal disclosure. Filing burst typically 4:00-6:30pm ET.",
+    "SC 13D (activist >5%)": "within 10 days of crossing 5% \u2014 the highest-signal filing; often moves the stock on the filing itself.",
+    "SC 13G (passive >5%)": "annual/quarterly amendments; low signal.",
+    "Block/dark prints": "cluster in the opening 30 min (9:30-10:00 ET) and the closing auction (3:50-4:00 ET). Free feeds do not expose these reliably.",
+    "Options sweeps": "cluster first hour and last hour; requires paid flow data."
+   },
+   "sources": {
+    "form4": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=4&dateb=&owner=include&count=100&output=atom",
+    "13f": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=13F-HR&dateb=&owner=include&count=100&output=atom",
+    "13d": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=SC+13D&dateb=&owner=include&count=40&output=atom",
+    "ua_required": "SEC requires a User-Agent with contact info"
+   }
   }
  },
  "positions": [
@@ -2146,5 +2182,26 @@
    "exit_reason": "2-day exit",
    "outcome": "loss"
   }
- ]
+ ],
+ "spy_state": {
+  "price": 772.49,
+  "sma20": 753.19,
+  "sma50": 748.12,
+  "ret5": 0.35,
+  "vix": 14.46,
+  "vix_chg5": -4.6,
+  "breadth_pct": 75,
+  "parts": {
+   "trend": 30,
+   "momentum": 15,
+   "volatility": 20,
+   "breadth": 11,
+   "news": 9
+  },
+  "day_pct": 0.25,
+  "score": 85,
+  "bias": "BULLISH"
+ },
+ "spy_calls": [],
+ "whale_events": []
 }

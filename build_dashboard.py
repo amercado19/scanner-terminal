@@ -183,6 +183,8 @@ def main(ledger_path, out_path):
                        'invested': invested, 'total_val': total_val, 'closed_pl': closed_pl,
                        'cash': cash, 'total_cash': total_cash, 'portfolio': port,
                        'signals': ledger['meta'].get('signals', []),
+                       'spy': ledger.get('spy_state', {}), 'spy_calls': ledger.get('spy_calls', []),
+                       'whale': ledger['meta'].get('whale', {}), 'whale_events': ledger.get('whale_events', []),
                        'spy_val': round(spy_val, 2), 'stamp': stamp,
                        'options': ledger['options_positions'], 'closed_options': ledger['closed_options'],
                        'opt_stats': opt_stats,
@@ -289,7 +291,7 @@ const fmtP=v=>(v>0?'+':'')+v.toFixed(2)+'%';
 const cls=v=>v>0.001?'pos':(v<-0.001?'neg':'');
 const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 function flip(){const r=document.documentElement;r.setAttribute('data-theme',r.getAttribute('data-theme')==='dark'?'light':'dark');render();}
-const BOOKS=[['overview','Overview'],['core','Core'],['vol24','24h Volatility'],['options','Options'],['penny','Penny'],['longterm','Long-term'],['journal','Journal'],['closed','Closed']];
+const BOOKS=[['overview','Overview'],['spy','SPY / 1DTE'],['whale','Whale Watch'],['core','Core'],['vol24','24h Volatility'],['options','Options'],['penny','Penny'],['longterm','Long-term'],['journal','Journal'],['closed','Closed']];
 let tab='overview', sortKey='score_total', sortDir=-1;
 const by=b=>D.positions.filter(p=>(p.book||'core')===b);
 
@@ -506,6 +508,63 @@ function optionsView(){
  <div class="panel"><h2>Rules of this book</h2><div class="sig" style="border-color:var(--warn)"><span>Buys OTM contracts (2–10%) on catalyst-driven movers with a stated direction, only when the chain is liquid (OI ≥ 500, spread ≤ 20% of ask) and total cost < $200. Target = 2× entry ask · stop = 0.5× ask · forced exit after 2 trading days or at expiry — first trigger wins. Prior study says the expected result is losing the premium; the book exists to measure it, and closes permanently if P/L is negative after 20 resolved positions.</span></div></div>
  <div class="panel">${openT}${closedT}</div>`;
 }
+function gauge(score){
+ const w=260,h=90,cx=w/2,cy=h-6,r=64;
+ const ang=Math.PI*(1-score/100);
+ const x=cx+r*Math.cos(ang), y=cy-r*Math.sin(ang);
+ const col=score>=60?css('--up'):(score<=40?css('--down'):css('--warn'));
+ let s2=`<svg width="${w}" height="${h}">`;
+ s2+=`<path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx-r*0.31} ${cy-r*0.95}" fill="none" stroke="${css('--down')}" stroke-width="9" opacity=".45"/>`;
+ s2+=`<path d="M ${cx-r*0.31} ${cy-r*0.95} A ${r} ${r} 0 0 1 ${cx+r*0.31} ${cy-r*0.95}" fill="none" stroke="${css('--muted')}" stroke-width="9" opacity=".45"/>`;
+ s2+=`<path d="M ${cx+r*0.31} ${cy-r*0.95} A ${r} ${r} 0 0 1 ${cx+r} ${cy}" fill="none" stroke="${css('--up')}" stroke-width="9" opacity=".45"/>`;
+ s2+=`<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${col}" stroke-width="3"/>`;
+ s2+=`<circle cx="${cx}" cy="${cy}" r="4" fill="${col}"/>`;
+ s2+=`<text x="${cx}" y="${cy-22}" text-anchor="middle" style="font-size:22px;font-weight:700;fill:${col}">${score}</text>`;
+ return s2+'</svg>';
+}
+function spyView(){
+ const s=D.spy||{};
+ if(!s.score)return '<div class="panel"><div class="empty">SPY model has not run yet — it populates on the next scan.</div></div>';
+ const p=s.parts||{};
+ const rows=[['Trend (SPY vs 20 & 50 DMA)',p.trend,30,`px ${fmt$(s.price)} · 20d ${fmt$(s.sma20)} · 50d ${fmt$(s.sma50)}`],
+   ['Momentum (5-day return)',p.momentum,25,fmtP(s.ret5)],
+   ['Volatility (VIX level + trend)',p.volatility,20,`VIX ${s.vix} (${fmtP(s.vix_chg5)} 5d)`],
+   ['Breadth (sector ETFs > 20DMA)',p.breadth,15,`${s.breadth_pct}% of 8 sectors`],
+   ['World news signals',p.news,10,'bullish minus bearish']]
+  .map(([l,v,mx,d])=>`<tr><td style="text-align:left">${l}</td><td><b>${v}</b> / ${mx}</td><td style="width:34%"><div style="background:var(--grid);height:7px;border-radius:4px"><div style="background:${v/mx>=0.6?css('--up'):(v/mx<=0.35?css('--down'):css('--warn'))};height:7px;width:${Math.round(100*v/mx)}%;border-radius:4px"></div></div></td><td style="color:var(--muted);text-align:right">${d}</td></tr>`).join('');
+ const gcalls=(D.spy_calls||[]).filter(c=>c.outcome);
+ const hits=gcalls.filter(c=>c.outcome==='hit').length;
+ const rate=gcalls.length?Math.round(100*hits/gcalls.length):null;
+ const callRows=(D.spy_calls||[]).slice().reverse().slice(0,15).map(c=>
+  `<tr><td style="text-align:left">${c.date}</td><td><span class="dir ${c.bias==='BULLISH'?'pos':(c.bias==='BEARISH'?'neg':'')}">${c.bias}</span></td><td>${c.score}</td><td>${c.spy_close?fmt$(c.spy_close):'—'}</td><td class="${c.next_ret!=null?cls(c.next_ret):''}">${c.next_ret!=null?fmtP(c.next_ret):'pending'}</td><td>${c.outcome?(c.outcome==='hit'?'<span class="pos">✓ hit</span>':'<span class="neg">✗ miss</span>'):'<span class="nm">—</span>'}</td></tr>`).join('');
+ return `<div class="kpis">
+  <div class="tile"><div class="lbl">SPY</div><div class="val">${fmt$(s.price)}</div><div class="sm ${cls(s.day_pct)}">${fmtP(s.day_pct)} today</div></div>
+  <div class="tile"><div class="lbl">Composite bias</div><div class="val" style="color:${s.bias==='BULLISH'?css('--up'):(s.bias==='BEARISH'?css('--down'):css('--warn'))}">${s.bias}</div><div class="sm">score ${s.score}/100</div></div>
+  <div class="tile"><div class="lbl">Direction hit rate</div><div class="val">${rate!=null?rate+'%':'—'}</div><div class="sm">${gcalls.length} graded · kill &lt;55% @ 30</div></div>
+  <div class="tile"><div class="lbl">VIX</div><div class="val">${s.vix}</div><div class="sm ${cls(-s.vix_chg5)}">${fmtP(s.vix_chg5)} 5d</div></div>
+  <div class="tile"><div class="lbl">Breadth</div><div class="val">${s.breadth_pct}%</div><div class="sm">sectors above 20-DMA</div></div>
+ </div>
+ <div class="panel" style="text-align:center"><h2>Daily sentiment</h2>${gauge(s.score)}
+  <div class="nm" style="margin-top:4px">0—40 bearish · 40—60 neutral · 60—100 bullish · weights frozen 2026-08-13, never re-tuned</div></div>
+ <div class="panel"><h2>Score components</h2><div style="overflow-x:auto"><table><tbody>${rows}</tbody></table></div></div>
+ <div class="panel"><h2>1DTE rules</h2><div class="sig" style="border-color:var(--warn)"><span>SPY only · exactly <b>one strike</b> per day · premium <b>$0.30–$0.60</b> · <b>0.2–1.5% OTM</b> (the 2–10% gate is meaningless at one day) · OI ≥ 500 · spread ≤ 20% · ≤ $250 total · target 6× / stop 0.5× · NEUTRAL days trade nothing. The direction call is published and graded <b>every day regardless</b>, so direction skill is measured separately from option economics — per the 811-day study, that separation is the whole point. Prior: 0–2DTE SPY OTM had median −100% per trade.</span></div></div>
+ <div class="panel"><h2>Direction call record — published before the session, graded after</h2>${(D.spy_calls||[]).length?`<div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Call date</th><th>Bias</th><th>Score</th><th>SPY at call</th><th>Next session</th><th>Result</th></tr></thead><tbody>${callRows}</tbody></table></div>`:'<div class="empty">First call publishes on the next scan.</div>'}</div>`;
+}
+function whaleView(){
+ const w=D.whale||{};
+ const ev=D.whale_events||[];
+ const notes=Object.entries(w.notes||{}).map(([k,v])=>`<div class="sig"><b>${k}</b><span>${v}</span></div>`).join('');
+ const evRows=ev.slice().reverse().slice(0,25).map(e=>
+  `<tr><td style="text-align:left">${e.date||''}</td><td><span class="tag">${e.form||''}</span></td><td style="text-align:left"><b>${e.filer||''}</b></td><td style="text-align:left">${e.subject||''}</td><td style="color:var(--muted);text-align:left">${e.note||''}</td></tr>`).join('');
+ return `<div class="kpis">
+  <div class="tile"><div class="lbl">Next 13F deadline</div><div class="val">${w.next_13f_deadline||'—'}</div><div class="sm">${w.days_to_13f!=null?w.days_to_13f+' day(s) away':''}</div></div>
+  <div class="tile"><div class="lbl">13F window</div><div class="val" style="color:${w.in_13f_window?css('--warn'):css('--muted')}">${w.in_13f_window?'OPEN':'closed'}</div><div class="sm">institutions filing now</div></div>
+  <div class="tile"><div class="lbl">Events logged</div><div class="val">${ev.length}</div><div class="sm">filings captured</div></div>
+ </div>
+ ${w.in_13f_window?`<div class="panel"><h2>Active window</h2><div class="sig" style="border-color:var(--warn)"><span><b>13F filings are landing now</b> — institutions with over $100M must disclose Q2 holdings by ${w.next_13f_deadline}. Read these as sentiment only: the positions are up to 4.5 months old and the fund may have already exited. Nothing here is a trade signal on its own.</span></div></div>`:''}
+ <div class="panel"><h2>When large-holder information actually surfaces</h2><div class="signals">${notes}</div></div>
+ <div class="panel"><h2>Captured filings</h2>${ev.length?`<div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Date</th><th>Form</th><th style="text-align:left">Filer</th><th style="text-align:left">Subject</th><th style="text-align:left">Note</th></tr></thead><tbody>${evRows}</tbody></table></div>`:'<div class="empty">No filings captured yet — the scans populate this from SEC EDGAR feeds (Form 4 insider trades, 13D activist stakes, 13F institutional holdings).</div>'}</div>`;
+}
 function journalView(){
  const trades=[...D.closed.map(t=>({...t,kind:'stock',label:t.ticker,entry:t.flag_price,exit:t.exit_price,date:t.exit_date,book:t.book||'core'})),
                ...D.closed_options.map(o=>({...o,kind:'option',label:o.underlying+' '+o.type.toUpperCase()+' $'+o.strike,entry:o.entry_ask,exit:o.exit_bid!=null?o.exit_bid:o.current_bid,date:o.exit_date,book:'options'}))]
@@ -591,12 +650,14 @@ async function manualRefresh(){
 }
 function render(){
  document.getElementById('tabs').innerHTML=BOOKS.map(([id,n])=>{
-  const c=id==='overview'?'':id==='closed'?D.closed.length:id==='options'?D.options.length:id==='journal'?(D.closed.length+D.closed_options.length):by(id).length;
+  const c=id==='overview'?'':id==='spy'?'':id==='whale'?(D.whale&&D.whale.in_13f_window?'!':''):id==='closed'?D.closed.length:id==='options'?D.options.length:id==='journal'?(D.closed.length+D.closed_options.length):by(id).length;
   return`<button class="tab ${tab===id?'on':''}" data-t="${id}">${n}${c!==''?`<span class="n">${c}</span>`:''}</button>`;
  }).join('');
  document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{tab=b.dataset.t;render();});
  const v=document.getElementById('views');
  if(tab==='overview')v.innerHTML=overview();
+ else if(tab==='spy')v.innerHTML=spyView();
+ else if(tab==='whale')v.innerHTML=whaleView();
  else if(tab==='options')v.innerHTML=optionsView();
  else if(tab==='journal')v.innerHTML=journalView();
  else if(tab==='closed')v.innerHTML=closedView();
