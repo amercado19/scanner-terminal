@@ -12,6 +12,7 @@ penny ($0.50-$5 listed), longterm (written criteria, 1-3y).
 """
 import json, math, sys, time, urllib.request
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 def yahoo(t, rng='3mo'):
     url = f'https://query1.finance.yahoo.com/v8/finance/chart/{t}?range={rng}&interval=1d'
@@ -24,9 +25,22 @@ def yahoo(t, rng='3mo'):
     return {'price': res['meta'].get('regularMarketPrice'), 'closes': closes}
 
 def cboe_chain(t):
+    """CBOE rate-limits (HTTP 429) when several requests land close together.
+    Un-retried 429s are what produced empty option scans on 2026-08-13 —
+    the gates were fine, the fetch just died. Back off and retry."""
     url = f'https://cdn.cboe.com/api/global/delayed_quotes/options/{t}.json'
-    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-    return json.load(urllib.request.urlopen(req, timeout=25))['data']
+    hdr = {'User-Agent': ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                          '(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'),
+           'Accept': 'application/json', 'Referer': 'https://www.cboe.com/'}
+    last = None
+    for i in range(4):
+        try:
+            req = urllib.request.Request(url, headers=hdr)
+            return json.load(urllib.request.urlopen(req, timeout=40))['data']
+        except Exception as e:
+            last = e
+            time.sleep(20 * (i + 1))
+    raise last
 
 def update_options(ledger, today):
     """Mark open option positions to bid via CBOE; enforce 2-day/expiry exits."""
@@ -105,8 +119,11 @@ def main(ledger_path, out_path):
         cash[book] = round(avail - st, 2)
         return st
     now = datetime.now(timezone.utc)
-    stamp = now.strftime('%b %d, %Y %H:%M UTC')
-    today = now.strftime('%Y-%m-%d')
+    # Display everything in Eastern, 12-hour clock — this is a US-market tool and
+    # nobody reads "15:21 UTC" as "just after lunch".
+    et = now.astimezone(ZoneInfo('America/New_York'))
+    stamp = et.strftime('%b %d, %Y · %I:%M %p ET').replace(' 0', ' ')
+    today = et.strftime('%Y-%m-%d')
 
     spy_now = yahoo('SPY')['price']
 
@@ -168,6 +185,13 @@ def main(ledger_path, out_path):
     spy_val = sum((p.get('stake', 0)) * (spy_now / p['spy_flag_price']) if p.get('spy_flag_price') else p.get('stake', 0)
                   for p in still_open)
     opt_stats = update_options(ledger, today)
+    try:
+        import option_score as _OS
+        conf_grade = _OS.grade_bands(ledger.get('closed_options', []))
+        _v, _m = _OS.kill_check(ledger.get('closed_options', []))
+        conf_kill = {'verdict': _v, 'msg': _m}
+    except Exception as _e:
+        conf_grade, conf_kill = {}, {'verdict': 'pending', 'msg': f'score module unavailable: {_e}'}
     calls = [p for p in still_open + ledger['closed'] if p.get('direction')]
     resolved = [p for p in calls if p.get('direction_outcome')]
     hits = sum(1 for p in resolved if p['direction_outcome'] == 'hit')
@@ -188,6 +212,8 @@ def main(ledger_path, out_path):
                        'spy_val': round(spy_val, 2), 'stamp': stamp,
                        'options': ledger['options_positions'], 'closed_options': ledger['closed_options'],
                        'opt_stats': opt_stats,
+                       'conf_grade': conf_grade, 'conf_kill': conf_kill,
+                       'spy_cand': ledger.get('spy_entry_candidate'),
                        'dir_stats': {'n': len(resolved), 'hits': hits, 'open_calls': len(calls) - len(resolved)}})
     html = HTML.replace('__DATA__', data)
     html = html.replace('__FINNHUB_KEY__', ledger['meta'].get('finnhub_key', ''))
@@ -235,6 +261,8 @@ header{display:flex;justify-content:space-between;align-items:center;margin-bott
 .signals{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px}
 .sig{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:12px}
 .sig b{display:block;margin-bottom:2px;font-size:12px}
+.sig.flow b{display:inline;margin:0}
+.sig.flow span{line-height:1.6}
 .sig span{color:var(--ink2)}
 table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
 th{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;text-align:right;padding:6px 7px;border-bottom:1px solid var(--axis);font-weight:600;cursor:pointer;user-select:none;white-space:nowrap}
@@ -260,6 +288,44 @@ svg text{font:10px system-ui,sans-serif;fill:var(--muted)}
 .foot{color:var(--muted);font-size:11px;margin-top:12px;line-height:1.55}
 .watch li{margin:2px 0 2px 15px;font-size:12px;color:var(--ink2)}
 .empty{color:var(--muted);font-size:12px;padding:6px 0}
+.ocard{border:1px solid var(--border);border-radius:9px;padding:11px 12px;margin-bottom:9px;background:rgba(255,255,255,.015)}
+.ohead{display:flex;gap:13px;align-items:flex-start}
+.oconf{flex:0 0 78px;border:2px solid;border-radius:9px;padding:6px 4px 5px;text-align:center}
+.oconfn{font-size:31px;font-weight:800;line-height:1.03;font-variant-numeric:tabular-nums}
+.oconfb{display:block;font-size:8.5px;font-weight:800;letter-spacing:.07em;color:#07090c;border-radius:3px;padding:1px 0;margin:3px 3px 0}
+.oconfl{font-size:8.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:3px}
+.otitle{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;margin-bottom:7px}
+.obig{font-size:19px;font-weight:750;letter-spacing:-.01em}
+.okeys{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:6px}
+.okey{background:var(--grid);border-radius:6px;padding:4px 7px 5px}
+.okey span{display:block;font-size:8.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.okey b{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+.obar{margin-top:6px;font-size:11px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap}
+.odet{margin-top:9px;border-top:1px solid var(--border);padding-top:7px}
+.odet summary{cursor:pointer;font-size:11px;color:var(--ink2);list-style:none;user-select:none}
+.odet summary::-webkit-details-marker{display:none}
+.odet summary::before{content:'▸ ';color:var(--muted)}
+.odet[open] summary::before{content:'▾ '}
+.odl{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:2px 22px;margin-top:9px;font-size:11.5px}
+.odl>div{display:flex;justify-content:space-between;gap:14px;border-bottom:1px dotted var(--border);padding:3px 0}
+.odl span{color:var(--muted);white-space:nowrap}
+@media(max-width:620px){.oconf{flex:0 0 64px}.oconfn{font-size:25px}.obig{font-size:16px}}
+.tstrip{display:flex;align-items:flex-start;gap:9px;border:1px solid;border-radius:7px;padding:6px 9px;margin-top:9px;background:rgba(255,255,255,.02)}
+.tbadge{flex:0 0 auto;font-size:9.5px;font-weight:800;letter-spacing:.06em;color:#07090c;border-radius:4px;padding:2px 7px;white-space:nowrap}
+.ttext{font-size:11.5px;color:var(--ink2);line-height:1.45}
+.tbar{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-bottom:11px}
+.tbtn{font-size:12px;font-weight:650;padding:6px 12px}
+.tbar .nm{flex:1;min-width:220px;font-size:11px;line-height:1.45}
+.fresh{border:2px solid;border-radius:11px;padding:13px 14px}
+.dteWrap{border:2px solid var(--s1);border-radius:11px;padding:14px 15px 13px;background:linear-gradient(180deg,rgba(84,240,120,.07),transparent 65%)}
+.dteLbl{font-size:9.5px;font-weight:800;letter-spacing:.13em;color:var(--muted)}
+.dteStrike{font-size:40px;font-weight:800;letter-spacing:-.025em;line-height:1.08;margin:1px 0 3px;font-variant-numeric:tabular-nums}
+.dteSub{font-size:11.5px;color:var(--muted);margin-bottom:12px}
+.dteGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:7px}
+.dbox{background:var(--grid);border:1px solid var(--border);border-radius:7px;padding:6px 9px 7px}
+.dbox span{display:block;font-size:8.5px;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:1px}
+.dbox b{font-size:17px;font-weight:750;font-variant-numeric:tabular-nums}
+@media(max-width:620px){.dteStrike{font-size:30px}.dbox b{font-size:15px}}
 .chip{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.05em;border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:1px}
 .chip.bullish{color:var(--up);border:1px solid var(--up)}
 .chip.bearish{color:var(--down);border:1px solid var(--down)}
@@ -482,31 +548,81 @@ function overview(){
 function optionsView(){
  const os=D.opt_stats;
  const realized=D.closed_options.reduce((t,o)=>t+(o.pl||0),0);
+ const bandCol=b=>b==='A'?css('--up'):b==='B'?'#4ea8de':b==='C'?css('--warn'):css('--down');
  const kpi=[
-  ['Open contracts',D.options.length+' pos','$'+D.options.reduce((t,o)=>t+o.cost,0).toFixed(0)+' at risk'],
+  ['Open contracts',D.options.length+' pos','$'+D.options.reduce((t,o)=>t+o.cost,0).toFixed(0)+' at risk · cap 8/day'],
   ['Open P/L'+(liveStamp?' (live est)':''),`<span class="${cls(D.options.reduce((t,o)=>t+(o.pl||0),0))}">${fmt$(D.options.reduce((t,o)=>t+(o.pl||0),0))}</span>`,'mark: '+(liveStamp?'model est':'CBOE bid')],
   ['Realized (closed)',`<span class="${cls(realized)}">${fmt$(realized)}</span>`,os.resolved+' resolved'],
   ['Win rate',os.resolved?`${os.wins}/${os.resolved} (${Math.round(100*os.wins/os.resolved)}%)`:'0 resolved','kill: P/L<0 after 20'],
+  ['Avg confidence',(()=>{const s=D.options.filter(o=>o.conf!=null);return s.length?Math.round(s.reduce((t,o)=>t+o.conf,0)/s.length):'—'})(),'of open book'],
  ].map(([l,v,s2])=>`<div class="tile"><div class="lbl">${l}</div><div class="val">${v}</div><div class="sm">${s2}</div></div>`).join('');
- const row=o=>{
-  const live=o.live_est!=null;
-  const mark=live?o.live_est:o.current_bid;
-  return`<tr class="main">
-  <td><span class="tk">${o.underlying}</span> <span class="tag">${o.type.toUpperCase()} $${o.strike} · exp ${o.expiry.slice(5)}</span><br><span class="nm">${o.contract}${o.source_call?' · '+o.source_call:''}</span></td>
-  <td style="font-size:15px;font-weight:650">${o.contracts_n}</td>
-  <td>${fmt$(o.entry_ask)}<br><span class="nm">cost ${fmt$(o.cost)}</span></td>
-  <td class="pos" style="font-weight:650">${fmt$(o.target_premium)}</td>
-  <td class="neg" style="font-weight:650">${fmt$(o.stop_premium)}</td>
-  <td>${mark!=null?fmt$(mark):'—'}${live?' <span class="tag" title="model estimate from live stock price + entry IV; official mark is scan-time CBOE bid">est</span>':''}</td>
-  <td class="${cls(o.pl||0)}" style="font-weight:650">${fmt$(o.pl||0)}<br><span class="${cls(o.pl_pct||0)}" style="font-size:11px">${fmtP(o.pl_pct||0)}</span></td>
-  <td style="color:var(--muted)">${o.status==='closed'?(o.exit_reason||'closed'):('exit by '+o.exit_by.slice(5))}</td></tr>`;
+
+ const card=o=>{
+  const live=o.live_est!=null, mark=live?o.live_est:o.current_bid;
+  const b=o.conf_band||'—', col=bandCol(b);
+  const p=o.conf_parts||{}, dt=o.conf_detail||{};
+  const toTgt=mark!=null&&o.target_premium?((o.target_premium-mark)/mark*100):null;
+  const toStop=mark!=null&&o.stop_premium?((mark-o.stop_premium)/mark*100):null;
+  const parts=[['Execution',p.execution,25,`spread ${dt.spread_pct}% · OI ${dt.oi}`],
+   ['Breakeven',p.breakeven,25,`needs ${dt.required_move_pct}% vs ${dt.expected_move_pct}% implied — ratio ${dt.be_ratio}`],
+   ['Signal',p.signal,25,dt.signal_tier||'—'],
+   ['Clock',p.clock,15,`${dt.days_left_at_exit} days of life left at planned exit`],
+   ['IV cost',p.iv_cost,10,dt.iv_vs_realized!=null?`IV is ${dt.iv_vs_realized}× 20-day realized`:'realized vol unavailable — neutral 5']]
+   .map(([l,v,mx,d])=>`<tr><td style="text-align:left">${l}</td><td><b>${v==null?'—':v}</b>/${mx}</td><td style="width:32%"><div style="background:var(--grid);height:6px;border-radius:4px"><div style="background:${v/mx>=0.6?css('--up'):(v/mx<=0.35?css('--down'):css('--warn'))};height:6px;width:${Math.round(100*(v||0)/mx)}%;border-radius:4px"></div></div></td><td style="color:var(--muted);text-align:right;font-size:11px">${d}</td></tr>`).join('');
+  return`<div class="ocard">
+   <div class="ohead">
+    <div class="oconf" style="border-color:${col}">
+      <div class="oconfn" style="color:${col}">${o.conf!=null?o.conf:'—'}</div>
+      <div class="oconfb" style="background:${col}">BAND ${b}</div>
+      <div class="oconfl">confidence</div>
+    </div>
+    <div style="flex:1;min-width:0">
+     <div class="otitle"><span class="tk">${o.underlying}</span> <span class="obig">$${o.strike} ${o.type.toUpperCase()}</span> <span class="tag">exp ${o.expiry.slice(5)}</span></div>
+     <div class="okeys">
+      <div class="okey"><span>Entry</span><b>${fmt$(o.entry_ask)}</b></div>
+      <div class="okey"><span>Target</span><b class="pos">${fmt$(o.target_premium)}</b></div>
+      <div class="okey"><span>Stop</span><b class="neg">${fmt$(o.stop_premium)}</b></div>
+      <div class="okey"><span>Mark${live?' est':''}</span><b>${mark!=null?fmt$(mark):'—'}</b></div>
+      <div class="okey"><span>Qty</span><b>${o.contracts_n} × ${fmt$(o.cost)}</b></div>
+      <div class="okey"><span>P/L</span><b class="${cls(o.pl||0)}">${fmt$(o.pl||0)} <span style="font-size:11px">${fmtP(o.pl_pct||0)}</span></b></div>
+     </div>
+     ${o.status!=='closed'?timingStrip(o):''}
+    <div class="obar">${toTgt!=null?`<span>${toTgt.toFixed(0)}% to target</span><span>·</span><span>${toStop.toFixed(0)}% to stop</span><span>·</span>`:''}<span>${o.status==='closed'?(o.exit_reason||'closed'):'exit by '+o.exit_by.slice(5)}</span></div>
+    </div>
+   </div>
+   <details class="odet"><summary>Details, score breakdown &amp; thesis</summary>
+    <table style="margin-top:8px"><tbody>${parts}</tbody></table>
+    <div class="odl">
+     <div><span>Contract</span>${o.contract}</div>
+     <div><span>Underlying at entry</span>${o.entry_spot!=null?fmt$(o.entry_spot):'—'}</div>
+     <div><span>Open interest</span>${o.oi}</div>
+     <div><span>IV at entry</span>${(o.iv*100).toFixed(0)}%</div>
+     <div><span>Entry bid/ask</span>${fmt$(o.entry_bid)} / ${fmt$(o.entry_ask)}</div>
+     <div><span>Entry date</span>${o.entry_date}</div>
+    </div>
+    <div class="sig" style="margin-top:8px"><span><b>Source:</b> ${o.source_call||'—'}</span></div>
+    ${o.note?`<div class="sig" style="margin-top:6px;border-color:var(--muted)"><span>${o.note}</span></div>`:''}
+   </details></div>`;
  };
- const head='<thead><tr><th style="text-align:left">Contract</th><th>Qty</th><th>Entry</th><th>Target</th><th>Stop</th><th>Mark</th><th>P/L</th><th>Status</th></tr></thead>';
- const openT=D.options.length?`<div style="overflow-x:auto"><table>${head}<tbody>${D.options.map(row).join('')}</tbody></table></div>`:'<div class="empty">No open contracts.</div>';
- const closedT=D.closed_options.length?`<h2 style="margin-top:14px">Exited — realized results (permanent record)</h2><div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Contract</th><th>Qty</th><th>Entry</th><th>Exit bid</th><th>Realized $</th><th>Realized %</th><th>Exit date</th><th>Reason</th></tr></thead><tbody>${D.closed_options.map(o=>`<tr><td style="text-align:left"><span class="tk">${o.underlying}</span> <span class="tag">${o.type.toUpperCase()} $${o.strike}</span><br><span class="nm">${o.contract}</span></td><td>${o.contracts_n}</td><td>${fmt$(o.entry_ask)}</td><td>${fmt$(o.exit_bid!=null?o.exit_bid:o.current_bid)}</td><td class="${cls(o.pl)}" style="font-weight:650">${fmt$(o.pl)}</td><td class="${cls(o.pl_pct)}">${fmtP(o.pl_pct)}</td><td>${o.exit_date||''}</td><td style="color:var(--muted)">${o.exit_reason||''}</td></tr>`).join('')}</tbody></table></div>`:'';
+ const sorted=D.options.slice().sort((a,b)=>(b.conf||0)-(a.conf||0));
+ const openT=sorted.length?sorted.map(card).join(''):'<div class="empty">No open contracts.</div>';
+
+ const bg=D.conf_grade||{}; const bandOrder=['A','B','C','D'];
+ const gradeRows=bandOrder.filter(b=>bg[b]).map(b=>{const d=bg[b];
+   return`<tr><td style="text-align:left"><span class="oconfb" style="background:${bandCol(b)};display:inline-block">BAND ${b}</span></td><td>${d.n}</td><td class="${cls(d.avg_pl_pct)}"><b>${fmtP(d.avg_pl_pct)}</b></td><td>${d.win_rate}%</td><td class="${cls(d.sum_pl)}">${fmt$(d.sum_pl)}</td></tr>`}).join('');
+ const kv=D.conf_kill||{};
+ const gradePanel=`<div class="panel"><h2>Does the confidence score actually work?</h2>
+  ${gradeRows?`<div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Band</th><th>Resolved</th><th>Avg P/L %</th><th>Win rate</th><th>Total $</th></tr></thead><tbody>${gradeRows}</tbody></table></div>`:'<div class="empty">No scored contracts have resolved yet.</div>'}
+  <div class="sig" style="margin-top:10px;border-color:${kv.verdict==='dead'?css('--down'):kv.verdict==='alive'?css('--up'):css('--warn')}"><span><b>${(kv.verdict||'pending').toUpperCase()}</b> — ${kv.msg||''}</span></div></div>`;
+
+ const closedT=D.closed_options.length?`<h2 style="margin-top:14px">Exited — realized results (permanent record)</h2><div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Contract</th><th>Conf</th><th>Qty</th><th>Entry</th><th>Exit bid</th><th>Realized $</th><th>Realized %</th><th>Exit date</th><th>Reason</th></tr></thead><tbody>${D.closed_options.map(o=>`<tr><td style="text-align:left"><span class="tk">${o.underlying}</span> <span class="tag">${o.type.toUpperCase()} $${o.strike}</span><br><span class="nm">${o.contract}</span></td><td>${o.conf!=null?`<b style="color:${bandCol(o.conf_band)}">${o.conf} ${o.conf_band}</b>`:'<span class="nm">unscored</span>'}</td><td>${o.contracts_n}</td><td>${fmt$(o.entry_ask)}</td><td>${fmt$(o.exit_bid!=null?o.exit_bid:o.current_bid)}</td><td class="${cls(o.pl)}" style="font-weight:650">${fmt$(o.pl)}</td><td class="${cls(o.pl_pct)}">${fmtP(o.pl_pct)}</td><td>${o.exit_date||''}</td><td style="color:var(--muted)">${o.exit_reason||''}</td></tr>`).join('')}</tbody></table></div>`:'';
+
  return`<div class="kpis">${kpi}</div>
- <div class="panel"><h2>Rules of this book</h2><div class="sig" style="border-color:var(--warn)"><span>Buys OTM contracts (2–10%) on catalyst-driven movers with a stated direction, only when the chain is liquid (OI ≥ 500, spread ≤ 20% of ask) and total cost < $200. Target = 2× entry ask · stop = 0.5× ask · forced exit after 2 trading days or at expiry — first trigger wins. Prior study says the expected result is losing the premium; the book exists to measure it, and closes permanently if P/L is negative after 20 resolved positions.</span></div></div>
- <div class="panel">${openT}${closedT}</div>`;
+ <div class="panel"><h2>Rules of this book</h2><div class="sig flow" style="border-color:var(--warn)"><span>Up to <b>8 contracts/day</b> across ETFs, blue chips, movers and earnings names. Gates are unchanged and non-negotiable: <b>2–10% OTM</b> (0.2–1.5% for 1DTE) · <b>OI ≥ 500</b> · <b>spread ≤ 20% of ask</b> · <b>cost ≤ $250</b>. Target = <b>6× entry ask</b>, stop = <b>0.5× ask</b> — a 10:1 ratio you set; forced exit after 2 trading days or at expiry, first trigger wins. Confidence <b>ranks</b> candidates, it does not gate them: every band gets traded so the score can be proven or killed. Prior study says the expected result is losing the premium; this book measures it and closes permanently if P/L is negative after 20 resolved positions.</span></div></div>
+ ${gradePanel}
+ <div class="panel"><h2>Open contracts — ranked by confidence</h2>
+  <div class="tbar">${timingBtn('tOpt')}<span class="nm">Re-prices every contract from live stock quotes and tells you, per contract, whether entering right now still gets roughly the flagged price. Premiums are Black-Scholes estimates off the live stock price and entry IV — not real quotes.</span></div>
+  ${openT}${closedT}</div>`;
 }
 function gauge(score){
  const w=260,h=90,cx=w/2,cy=h-6,r=64;
@@ -535,6 +651,38 @@ function spyView(){
  const gcalls=(D.spy_calls||[]).filter(c=>c.outcome);
  const hits=gcalls.filter(c=>c.outcome==='hit').length;
  const rate=gcalls.length?Math.round(100*hits/gcalls.length):null;
+ // --- today's 1DTE contract ---------------------------------------
+ const all1=[...D.options,...D.closed_options].filter(o=>(o.source_call||'').indexOf('1dte')===0);
+ all1.sort((a,b)=>(a.entry_date<b.entry_date?1:-1));
+ const c1=all1[0];
+ const dteCard=(()=>{
+  if(!c1)return`<div class="sig" style="border-color:var(--warn)"><span><b>No 1DTE contract selected yet.</b> The post-open scan picks exactly one strike per day. A day with none is a legitimate result — it means no strike cleared the $0.30–$0.60 / 0.2–1.5% OTM / OI≥500 / spread≤20% gates, or the bias was NEUTRAL.</span></div>`;
+  const open=c1.status!=='closed';
+  const live=c1.live_est!=null, mark=open?(live?c1.live_est:c1.current_bid):(c1.exit_bid!=null?c1.exit_bid:c1.current_bid);
+  const col=c1.conf_band==='A'?css('--up'):c1.conf_band==='B'?'#4ea8de':c1.conf_band==='C'?css('--warn'):css('--down');
+  const dist=s.price&&c1.strike?((c1.strike-s.price)/s.price*100):null;
+  const box=(l,v,c)=>`<div class="dbox"><span>${l}</span><b class="${c||''}">${v}</b></div>`;
+  return`<div class="dteWrap">
+   <div class="dteMain">
+    <div class="dteLbl">${open?'TODAY’S 1DTE CONTRACT':'TODAY’S 1DTE CONTRACT — CLOSED'}</div>
+    <div class="dteStrike">SPY $${c1.strike} <span style="font-size:24px">${c1.type.toUpperCase()}</span></div>
+    <div class="dteSub">${c1.contract} · expires ${c1.expiry}${dist!=null?` · strike is ${dist>=0?'+':''}${dist.toFixed(2)}% from SPY ${fmt$(s.price)} right now`:''}</div>
+   </div>
+   <div class="dteGrid">
+    ${box('Entry (ask)',fmt$(c1.entry_ask))}
+    ${box('Target',fmt$(c1.target_premium),'pos')}
+    ${box('Stop',fmt$(c1.stop_premium),'neg')}
+    ${box(open?(live?'Mark (est)':'Mark'):'Exit bid',mark!=null?fmt$(mark):'—')}
+    ${box('Contracts',c1.contracts_n+' × '+fmt$(c1.cost))}
+    ${box(open?'Open P/L':'Realized',fmt$(c1.pl||0)+' ('+fmtP(c1.pl_pct||0)+')',cls(c1.pl||0))}
+    ${c1.conf!=null?`<div class="dbox" style="border-color:${col}"><span>Confidence</span><b style="color:${col}">${c1.conf} · ${c1.conf_band}</b></div>`:''}
+    ${box('Status',open?('exit by '+c1.exit_by):(c1.exit_reason||'closed'),open?'':'neg')}
+   </div>
+   <div style="margin-top:10px">${timingStrip(c1)}</div>
+   ${c1.source_call?`<div class="sig" style="margin-top:9px"><span><b>Why this strike:</b> ${c1.source_call}</span></div>`:''}
+  </div>`;
+ })();
+ const prior1=all1.slice(1,11).map(o=>`<tr><td style="text-align:left">${o.entry_date}</td><td><b>$${o.strike} ${o.type.toUpperCase()}</b></td><td>${fmt$(o.entry_ask)}</td><td class="pos">${fmt$(o.target_premium)}</td><td class="neg">${fmt$(o.stop_premium)}</td><td>${o.contracts_n}</td><td class="${cls(o.pl||0)}"><b>${fmt$(o.pl||0)}</b></td><td style="color:var(--muted)">${o.exit_reason||'open'}</td></tr>`).join('');
  const callRows=(D.spy_calls||[]).slice().reverse().slice(0,15).map(c=>
   `<tr><td style="text-align:left">${c.date}</td><td><span class="dir ${c.bias==='BULLISH'?'pos':(c.bias==='BEARISH'?'neg':'')}">${c.bias}</span></td><td>${c.score}</td><td>${c.spy_close?fmt$(c.spy_close):'—'}</td><td class="${c.next_ret!=null?cls(c.next_ret):''}">${c.next_ret!=null?fmtP(c.next_ret):'pending'}</td><td>${c.outcome?(c.outcome==='hit'?'<span class="pos">✓ hit</span>':'<span class="neg">✗ miss</span>'):'<span class="nm">—</span>'}</td></tr>`).join('');
  return `<div class="kpis">
@@ -547,7 +695,14 @@ function spyView(){
  <div class="panel" style="text-align:center"><h2>Daily sentiment</h2>${gauge(s.score)}
   <div class="nm" style="margin-top:4px">0—40 bearish · 40—60 neutral · 60—100 bullish · weights frozen 2026-08-13, never re-tuned</div></div>
  <div class="panel"><h2>Score components</h2><div style="overflow-x:auto"><table><tbody>${rows}</tbody></table></div></div>
- <div class="panel"><h2>1DTE rules</h2><div class="sig" style="border-color:var(--warn)"><span>SPY only · exactly <b>one strike</b> per day · premium <b>$0.30–$0.60</b> · <b>0.2–1.5% OTM</b> (the 2–10% gate is meaningless at one day) · OI ≥ 500 · spread ≤ 20% · ≤ $250 total · target 6× / stop 0.5× · NEUTRAL days trade nothing. The direction call is published and graded <b>every day regardless</b>, so direction skill is measured separately from option economics — per the 811-day study, that separation is the whole point. Prior: 0–2DTE SPY OTM had median −100% per trade.</span></div></div>
+ <div class="panel"><h2>Today’s 1DTE contract — the one strike</h2>
+  <div class="tbar">${timingBtn('tSpy')}<span class="nm">Pulls a live SPY quote, re-prices the strike, and says whether now is still a reasonable entry or the move is already gone.</span></div>
+  ${dteCard}</div>
+ <div class="panel"><h2>Live entry check — is a fresh SPY 1DTE worth taking right now?</h2>
+  <div class="tbar">${timingBtn('tFresh')}<span class="nm">Runs the same gates against the most recent chain scan and re-prices from a live SPY quote. Answers "would a new contract qualify now", separately from how today's tracked contract did.</span></div>
+  ${freshPanel()}</div>
+ ${prior1?`<div class="panel"><h2>Prior 1DTE contracts</h2><div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Date</th><th>Strike</th><th>Entry</th><th>Target</th><th>Stop</th><th>Qty</th><th>P/L</th><th>Outcome</th></tr></thead><tbody>${prior1}</tbody></table></div></div>`:''}
+ <div class="panel"><h2>1DTE rules</h2><div class="sig flow" style="border-color:var(--warn)"><span>SPY only · exactly <b>one strike</b> per day · premium <b>$0.30–$0.60</b> · <b>0.2–1.5% OTM</b> (the 2–10% gate is meaningless at one day) · OI ≥ 500 · spread ≤ 20% · ≤ $250 total · target 6× / stop 0.5× · NEUTRAL days trade nothing. The direction call is published and graded <b>every day regardless</b>, so direction skill is measured separately from option economics — per the 811-day study, that separation is the whole point. Prior: 0–2DTE SPY OTM had median −100% per trade.</span></div></div>
  <div class="panel"><h2>Direction call record — published before the session, graded after</h2>${(D.spy_calls||[]).length?`<div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Call date</th><th>Bias</th><th>Score</th><th>SPY at call</th><th>Next session</th><th>Result</th></tr></thead><tbody>${callRows}</tbody></table></div>`:'<div class="empty">First call publishes on the next scan.</div>'}</div>`;
 }
 function whaleView(){
@@ -602,6 +757,7 @@ async function liveTick(){
    fetch('https://finnhub.io/api/v1/quote?symbol='+t+'&token='+FKEY).then(r=>r.json()).catch(()=>null)));
   const map={};tickers.forEach((t,i)=>{if(qs[i]&&qs[i].c)map[t]=qs[i];});
   const spy=map['SPY'];
+  if(spy&&spy.c&&D.spy){D.spy.price=spy.c;if(spy.pc)D.spy.day_pct=+(100*(spy.c/spy.pc-1)).toFixed(2);}
   let touched=0;
   D.positions.forEach(p=>{
    const q=map[p.ticker];if(!q)return;touched++;
@@ -635,7 +791,7 @@ async function liveTick(){
   });
   if(touched){
    D.total_val=D.positions.reduce((s,p)=>s+p.value,0);
-   liveStamp=new Date().toLocaleTimeString();
+   liveStamp=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'America/New_York'})+' ET';
    setStamp();render();
   }
  }catch(e){/* keep scan-time values on any failure */}
@@ -648,6 +804,115 @@ async function manualRefresh(){
  b.textContent='✓ refreshed';b.disabled=false;
  setTimeout(()=>b.textContent='⟳ Refresh prices',2500);
 }
+
+// ---- entry-timing verdict -------------------------------------------------
+// Answers one question: if you were acting on this flag RIGHT NOW, would you
+// be getting roughly the flagged price, a worse one, or is it already over?
+// The premium used is a Black-Scholes estimate from the LIVE stock price and
+// the ENTRY implied vol -- it is not a real quote. IV moves during the day, so
+// treat this as a direction-of-travel read, not a fill price.
+function mktState(){
+ const n=new Date();
+ const et=new Date(n.toLocaleString('en-US',{timeZone:'America/New_York'}));
+ const dow=et.getDay(), mins=et.getHours()*60+et.getMinutes();
+ if(dow===0||dow===6)return{open:false,left:0,label:'weekend'};
+ if(mins<570)return{open:false,left:0,label:'pre-market'};
+ if(mins>=960)return{open:false,left:0,label:'after hours'};
+ return{open:true,left:960-mins,label:'open'};
+}
+function timing(o){
+ const m=mktState();
+ const mark=o.live_est!=null?o.live_est:o.current_bid;
+ const est=o.live_est!=null;
+ if(o.status==='closed')return{v:'CLOSED',c:'var(--muted)',t:'This contract already exited — '+(o.exit_reason||'closed')+'. Not an entry.'};
+ if(mark==null)return{v:'NO DATA',c:'var(--muted)',t:'No live mark available. Hit the timing button to pull fresh prices.'};
+ if(o.target_premium&&mark>=o.target_premium)return{v:'TOO LATE',c:'var(--warn)',t:'Already at or past the target ('+fmt$(o.target_premium)+'). The move happened. This is an exit, not an entry.'};
+ if(o.stop_premium&&mark<=o.stop_premium)return{v:'DEAD',c:'var(--down)',t:'At or below the stop ('+fmt$(o.stop_premium)+'). The flagged trade is over — entering now is a different trade with no thesis behind it.'};
+ const dte=Math.ceil((new Date(o.expiry+'T20:00:00Z')-new Date())/864e5);
+ if(!m.open)return{v:'MARKET '+m.label.toUpperCase(),c:'var(--muted)',t:'You cannot get a real fill now. Quotes outside 9:30–4:00 ET are indicative only, and spreads widen sharply.'};
+ if(dte<=1&&m.left<90)return{v:'TOO LATE',c:'var(--down)',t:'Under '+m.left+' minutes left and the contract expires within a day. Theta dominates everything else in the final hour — this is the worst point on the clock to open.'};
+ const p=mark/o.entry_ask, ch=(p-1)*100;
+ if(p>1.30)return{v:'TOO LATE',c:'var(--down)',t:'Premium is '+ch.toFixed(0)+'% above the flagged entry of '+fmt$(o.entry_ask)+'. You would be paying '+fmt$(mark)+' for the same contract — the move you were trying to catch has largely happened, and the distance left to target shrank with it.'};
+ if(p>1.10)return{v:'LATE',c:'var(--warn)',t:'Premium is '+ch.toFixed(0)+'% above the flagged '+fmt$(o.entry_ask)+'. Still live, but you are buying after part of the move. Your effective risk/reward is worse than the one on the card.'};
+ if(p>=0.85)return{v:'OPTIMAL',c:'var(--up)',t:'Premium is within '+Math.abs(ch).toFixed(0)+'% of the flagged entry ('+fmt$(o.entry_ask)+' → '+fmt$(mark)+'). Effectively the same trade the scanner flagged.'};
+ return{v:'CHEAPER — CHECK THESIS',c:'#4ea8de',t:'Premium is '+Math.abs(ch).toFixed(0)+'% BELOW the flagged entry. Cheaper is not automatically better: the underlying has moved against the direction call, so the discount is the market disagreeing with the thesis, not a gift.'};
+}
+function timingStrip(o){
+ const t=timing(o);
+ const src=o.live_est!=null?`live estimate · ${liveStamp||''}`:`scan-time CBOE bid · ${D.stamp||''} — press the timing button for a live re-price`;
+ return`<div class="tstrip" style="border-color:${t.c}"><span class="tbadge" style="background:${t.c}">${t.v}</span><span class="ttext">${t.t}<br><span class="nm" style="font-size:10.5px">priced from: ${src}</span></span></div>`;
+}
+function timingBtn(id){
+ return`<button class="toggle tbtn" id="${id}" onclick="checkTiming('${id}')" style="border-color:var(--s1);color:var(--s1)">⟳ Check entry timing now</button>`;
+}
+async function checkTiming(id){
+ const b=document.getElementById(id);
+ if(!FKEY||FKEY.startsWith('__')){b.textContent='no live key';return;}
+ b.textContent='⟳ checking…';b.disabled=true;
+ await liveTick();
+ render();
+ const nb=document.getElementById(id);
+ if(nb){nb.textContent='✓ updated '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'America/New_York'})+' ET';setTimeout(()=>{const z=document.getElementById(id);if(z)z.textContent='⟳ Check entry timing now'},4000);}
+}
+
+
+// ---- fresh SPY 1DTE entry check ------------------------------------------
+// Different question from timing(): there is no flagged entry to compare
+// against, so this asks "would a NEW contract clear the gates and the clock
+// right now?" Gates are evaluated on the scan-time chain (real bid/ask/OI);
+// the premium is then re-estimated from the live SPY quote, and the estimate
+// is labelled as such. It is a check, not a fill.
+function freshEntry(){
+ const C=D.spy_cand;
+ if(!C)return{v:'NO SCAN',c:'var(--muted)',t:'No live candidate has been scanned yet.',cand:null,est:null};
+ const m=mktState(), s=D.spy||{};
+ const b=C.best;
+ if(C.bias==='NEUTRAL')return{v:'NO TRADE',c:'var(--muted)',t:'The composite is NEUTRAL. The rules trade nothing on neutral days — that is the rule doing its job, not a missed opportunity.',cand:b,est:null};
+ if(!b)return{v:'NO ENTRY',c:'var(--down)',t:'No strike cleared all gates on the last chain scan. Near-misses and the gate each one failed are listed below.',cand:null,est:null};
+ // re-estimate the premium from the live SPY price
+ let est=null;
+ if(liveStamp&&s.price&&b.iv){
+  const ncdf=x=>{const t=1/(1+0.2316419*Math.abs(x));const d=0.3989423*Math.exp(-x*x/2);let pr=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return x>0?1-pr:pr;};
+  const S1=s.price,K=b.strike,T=Math.max((new Date(C.expiry+'T20:00:00Z')-new Date())/(365.25*864e5),1e-4);
+  const v=Math.max(b.iv,0.05),r=0.04;
+  const d1=(Math.log(S1/K)+(r+v*v/2)*T)/(v*Math.sqrt(T)),d2=d1-v*Math.sqrt(T);
+  est=Math.max(S1*ncdf(d1)-K*Math.exp(-r*T)*ncdf(d2),0);
+  est=+est.toFixed(2);
+ }
+ if(!m.open)return{v:'MARKET '+m.label.toUpperCase(),c:'var(--muted)',t:'No real fill is available outside 9:30–4:00 ET. Short-dated spreads widen hard after the bell — the $'+b.ask+' ask on the card is a regular-session number.',cand:b,est:est};
+ if(m.left<90)return{v:'TOO LATE',c:'var(--down)',t:'Only '+(m.left>=60?Math.floor(m.left/60)+'h '+(m.left%60)+'m':m.left+' minutes')+' to the close on a contract expiring tomorrow. Theta is the dominant term in the last hour and it runs against a long buyer every minute — this is the worst point on the clock to open a 1DTE.',cand:b,est:est};
+ const moved=s.day_pct;
+ if(C.bias==='BULLISH'&&moved!=null&&moved>0.6)return{v:'LATE',c:'var(--warn)',t:'SPY is already +'+moved.toFixed(2)+'% today. A 1DTE bullish contract is a bet on the NEXT day\'s move, but most of the daily range is spent — you would be paying for a move that largely happened.',cand:b,est:est};
+ if(C.bias==='BEARISH'&&moved!=null&&moved<-0.6)return{v:'LATE',c:'var(--warn)',t:'SPY is already '+moved.toFixed(2)+'% today. Most of the daily range is spent and you would be paying for a move that largely happened.',cand:b,est:est};
+ if(est==null)return{v:'RE-SCAN NEEDED',c:'var(--warn)',t:'No live SPY quote has landed this session, so the strike cannot be re-priced against right now. The gates below passed at the '+C.scanned_at+' chain scan with SPY at '+fmt$(C.spot_at_scan)+' — press the button above to pull a live quote before trusting any of it.',cand:b,est:null};
+ if(est!=null&&est>b.ask*1.25)return{v:'LATE',c:'var(--warn)',t:'The strike has richened since the chain scan — estimated '+fmt$(est)+' vs the scanned ask of '+fmt$(b.ask)+'. Re-scan before acting; the qty and cost on the card assume the scanned price.',cand:b,est:est};
+ if(est!=null&&est<b.ask*0.6)return{v:'CHECK DIRECTION',c:'#4ea8de',t:'The strike is much cheaper than at scan ('+fmt$(est)+' est vs '+fmt$(b.ask)+' scanned) because SPY moved away from it. Cheaper, but the '+C.bias.toLowerCase()+' thesis is losing in real time.',cand:b,est:est};
+ return{v:'ENTRY AVAILABLE',c:'var(--up)',t:'This strike clears every gate — '+b.otm+'% OTM, '+b.spread_pct+'% spread, OI '+b.oi.toLocaleString()+', '+b.contracts_n+' contracts for '+fmt$(b.cost)+' — with '+Math.floor(m.left/60)+'h '+(m.left%60)+'m left in the session. Clearing the gates is not a prediction: the prior study still says the median outcome for this trade is −100%.',cand:b,est:est};
+}
+function freshPanel(){
+ const C=D.spy_cand; const f=freshEntry(); const b=f.cand;
+ const box=(l,v,c)=>`<div class="dbox"><span>${l}</span><b class="${c||''}">${v}</b></div>`;
+ const near=(C&&C.near_misses&&C.near_misses.length)?`<details class="odet" style="margin-top:9px"><summary>Strikes that did NOT qualify, and the gate each one failed</summary><table style="margin-top:7px"><thead><tr><th style="text-align:left">Strike</th><th>OTM</th><th>Ask</th><th>Spread</th><th>OI</th><th style="text-align:right">Failed gate</th></tr></thead><tbody>${C.near_misses.map(n=>`<tr><td style="text-align:left">$${n.strike}</td><td>${n.otm}%</td><td>${fmt$(n.ask)}</td><td>${n.spread_pct}%</td><td>${n.oi.toLocaleString()}</td><td style="text-align:right;color:var(--muted)">${n.fail}</td></tr>`).join('')}</tbody></table></details>`:'';
+ const alt=(C&&C.passing&&C.passing.length>1)?`<div class="nm" style="margin-top:7px">Also cleared the gates: ${C.passing.filter(p=>!b||p.strike!==b.strike).map(p=>`$${p.strike} at ${fmt$(p.ask)} (conf ${p.conf} ${p.conf_band})`).join(' · ')} — the rules take the single highest-scoring survivor.</div>`:'';
+ return`<div class="fresh" style="border-color:${f.c}">
+  <div class="tstrip" style="border:0;padding:0;margin:0 0 10px;background:none"><span class="tbadge" style="background:${f.c}">${f.v}</span><span class="ttext">${f.t}</span></div>
+  ${b?`<div class="dteStrike" style="font-size:30px">SPY $${b.strike} CALL <span style="font-size:14px;color:var(--muted);font-weight:500">exp ${C.expiry}</span></div>
+  <div class="dteGrid" style="margin-top:9px">
+   ${box('Ask at scan',fmt$(b.ask))}
+   ${box('Est. now',f.est!=null?fmt$(f.est):'stale')}
+   ${box('SPY scan → now',fmt$(C.spot_at_scan)+(liveStamp&&D.spy&&D.spy.price?' → '+fmt$(D.spy.price):' → —'),(liveStamp&&D.spy&&D.spy.price)?cls(D.spy.price-C.spot_at_scan):'')}
+   ${box('Target',fmt$(b.target_premium),'pos')}
+   ${box('Stop',fmt$(b.stop_premium),'neg')}
+   ${box('Contracts',b.contracts_n+' × '+fmt$(b.cost))}
+   ${box('OTM',b.otm+'%')}
+   ${box('Spread / OI',b.spread_pct+'% · '+b.oi.toLocaleString())}
+   <div class="dbox"><span>Confidence</span><b style="color:${b.conf_band==='A'?css('--up'):b.conf_band==='B'?'#4ea8de':b.conf_band==='C'?css('--warn'):css('--down')}">${b.conf} · ${b.conf_band}</b></div>
+  </div>${alt}`:''}
+  ${near}
+  <div class="sig flow" style="margin-top:10px;border-color:var(--warn)"><span><b>Read this before acting.</b> ${C?C.rule_note:''} Bid/ask/OI above are from the chain scan at <b>${C?C.scanned_at:'—'}</b> with SPY at ${C?fmt$(C.spot_at_scan):'—'}; "Est. now" is a Black-Scholes estimate off the live SPY quote and the scanned IV, <b>not a real quote</b>. Browser-side live option quotes are not available on the free data tiers.</span></div>
+ </div>`;
+}
+
 function render(){
  document.getElementById('tabs').innerHTML=BOOKS.map(([id,n])=>{
   const c=id==='overview'?'':id==='spy'?'':id==='whale'?(D.whale&&D.whale.in_13f_window?'!':''):id==='closed'?D.closed.length:id==='options'?D.options.length:id==='journal'?(D.closed.length+D.closed_options.length):by(id).length;
