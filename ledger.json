@@ -5,7 +5,7 @@
   "stake_per_position_usd": null,
   "mode": "paper",
   "notes": "Flag price = market price at scan time on flag date. Shares are fractional (1000/flag_price). P/L is hypothetical; no fees/slippage modeled. This is a measurement instrument for the news+IPO thesis, not a live strategy.",
-  "last_scan": "Aug 12, 2026 20:34 UTC",
+  "last_scan": "Aug 12, 2026 20:59 UTC",
   "benchmark": "SPY",
   "score_rubric": "catalyst/30 momentum/25 liquidity/15 risk/15(higher=safer) valuation/15; set at flag time",
   "exit_rules": "auto-close if price <= flag*(1+stop_pct/100); review_date forces thesis re-check",
@@ -16,7 +16,7 @@
    "longterm": "Written criteria, 1\u20133y horizon"
   },
   "direction_rule": "vol24 calls evaluated at eval_date: hit if sign(move since flag) matches call; running hit rate on dashboard; feature killed if <=50% after 30 calls",
-  "options_rules": "Options book mirrors vol24 direction calls only (per 0dte-otm-findings: direction is the sole claim that could beat the variance premium). OTM 2-10%, nearest weekly, BUY at ask, mark/exit at bid (spread cost included). Options are a SEPARATE pool from the $1,000 stock portfolio. Max cost per trade $250 (contracts = floor(250/(ask*100))). Target sale = 6x entry ask, stop = 0.5x entry ask \u2014 a 10:1 profit-to-stop ratio set by Andres 2026-08-12 over advisory objection (target rarely reachable in a 2-day hold; most exits will be stop or clock). Contracts entered before 2026-08-12 keep their original 2x/0.5x terms. Exit at first of: target hit, stop hit, 2 trading days, expiry. KILL RULE: book closes if total P/L < 0 after 20 resolved positions. Expected outcome per prior study: median -100% per trade; this book measures whether any direction edge survives premium.",
+  "options_rules": "Options book mirrors vol24 direction calls only (per 0dte-otm-findings: direction is the sole claim that could beat the variance premium). OTM 2-10%, nearest weekly, BUY at ask, mark/exit at bid (spread cost included). Options are a SEPARATE pool from the $1,000 stock portfolio. Max cost per trade $250 (contracts = floor(250/(ask*100))). Target sale = 6x entry ask, stop = 0.5x entry ask \u2014 a 10:1 profit-to-stop ratio set by Andres 2026-08-12 over advisory objection (target rarely reachable in a 2-day hold; most exits will be stop or clock). Contracts entered before 2026-08-12 keep their original 2x/0.5x terms. Exit at first of: target hit, stop hit, 2 trading days, expiry. KILL RULE: book closes if total P/L < 0 after 20 resolved positions. Expected outcome per prior study: median -100% per trade; this book measures whether any direction edge survives premium. SECOND SOURCE (added 2026-08-12): blue-chip/index underlyings \u2014 SPY, QQQ, AAPL, MSFT, NVDA, AMZN, GOOGL, META, TSLA, TSM \u2014 max 1 contract/day, same gates and 10:1 exits, but requires a written rationale tied to an active world signal or scheduled macro event (no 8% move needed). Tag source_call \"bluechip\" vs \"mover\" so the journal can compare the two sources. Recorded caveat: the prior 811-day study showed SPY short-dated OTM buying has median -100% per trade; this source exists to test whether cheap execution (penny spreads, deep OI) changes that, and it dies with the same 20-position kill rule.",
   "finnhub_key": "d9ubm9hr01qs9cmc2nngd9ubm9hr01qs9cmc2no0",
   "portfolio": {
    "capital": 1000,
