@@ -5,7 +5,7 @@
   "stake_per_position_usd": null,
   "mode": "paper",
   "notes": "Flag price = market price at scan time on flag date. Shares are fractional (1000/flag_price). P/L is hypothetical; no fees/slippage modeled. This is a measurement instrument for the news+IPO thesis, not a live strategy.",
-  "last_scan": "Aug 12, 2026 20:59 UTC",
+  "last_scan": "Aug 13, 2026 13:00 UTC",
   "benchmark": "SPY",
   "score_rubric": "catalyst/30 momentum/25 liquidity/15 risk/15(higher=safer) valuation/15; set at flag time",
   "exit_rules": "auto-close if price <= flag*(1+stop_pct/100); review_date forces thesis re-check",
@@ -16,7 +16,7 @@
    "longterm": "Written criteria, 1\u20133y horizon"
   },
   "direction_rule": "vol24 calls evaluated at eval_date: hit if sign(move since flag) matches call; running hit rate on dashboard; feature killed if <=50% after 30 calls",
-  "options_rules": "Options book mirrors vol24 direction calls only (per 0dte-otm-findings: direction is the sole claim that could beat the variance premium). OTM 2-10%, nearest weekly, BUY at ask, mark/exit at bid (spread cost included). Options are a SEPARATE pool from the $1,000 stock portfolio. Max cost per trade $250 (contracts = floor(250/(ask*100))). Target sale = 6x entry ask, stop = 0.5x entry ask \u2014 a 10:1 profit-to-stop ratio set by Andres 2026-08-12 over advisory objection (target rarely reachable in a 2-day hold; most exits will be stop or clock). Contracts entered before 2026-08-12 keep their original 2x/0.5x terms. Exit at first of: target hit, stop hit, 2 trading days, expiry. KILL RULE: book closes if total P/L < 0 after 20 resolved positions. Expected outcome per prior study: median -100% per trade; this book measures whether any direction edge survives premium. SECOND SOURCE (added 2026-08-12): blue-chip/index underlyings \u2014 SPY, QQQ, AAPL, MSFT, NVDA, AMZN, GOOGL, META, TSLA, TSM \u2014 max 1 contract/day, same gates and 10:1 exits, but requires a written rationale tied to an active world signal or scheduled macro event (no 8% move needed). Tag source_call \"bluechip\" vs \"mover\" so the journal can compare the two sources. Recorded caveat: the prior 811-day study showed SPY short-dated OTM buying has median -100% per trade; this source exists to test whether cheap execution (penny spreads, deep OI) changes that, and it dies with the same 20-position kill rule.",
+  "options_rules": "Options book mirrors vol24 direction calls only (per 0dte-otm-findings: direction is the sole claim that could beat the variance premium). OTM 2-10%, nearest weekly, BUY at ask, mark/exit at bid (spread cost included). Options are a SEPARATE pool from the $1,000 stock portfolio. Max cost per trade $250 (contracts = floor(250/(ask*100))). Target sale = 6x entry ask, stop = 0.5x entry ask \u2014 a 10:1 profit-to-stop ratio set by Andres 2026-08-12 over advisory objection (target rarely reachable in a 2-day hold; most exits will be stop or clock). Contracts entered before 2026-08-12 keep their original 2x/0.5x terms. Exit at first of: target hit, stop hit, 2 trading days, expiry. KILL RULE: book closes if total P/L < 0 after 20 resolved positions. Expected outcome per prior study: median -100% per trade; this book measures whether any direction edge survives premium. SECOND SOURCE (added 2026-08-12): blue-chip/index underlyings \u2014 SPY, QQQ, AAPL, MSFT, NVDA, AMZN, GOOGL, META, TSLA, TSM \u2014 max 1 contract/day, same gates and 10:1 exits, but requires a written rationale tied to an active world signal or scheduled macro event (no 8% move needed). Tag source_call \"bluechip\" vs \"mover\" so the journal can compare the two sources. Recorded caveat: the prior 811-day study showed SPY short-dated OTM buying has median -100% per trade; this source exists to test whether cheap execution (penny spreads, deep OI) changes that, and it dies with the same 20-position kill rule. FEEDERS (2026-08-13): candidates may come from any of \u2014 screener movers, earnings-calendar names reporting within 2 days, blue-chip/index universe, or a Finnhub-news catalyst. Daily cap raised to 5 contracts across all sources (was 3 mover + 1 bluechip). ALL quality gates unchanged: OI>=500, spread<=20% of ask, 2-10% OTM, cost<=$250, written direction rationale. More candidates, same standards; zero qualifying days remain correct.",
   "finnhub_key": "d9ubm9hr01qs9cmc2nngd9ubm9hr01qs9cmc2no0",
   "portfolio": {
    "capital": 1000,
@@ -76,7 +76,35 @@
     "sector": "Crypto",
     "body": "Options positioned for August BTC dip vs strong equity tape \u2014 IOND, CRCL test it."
    }
-  ]
+  ],
+  "candidate_feeders": {
+   "note": "Feeder sources for the options scan (added 2026-08-13). Gates are UNCHANGED \u2014 feeders only widen the candidate funnel, they never lower OI/spread/cost standards.",
+   "yahoo_screeners": [
+    "day_gainers",
+    "day_losers",
+    "most_actives",
+    "small_cap_gainers",
+    "growth_technology_stocks",
+    "aggressive_small_caps",
+    "undervalued_growth_stocks"
+   ],
+   "finnhub_earnings_calendar": "https://finnhub.io/api/v1/calendar/earnings?from={today}&to={t+2}&token={key} \u2014 tomorrow/next-day reporters with weekly options; direction from surprise history + signal alignment",
+   "finnhub_ipo_calendar": "https://finnhub.io/api/v1/calendar/ipo?from={t-30}&to={t+14}&token={key} \u2014 feeds the core book, not options",
+   "finnhub_news": "https://finnhub.io/api/v1/news?category=general&token={key} \u2014 catalyst confirmation without a web search",
+   "bluechip_universe": [
+    "SPY",
+    "QQQ",
+    "AAPL",
+    "MSFT",
+    "NVDA",
+    "AMZN",
+    "GOOGL",
+    "META",
+    "TSLA",
+    "TSM"
+   ],
+   "unavailable": "finnhub upgrade/downgrade endpoint is 403 on free tier \u2014 use web search for analyst actions if needed"
+  }
  },
  "positions": [
   {
@@ -288,7 +316,7 @@
     27.0,
     27.94,
     24.87,
-    26.645
+    26.65
    ],
    "shares": 1.930438,
    "value": 51.44,
@@ -427,6 +455,7 @@
     62.9,
     68.0,
     69.95,
+    70.01,
     69.04,
     61.44,
     59.2,
@@ -1099,7 +1128,6 @@
    "eval_date": "2026-08-18",
    "current_price": 31.01,
    "spark": [
-    37.11,
     38.25,
     38.0,
     39.21,
@@ -1136,6 +1164,7 @@
     37.89,
     37.91,
     37.1,
+    36.24,
     37.95,
     37.61,
     38.19,
@@ -2017,61 +2046,18 @@
    "invested": 999.98,
    "n_open": 20,
    "n_closed": 0
+  },
+  {
+   "date": "2026-08-13",
+   "value": 1031.6,
+   "spy_value": 1002.5,
+   "invested": 999.98,
+   "n_open": 20,
+   "n_closed": 0
   }
  ],
  "closed": [],
- "options_positions": [
-  {
-   "contract": "NIQ260821C00017500",
-   "underlying": "NIQ",
-   "type": "call",
-   "strike": 17.5,
-   "expiry": "2026-08-21",
-   "source_call": "NIQ bull (earnings +42%)",
-   "entry_date": "2026-08-11",
-   "entry_ask": 0.2,
-   "entry_bid": 0.15,
-   "contracts_n": 9,
-   "cost": 180.0,
-   "exit_by": "2026-08-13",
-   "status": "open",
-   "oi": 0,
-   "iv": 0.46,
-   "note": "5.7% OTM. Thin chain (OI 0, 25% spread) \u2014 the spread alone must be overcome.",
-   "current_bid": 0.15,
-   "current_ask": 0.2,
-   "value": 135.0,
-   "pl": -45.0,
-   "pl_pct": -25.0,
-   "target_premium": 0.4,
-   "stop_premium": 0.1
-  },
-  {
-   "contract": "FRMI260814C00008000",
-   "underlying": "FRMI",
-   "type": "call",
-   "strike": 8.0,
-   "expiry": "2026-08-14",
-   "source_call": "FRMI bull ($6.5B AI lease)",
-   "entry_date": "2026-08-11",
-   "entry_ask": 0.3,
-   "entry_bid": 0.25,
-   "contracts_n": 6,
-   "cost": 180.0,
-   "exit_by": "2026-08-13",
-   "status": "open",
-   "oi": 3665,
-   "iv": 2.09,
-   "note": "7.7% OTM. IV is 209% \u2014 the market has already priced a huge move; textbook \"paying most on the days you correctly identify as volatile\".",
-   "current_bid": 0.25,
-   "current_ask": 0.35,
-   "value": 150.0,
-   "pl": -30.0,
-   "pl_pct": -16.7,
-   "target_premium": 0.6,
-   "stop_premium": 0.15
-  }
- ],
+ "options_positions": [],
  "closed_options": [
   {
    "contract": "ONON260814P00030000",
@@ -2100,6 +2086,64 @@
    "exit_date": "2026-08-12",
    "exit_bid": 0.06,
    "exit_reason": "stopped",
+   "outcome": "loss"
+  },
+  {
+   "contract": "NIQ260821C00017500",
+   "underlying": "NIQ",
+   "type": "call",
+   "strike": 17.5,
+   "expiry": "2026-08-21",
+   "source_call": "NIQ bull (earnings +42%)",
+   "entry_date": "2026-08-11",
+   "entry_ask": 0.2,
+   "entry_bid": 0.15,
+   "contracts_n": 9,
+   "cost": 180.0,
+   "exit_by": "2026-08-13",
+   "status": "closed",
+   "oi": 0,
+   "iv": 0.46,
+   "note": "5.7% OTM. Thin chain (OI 0, 25% spread) \u2014 the spread alone must be overcome.",
+   "current_bid": 0.15,
+   "current_ask": 0.2,
+   "value": 135.0,
+   "pl": -45.0,
+   "pl_pct": -25.0,
+   "target_premium": 0.4,
+   "stop_premium": 0.1,
+   "exit_date": "2026-08-13",
+   "exit_bid": 0.15,
+   "exit_reason": "2-day exit",
+   "outcome": "loss"
+  },
+  {
+   "contract": "FRMI260814C00008000",
+   "underlying": "FRMI",
+   "type": "call",
+   "strike": 8.0,
+   "expiry": "2026-08-14",
+   "source_call": "FRMI bull ($6.5B AI lease)",
+   "entry_date": "2026-08-11",
+   "entry_ask": 0.3,
+   "entry_bid": 0.25,
+   "contracts_n": 6,
+   "cost": 180.0,
+   "exit_by": "2026-08-13",
+   "status": "closed",
+   "oi": 3665,
+   "iv": 2.09,
+   "note": "7.7% OTM. IV is 209% \u2014 the market has already priced a huge move; textbook \"paying most on the days you correctly identify as volatile\".",
+   "current_bid": 0.25,
+   "current_ask": 0.35,
+   "value": 150.0,
+   "pl": -30.0,
+   "pl_pct": -16.7,
+   "target_premium": 0.6,
+   "stop_premium": 0.15,
+   "exit_date": "2026-08-13",
+   "exit_bid": 0.25,
+   "exit_reason": "2-day exit",
    "outcome": "loss"
   }
  ]

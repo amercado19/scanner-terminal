@@ -275,7 +275,9 @@ svg text{font:10px system-ui,sans-serif;fill:var(--muted)}
 </style></head><body>
 <header>
  <div><h1>SCANNER <b>TERMINAL</b></h1><div class="sub" id="stamp"></div></div>
- <button class="toggle" onclick="flip()">Light / dark</button>
+ <div style="display:flex;gap:6px;align-items:center">
+  <button class="toggle" id="rescan" onclick="manualRefresh()" style="border-color:var(--s1);color:var(--s1)">⟳ Refresh prices</button>
+  <button class="toggle" onclick="flip()">Light / dark</button></div>
 </header>
 <div class="tabs" id="tabs"></div>
 <div id="views"></div>
@@ -578,6 +580,14 @@ async function liveTick(){
    setStamp();render();
   }
  }catch(e){/* keep scan-time values on any failure */}
+}
+async function manualRefresh(){
+ const b=document.getElementById('rescan');
+ if(!FKEY||FKEY.startsWith('__')){b.textContent='no live key';setTimeout(()=>b.textContent='⟳ Refresh prices',2000);return;}
+ b.textContent='⟳ refreshing…';b.disabled=true;
+ await liveTick();
+ b.textContent='✓ refreshed';b.disabled=false;
+ setTimeout(()=>b.textContent='⟳ Refresh prices',2500);
 }
 function render(){
  document.getElementById('tabs').innerHTML=BOOKS.map(([id,n])=>{
