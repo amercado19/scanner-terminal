@@ -4,8 +4,8 @@
   "created": "2026-08-11",
   "stake_per_position_usd": null,
   "mode": "paper",
-  "notes": "Flag price = market price at scan time on flag date. Shares are fractional (1000/flag_price). P/L is hypothetical; no fees/slippage modeled. This is a measurement instrument for the news+IPO thesis, not a live strategy.",
-  "last_scan": "Aug 13, 2026 \u00b7 2:26 PM ET",
+  "notes": "Flag price = market price at scan time on flag date. Shares are fractional. P/L is hypothetical; no fees/slippage modeled. Measurement instrument, not a live strategy.",
+  "last_scan": "Aug 14, 2026 \u00b7 10:07 AM ET",
   "benchmark": "SPY",
   "score_rubric": "catalyst/30 momentum/25 liquidity/15 risk/15(higher=safer) valuation/15; set at flag time",
   "exit_rules": "auto-close if price <= flag*(1+stop_pct/100); review_date forces thesis re-check",
@@ -15,8 +15,8 @@
    "penny": "$0.50\u2013$5 listed only",
    "longterm": "Written criteria, 1\u20133y horizon"
   },
-  "direction_rule": "vol24 calls evaluated at eval_date: hit if sign(move since flag) matches call; running hit rate on dashboard; feature killed if <=50% after 30 calls",
-  "options_rules": "Options book. UP TO 8 CONTRACTS/DAY (raised 2026-08-13 from 5) across four feeders: SPY 1DTE (exactly 1), ETF universe (SPY QQQ IWM DIA SMH XLE XLF XLK), blue-chip universe (AAPL MSFT NVDA AMZN GOOGL META TSLA TSM AMD AVGO NFLX JPM XOM COIN PLTR), and catalyst movers/earnings names. GATES ARE UNCHANGED AND NON-NEGOTIABLE: 2-10% OTM (0.2-1.5% for 1DTE), OI>=500, spread<=20% of ask, contracts_n = floor(250/(ask*100)), cost<=$250, BUY at ask, mark/exit at bid. Options are a SEPARATE pool from the $1,000 stock portfolio. Target = 6x entry ask, stop = 0.5x entry ask (10:1, set by Andres 2026-08-12 over advisory objection). Exit at first of: target, stop, 2 trading days, expiry. CONFIDENCE SCORE (2026-08-13): every contract is scored 0-100 by option_score.py at entry and the score is FROZEN. Bands A>=75, B 60-74, C 45-59, D<45. The score RANKS candidates, it does NOT gate them - all bands are traded so the score can be proven or killed. Selection: build the full candidate funnel, score everything that clears the gates, take the top 8 by score with at most 1 contract per underlying per day. KILL RULE 1 (book): closes if total P/L < 0 after 20 resolved positions. KILL RULE 2 (score): after 20 resolved SCORED contracts, if mean P/L%% of bands A+B does not exceed bands C+D, the score carries no information and option_score.py is deleted from the pipeline - recorded, not quietly dropped. Expected outcome per the prior 811-day study: median -100%% per trade. This book measures whether any edge survives the premium; the confidence score measures whether we can tell good bets from bad ones in advance.",
+  "direction_rule": "vol24 calls evaluated at eval_date: hit if sign(move since flag) matches call; feature killed if <=50% after 30 calls",
+  "options_rules": "Options book. UP TO 8 CONTRACTS/DAY across four feeders: SPY 1DTE (exactly 1), ETF universe, blue-chip universe, catalyst movers/earnings. GATES UNCHANGED: 2-10% OTM (0.2-1.5% for 1DTE), OI>=500, spread<=20% of ask, contracts_n = floor(250/(ask*100)), cost<=$250, BUY at ask, mark/exit at bid. Separate pool from the $1,000 stock portfolio. Target = 6x entry ask, stop = 0.5x entry ask (10:1, set by Andres 2026-08-12 over advisory objection). Exit at first of: target, stop, 2 trading days, expiry. Confidence score frozen at entry; bands A>=75, B 60-74, C 45-59, D<45; the score RANKS, it does not gate. KILL RULE 1 (book): closes if total P/L < 0 after 20 resolved positions. KILL RULE 2 (score): after 20 resolved scored contracts, if mean P/L%% of A+B does not exceed C+D, option_score.py is deleted from the pipeline. Prior study: median -100%% per trade.",
   "finnhub_key": "d9ubm9hr01qs9cmc2nngd9ubm9hr01qs9cmc2no0",
   "portfolio": {
    "capital": 1000,
@@ -78,7 +78,7 @@
    }
   ],
   "candidate_feeders": {
-   "note": "Feeder sources for the options scan (added 2026-08-13). Gates are UNCHANGED \u2014 feeders only widen the candidate funnel, they never lower OI/spread/cost standards.",
+   "note": "Feeder sources for the options scan. Gates are UNCHANGED \u2014 feeders only widen the candidate funnel.",
    "yahoo_screeners": [
     "day_gainers",
     "day_losers",
@@ -88,9 +88,9 @@
     "aggressive_small_caps",
     "undervalued_growth_stocks"
    ],
-   "finnhub_earnings_calendar": "https://finnhub.io/api/v1/calendar/earnings?from={today}&to={t+2}&token={key} \u2014 tomorrow/next-day reporters with weekly options; direction from surprise history + signal alignment",
-   "finnhub_ipo_calendar": "https://finnhub.io/api/v1/calendar/ipo?from={t-30}&to={t+14}&token={key} \u2014 feeds the core book, not options",
-   "finnhub_news": "https://finnhub.io/api/v1/news?category=general&token={key} \u2014 catalyst confirmation without a web search",
+   "finnhub_earnings_calendar": "https://finnhub.io/api/v1/calendar/earnings?from={today}&to={t+2}&token={key}",
+   "finnhub_ipo_calendar": "https://finnhub.io/api/v1/calendar/ipo?from={t-30}&to={t+14}&token={key}",
+   "finnhub_news": "https://finnhub.io/api/v1/news?category=general&token={key}",
    "bluechip_universe": [
     "AAPL",
     "MSFT",
@@ -108,7 +108,6 @@
     "COIN",
     "PLTR"
    ],
-   "unavailable": "finnhub upgrade/downgrade endpoint is 403 on free tier \u2014 use web search for analyst actions if needed",
    "etf_universe": [
     "SPY",
     "QQQ",
@@ -118,28 +117,29 @@
     "XLE",
     "XLF",
     "XLK"
-   ]
+   ],
+   "unavailable": "finnhub upgrade/downgrade endpoint is 403 on free tier"
   },
   "spy_model": {
    "created": "2026-08-13",
-   "rule": "Composite 0-100 from five fixed components: trend/30 (SPY vs 20 & 50 DMA), momentum/25 (5-day return), volatility/20 (VIX level + 5-day change), breadth/15 (% of 8 sector ETFs above own 20-DMA), news/10 (bullish minus bearish world signals). >=60 BULLISH, <=40 BEARISH, else NEUTRAL. Weights are FROZEN as of 2026-08-13 and must never be re-tuned after seeing outcomes.",
-   "grading": "Every scan publishes a next-session direction call BEFORE the session. Graded on SPY close-to-close: hit if BULLISH and SPY up, or BEARISH and SPY down. NEUTRAL calls are recorded but not graded. This runs daily whether or not any option contract qualifies \u2014 direction skill is measured separately from option economics, per the 0dte-otm study conclusion.",
-   "kill": "If direction hit rate < 55% after 30 graded calls, no 1DTE structure can be profitable \u2014 stop the 1DTE book and record the finding."
+   "rule": "Composite 0-100 from five fixed components: trend/30, momentum/25, volatility/20, breadth/15, news/10. >=60 BULLISH, <=40 BEARISH, else NEUTRAL. Weights FROZEN 2026-08-13.",
+   "grading": "Every scan publishes a next-session direction call BEFORE the session. Graded on SPY close-to-close. NEUTRAL calls recorded but not graded.",
+   "kill": "If direction hit rate < 55% after 30 graded calls, stop the 1DTE book and record the finding."
   },
   "dte1_rules": {
    "created": "2026-08-13",
    "underlying": "SPY only",
    "premium_band": "ask between $0.30 and $0.60 per contract (user-set 2026-08-13)",
-   "otm_band": "0.2%-1.5% OTM \u2014 the standard 2-10% gate is invalid at 1 day (SPY average daily move ~0.5%); this band matches the 0dte-otm study geometry",
+   "otm_band": "0.2%-1.5% OTM",
    "strike": "exactly ONE strike per day, nearest to the band midpoint that passes all gates",
    "direction": "taken from the SPY composite bias; NEUTRAL days trade nothing",
    "gates": "OI >= 500, spread <= 20% of ask, contracts = floor(250/(ask*100)), total cost <= $250, expiry = next session",
-   "exits": "target 6x ask / stop 0.5x ask (10:1) or expiry \u2014 1DTE means the clock is the dominant exit",
-   "prior": "The 811-day study found 0-2DTE SPY OTM has median -100% per trade and a break-even ceiling even with perfect exits. This book exists because SPY execution is nearly free (2-3% spreads, huge OI), so it isolates whether premium alone kills the trade. Same 20-position kill rule."
+   "exits": "target 6x ask / stop 0.5x ask (10:1) or expiry",
+   "prior": "The 811-day study found 0-2DTE SPY OTM has median -100% per trade. Same 20-position kill rule."
   },
   "whale": {
    "next_13f_deadline": "2026-08-14",
-   "days_to_13f": 1,
+   "days_to_13f": 0,
    "in_13f_window": true,
    "notes": {
     "13F (institutions >$100M)": "45 days after quarter end \u2014 Feb 14, May 15, Aug 14, Nov 14. Positions are up to 4.5 months stale; treat as sentiment, never as a trade signal.",
@@ -148,22 +148,16 @@
     "SC 13G (passive >5%)": "annual/quarterly amendments; low signal.",
     "Block/dark prints": "cluster in the opening 30 min (9:30-10:00 ET) and the closing auction (3:50-4:00 ET). Free feeds do not expose these reliably.",
     "Options sweeps": "cluster first hour and last hour; requires paid flow data."
-   },
-   "sources": {
-    "form4": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=4&dateb=&owner=include&count=100&output=atom",
-    "13f": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=13F-HR&dateb=&owner=include&count=100&output=atom",
-    "13d": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=SC+13D&dateb=&owner=include&count=40&output=atom",
-    "ua_required": "SEC requires a User-Agent with contact info"
    }
   },
   "options_daily_cap": 8,
   "confidence_score": {
    "created": "2026-08-13",
    "file": "option_score.py",
-   "components": "execution/25 (spread 15 + OI 10) \u00b7 breakeven/25 (required move to breakeven vs IV-implied move over the hold) \u00b7 signal/25 (registered thesis tier) \u00b7 clock/15 (days of life left at planned exit) \u00b7 iv_cost/10 (IV vs 20-day realized vol)",
+   "components": "execution/25 (spread 15 + OI 10) \u00b7 breakeven/25 \u00b7 signal/25 \u00b7 clock/15 \u00b7 iv_cost/10",
    "bands": "A>=75, B 60-74, C 45-59, D<45",
-   "frozen": "Weights frozen 2026-08-13. Never re-tune after seeing outcomes.",
-   "note": "The breakeven component is the one with the most prior support: a ratio above 1.0 means paying for a larger move than the chain itself implies, which is the standard way long premium loses."
+   "frozen": "Weights frozen 2026-08-13.",
+   "note": "The breakeven component has the most prior support: a ratio above 1.0 means paying for a larger move than the chain itself implies."
   }
  },
  "positions": [
@@ -171,14 +165,32 @@
    "ticker": "SPCX",
    "name": "SpaceX",
    "category": "IPO",
+   "book": "core",
    "flag_date": "2026-08-11",
    "flag_price": 133.29,
    "ref_label": "IPO offer (Jun 12, 2026)",
    "ref_price": 135.0,
    "news_tag": "Space / defense",
    "thesis": "Largest IPO in history ($1.75T valuation, $85.7B raised) digesting below its $161 day-one close. Starlink growth and defense contracts are the catalyst stream; post-IPO lockup supply is the risk.",
-   "current_price": 142.285,
-   "prev_close": 150.0,
+   "score": {
+    "catalyst": 22,
+    "momentum": 15,
+    "liquidity": 15,
+    "risk": 8,
+    "valuation": 6
+   },
+   "score_total": 66,
+   "stop_pct": -25,
+   "review_date": "2026-11-10",
+   "status": "open",
+   "spy_flag_price": 770.56,
+   "stake": 47.29,
+   "t12": {
+    "bull": 220,
+    "base": 160,
+    "bear": 100
+   },
+   "current_price": 137.87,
    "spark": [
     160.95,
     192.5,
@@ -222,36 +234,9 @@
     138.74,
     133.29,
     146.15,
-    142.285
+    141.29,
+    137.87
    ],
-   "shares": 0.35479,
-   "value": 50.48,
-   "pl": 3.19,
-   "pl_pct": 6.75,
-   "day_pct": -2.64,
-   "vs_ref_pct": 5.4,
-   "status": "open",
-   "spy_flag_price": 770.56,
-   "score": {
-    "catalyst": 22,
-    "momentum": 15,
-    "liquidity": 15,
-    "risk": 8,
-    "valuation": 6
-   },
-   "score_total": 66,
-   "stop_pct": -25,
-   "review_date": "2026-11-10",
-   "spy_ret_pct": 0.81,
-   "alpha_pct": 5.94,
-   "stop_price": 99.97,
-   "review_due": false,
-   "book": "core",
-   "t12": {
-    "bull": 220,
-    "base": 160,
-    "bear": 100
-   },
    "targets": {
     "t3": {
      "bull": 176.64,
@@ -269,20 +254,47 @@
      "bear": 100.0
     }
    },
-   "stake": 47.29
+   "shares": 0.35479,
+   "value": 48.91,
+   "pl": 1.62,
+   "pl_pct": 3.44,
+   "spy_ret_pct": 1.05,
+   "alpha_pct": 2.39,
+   "stop_price": 99.97,
+   "day_pct": -2.42,
+   "vs_ref_pct": 2.1,
+   "review_due": false
   },
   {
    "ticker": "SKHY",
    "name": "SK hynix (US listing)",
    "category": "IPO",
+   "book": "core",
    "flag_date": "2026-08-11",
    "flag_price": 141.65,
    "ref_label": "US IPO (Jul 10, 2026)",
    "ref_price": 149.0,
    "news_tag": "AI memory / HBM",
    "thesis": "HBM memory is the supply bottleneck of the AI buildout. Fresh US listing at $149; trades roughly flat vs offer while AI capex headlines keep coming. TSM strength corroborates the chip-cycle signal.",
-   "current_price": 166.925,
-   "prev_close": 170.0,
+   "score": {
+    "catalyst": 24,
+    "momentum": 12,
+    "liquidity": 14,
+    "risk": 10,
+    "valuation": 9
+   },
+   "score_total": 69,
+   "stop_pct": -25,
+   "review_date": "2026-11-10",
+   "status": "open",
+   "spy_flag_price": 770.56,
+   "stake": 49.44,
+   "t12": {
+    "bull": 230,
+    "base": 170,
+    "bear": 105
+   },
+   "current_price": 171.31,
    "spark": [
     168.01,
     152.35,
@@ -308,36 +320,9 @@
     135.29,
     141.65,
     154.41,
-    166.925
+    165.67,
+    171.31
    ],
-   "shares": 0.349029,
-   "value": 58.26,
-   "pl": 8.82,
-   "pl_pct": 17.84,
-   "day_pct": 8.11,
-   "vs_ref_pct": 12.0,
-   "status": "open",
-   "spy_flag_price": 770.56,
-   "score": {
-    "catalyst": 24,
-    "momentum": 12,
-    "liquidity": 14,
-    "risk": 10,
-    "valuation": 9
-   },
-   "score_total": 69,
-   "stop_pct": -25,
-   "review_date": "2026-11-10",
-   "spy_ret_pct": 0.81,
-   "alpha_pct": 17.03,
-   "stop_price": 106.24,
-   "review_due": false,
-   "book": "core",
-   "t12": {
-    "bull": 230,
-    "base": 170,
-    "bear": 105
-   },
    "targets": {
     "t3": {
      "bull": 185.82,
@@ -355,40 +340,28 @@
      "bear": 105.0
     }
    },
-   "stake": 49.44
+   "shares": 0.349029,
+   "value": 59.79,
+   "pl": 10.35,
+   "pl_pct": 20.94,
+   "spy_ret_pct": 1.05,
+   "alpha_pct": 19.89,
+   "stop_price": 106.24,
+   "day_pct": 3.4,
+   "vs_ref_pct": 15.0,
+   "review_due": false
   },
   {
    "ticker": "APMD",
    "name": "Apnimed",
    "category": "IPO",
+   "book": "core",
    "flag_date": "2026-08-11",
    "flag_price": 24.87,
    "ref_label": "IPO $16 (Jul 30, 2026)",
    "ref_price": 16.0,
    "news_tag": "Biotech",
-   "thesis": "Best performer of the 2026 IPO cohort (+~55% vs offer). First oral drug candidate for obstructive sleep apnea \u2014 huge untreated market. Biotech leadership is the strongest sector signal in this year's IPO tape.",
-   "current_price": 27.93,
-   "prev_close": 22.0,
-   "spark": [
-    25.0,
-    25.0,
-    25.71,
-    26.51,
-    27.88,
-    27.0,
-    27.94,
-    24.87,
-    26.65,
-    27.93
-   ],
-   "shares": 1.930438,
-   "value": 53.92,
-   "pl": 5.91,
-   "pl_pct": 12.3,
-   "day_pct": 4.8,
-   "vs_ref_pct": 74.6,
-   "status": "open",
-   "spy_flag_price": 770.56,
+   "thesis": "Best performer of the 2026 IPO cohort (+~55% vs offer). First oral drug candidate for obstructive sleep apnea \u2014 huge untreated market. Biotech leadership is the strongest sector signal in this year\u2019s IPO tape.",
    "score": {
     "catalyst": 25,
     "momentum": 20,
@@ -399,16 +372,28 @@
    "score_total": 67,
    "stop_pct": -35,
    "review_date": "2026-11-10",
-   "spy_ret_pct": 0.81,
-   "alpha_pct": 11.49,
-   "stop_price": 16.17,
-   "review_due": false,
-   "book": "core",
+   "status": "open",
+   "spy_flag_price": 770.56,
+   "stake": 48.01,
    "t12": {
     "bull": 45,
     "base": 30,
     "bear": 14
    },
+   "current_price": 29.395,
+   "spark": [
+    25.0,
+    25.0,
+    25.71,
+    26.51,
+    27.88,
+    27.0,
+    27.94,
+    24.87,
+    26.65,
+    28.79,
+    29.395
+   ],
    "targets": {
     "t3": {
      "bull": 34.94,
@@ -426,20 +411,47 @@
      "bear": 14.0
     }
    },
-   "stake": 48.01
+   "shares": 1.930438,
+   "value": 56.75,
+   "pl": 8.74,
+   "pl_pct": 18.19,
+   "spy_ret_pct": 1.05,
+   "alpha_pct": 17.14,
+   "stop_price": 16.17,
+   "day_pct": 2.1,
+   "vs_ref_pct": 83.7,
+   "review_due": false
   },
   {
    "ticker": "SCTX",
    "name": "Scribe Therapeutics",
    "category": "IPO",
+   "book": "core",
    "flag_date": "2026-08-11",
    "flag_price": 23.44,
    "ref_label": "IPO $15 (Jul 23, 2026)",
    "ref_price": 15.0,
    "news_tag": "Gene editing",
    "thesis": "CRISPR-by-design platform, +~55% vs offer in three weeks. Rides the same 2026 biotech-IPO strength as Apnimed; higher science risk, earlier pipeline.",
-   "current_price": 21.425,
-   "prev_close": 21.48,
+   "score": {
+    "catalyst": 20,
+    "momentum": 21,
+    "liquidity": 7,
+    "risk": 6,
+    "valuation": 6
+   },
+   "score_total": 60,
+   "stop_pct": -35,
+   "review_date": "2026-11-10",
+   "status": "open",
+   "spy_flag_price": 770.56,
+   "stake": 42.99,
+   "t12": {
+    "bull": 42,
+    "base": 28,
+    "bear": 12
+   },
+   "current_price": 19.2,
    "spark": [
     18.97,
     18.06,
@@ -454,36 +466,9 @@
     24.93,
     23.44,
     23.01,
-    21.425
+    20.37,
+    19.2
    ],
-   "shares": 1.834044,
-   "value": 39.29,
-   "pl": -3.7,
-   "pl_pct": -8.6,
-   "day_pct": -6.89,
-   "vs_ref_pct": 42.8,
-   "status": "open",
-   "spy_flag_price": 770.56,
-   "score": {
-    "catalyst": 20,
-    "momentum": 21,
-    "liquidity": 7,
-    "risk": 6,
-    "valuation": 6
-   },
-   "score_total": 60,
-   "stop_pct": -35,
-   "review_date": "2026-11-10",
-   "spy_ret_pct": 0.81,
-   "alpha_pct": -9.41,
-   "stop_price": 15.24,
-   "review_due": false,
-   "book": "core",
-   "t12": {
-    "bull": 42,
-    "base": 28,
-    "bear": 12
-   },
    "targets": {
     "t3": {
      "bull": 32.72,
@@ -501,20 +486,47 @@
      "bear": 12.0
     }
    },
-   "stake": 42.99
+   "shares": 1.834044,
+   "value": 35.21,
+   "pl": -7.78,
+   "pl_pct": -18.09,
+   "spy_ret_pct": 1.05,
+   "alpha_pct": -19.14,
+   "stop_price": 15.24,
+   "day_pct": -5.74,
+   "vs_ref_pct": 28.0,
+   "review_due": false
   },
   {
    "ticker": "IOND",
    "name": "Ionic Digital",
    "category": "IPO",
+   "book": "core",
    "flag_date": "2026-08-11",
    "flag_price": 59.1,
    "ref_label": "IPO $53 (Jul 28, 2026)",
    "ref_price": 53.0,
    "news_tag": "Crypto infra",
-   "thesis": "Crypto-mining/infrastructure listing up ~12% vs offer. Crypto stocks led Monday's movers, but options markets are positioned for an August BTC pullback \u2014 this position tests whether equity flow beats that caution.",
-   "current_price": 64.56,
-   "prev_close": 50.0,
+   "thesis": "Crypto-mining/infrastructure listing up ~12% vs offer. Crypto stocks led Monday\u2019s movers, but options markets are positioned for an August BTC pullback \u2014 this position tests whether equity flow beats that caution.",
+   "score": {
+    "catalyst": 15,
+    "momentum": 12,
+    "liquidity": 8,
+    "risk": 7,
+    "valuation": 8
+   },
+   "score_total": 50,
+   "stop_pct": -25,
+   "review_date": "2026-11-10",
+   "status": "open",
+   "spy_flag_price": 770.56,
+   "stake": 35.83,
+   "t12": {
+    "bull": 95,
+    "base": 65,
+    "bear": 38
+   },
+   "current_price": 66.0,
    "spark": [
     62.9,
     68.0,
@@ -528,36 +540,9 @@
     59.4,
     59.1,
     64.91,
-    64.56
+    66.0,
+    66.0
    ],
-   "shares": 0.606261,
-   "value": 39.14,
-   "pl": 3.31,
-   "pl_pct": 9.24,
-   "day_pct": -0.54,
-   "vs_ref_pct": 21.8,
-   "status": "open",
-   "spy_flag_price": 770.56,
-   "score": {
-    "catalyst": 15,
-    "momentum": 12,
-    "liquidity": 8,
-    "risk": 7,
-    "valuation": 8
-   },
-   "score_total": 50,
-   "stop_pct": -25,
-   "review_date": "2026-11-10",
-   "spy_ret_pct": 0.81,
-   "alpha_pct": 8.43,
-   "stop_price": 44.33,
-   "review_due": false,
-   "book": "core",
-   "t12": {
-    "bull": 95,
-    "base": 65,
-    "bear": 38
-   },
    "targets": {
     "t3": {
      "bull": 77.05,
@@ -575,20 +560,47 @@
      "bear": 38.0
     }
    },
-   "stake": 35.83
+   "shares": 0.606261,
+   "value": 40.01,
+   "pl": 4.18,
+   "pl_pct": 11.68,
+   "spy_ret_pct": 1.05,
+   "alpha_pct": 10.63,
+   "stop_price": 44.33,
+   "day_pct": 0.0,
+   "vs_ref_pct": 24.5,
+   "review_due": false
   },
   {
    "ticker": "STDN",
    "name": "Standard Nuclear",
    "category": "IPO",
+   "book": "core",
    "flag_date": "2026-08-11",
    "flag_price": 12.08,
    "ref_label": "IPO $15 (Jul 16, 2026)",
    "ref_price": 15.0,
    "news_tag": "Nuclear / AI power",
    "thesis": "Busted IPO (-45% at the July low) that has bounced ~47% off the bottom. The AI-datacenter power crunch keeps nuclear in the news cycle. Highest-risk flag on the board \u2014 this tests the busted-IPO-rebound pattern.",
-   "current_price": 11.55,
-   "prev_close": 13.5,
+   "score": {
+    "catalyst": 18,
+    "momentum": 16,
+    "liquidity": 6,
+    "risk": 4,
+    "valuation": 5
+   },
+   "score_total": 49,
+   "stop_pct": -35,
+   "review_date": "2026-11-10",
+   "status": "open",
+   "spy_flag_price": 770.56,
+   "stake": 35.11,
+   "t12": {
+    "bull": 28,
+    "base": 15,
+    "bear": 6
+   },
+   "current_price": 13.245,
    "spark": [
     12.3,
     10.4,
@@ -610,36 +622,9 @@
     11.45,
     12.08,
     11.48,
-    11.55
+    12.09,
+    13.245
    ],
-   "shares": 2.906457,
-   "value": 33.57,
-   "pl": -1.54,
-   "pl_pct": -4.39,
-   "day_pct": 0.61,
-   "vs_ref_pct": -23.0,
-   "status": "open",
-   "spy_flag_price": 770.56,
-   "score": {
-    "catalyst": 18,
-    "momentum": 16,
-    "liquidity": 6,
-    "risk": 4,
-    "valuation": 5
-   },
-   "score_total": 49,
-   "stop_pct": -35,
-   "review_date": "2026-11-10",
-   "spy_ret_pct": 0.81,
-   "alpha_pct": -5.2,
-   "stop_price": 7.85,
-   "review_due": false,
-   "book": "core",
-   "t12": {
-    "bull": 28,
-    "base": 15,
-    "bear": 6
-   },
    "targets": {
     "t3": {
      "bull": 20.04,
@@ -657,22 +642,48 @@
      "bear": 6.0
     }
    },
-   "stake": 35.11
+   "shares": 2.906457,
+   "value": 38.5,
+   "pl": 3.39,
+   "pl_pct": 9.64,
+   "spy_ret_pct": 1.05,
+   "alpha_pct": 8.59,
+   "stop_price": 7.85,
+   "day_pct": 9.55,
+   "vs_ref_pct": -11.7,
+   "review_due": false
   },
   {
    "ticker": "CRWV",
    "name": "CoreWeave",
    "category": "IPO-2025",
+   "book": "core",
    "flag_date": "2026-08-11",
    "flag_price": 90.32,
    "ref_label": "IPO $40 (Mar 2025)",
    "ref_price": 40.0,
    "news_tag": "AI infrastructure",
    "thesis": "The 2025 IPO that worked: AI GPU cloud with a ~$99B backlog and OpenAI/Meta contracts. Tests whether IPO winners keep winning once seasoned.",
-   "current_price": 107.42,
-   "prev_close": 114.7,
+   "score": {
+    "catalyst": 23,
+    "momentum": 14,
+    "liquidity": 14,
+    "risk": 9,
+    "valuation": 6
+   },
+   "score_total": 66,
+   "stop_pct": -25,
+   "review_date": "2026-11-10",
+   "status": "open",
+   "spy_flag_price": 770.56,
+   "stake": 47.29,
+   "t12": {
+    "bull": 160,
+    "base": 110,
+    "bear": 60
+   },
+   "current_price": 105.88,
    "spark": [
-    95.61,
     95.74,
     100.55,
     106.71,
@@ -716,36 +727,9 @@
     88.19,
     90.32,
     107.73,
-    107.42
+    106.29,
+    105.88
    ],
-   "shares": 0.523583,
-   "value": 56.24,
-   "pl": 8.95,
-   "pl_pct": 18.93,
-   "day_pct": -0.29,
-   "vs_ref_pct": 168.6,
-   "status": "open",
-   "spy_flag_price": 770.56,
-   "score": {
-    "catalyst": 23,
-    "momentum": 14,
-    "liquidity": 14,
-    "risk": 9,
-    "valuation": 6
-   },
-   "score_total": 66,
-   "stop_pct": -25,
-   "review_date": "2026-11-10",
-   "spy_ret_pct": 0.81,
-   "alpha_pct": 18.12,
-   "stop_price": 67.74,
-   "review_due": false,
-   "book": "core",
-   "t12": {
-    "bull": 160,
-    "base": 110,
-    "bear": 60
-   },
    "targets": {
     "t3": {
      "bull": 125.16,
@@ -763,22 +747,48 @@
      "bear": 60.0
     }
    },
-   "stake": 47.29
+   "shares": 0.523583,
+   "value": 55.44,
+   "pl": 8.15,
+   "pl_pct": 17.23,
+   "spy_ret_pct": 1.05,
+   "alpha_pct": 16.18,
+   "stop_price": 67.74,
+   "day_pct": -0.39,
+   "vs_ref_pct": 164.7,
+   "review_due": false
   },
   {
    "ticker": "CRCL",
    "name": "Circle Internet Group",
    "category": "IPO-2025",
+   "book": "core",
    "flag_date": "2026-08-11",
    "flag_price": 71.16,
    "ref_label": "IPO $31 (Jun 2025)",
    "ref_price": 31.0,
    "news_tag": "Stablecoins",
    "thesis": "USDC issuer earning Treasury yield on reserves. Stablecoin regulation and crypto-payments adoption are recurring world-news catalysts; rate cuts are the main headwind to its interest income.",
-   "current_price": 71.555,
-   "prev_close": 131.76,
+   "score": {
+    "catalyst": 20,
+    "momentum": 16,
+    "liquidity": 13,
+    "risk": 9,
+    "valuation": 8
+   },
+   "score_total": 66,
+   "stop_pct": -25,
+   "review_date": "2026-11-10",
+   "status": "open",
+   "spy_flag_price": 770.56,
+   "stake": 47.29,
+   "t12": {
+    "bull": 130,
+    "base": 85,
+    "bear": 50
+   },
+   "current_price": 72.154,
    "spark": [
-    78.93,
     82.63,
     77.84,
     83.37,
@@ -822,36 +832,9 @@
     67.05,
     71.16,
     71.28,
-    71.555
+    75.38,
+    72.1535
    ],
-   "shares": 0.664559,
-   "value": 47.55,
-   "pl": 0.26,
-   "pl_pct": 0.56,
-   "day_pct": 0.39,
-   "vs_ref_pct": 130.8,
-   "status": "open",
-   "spy_flag_price": 770.56,
-   "score": {
-    "catalyst": 20,
-    "momentum": 16,
-    "liquidity": 13,
-    "risk": 9,
-    "valuation": 8
-   },
-   "score_total": 66,
-   "stop_pct": -25,
-   "review_date": "2026-11-10",
-   "spy_ret_pct": 0.81,
-   "alpha_pct": -0.25,
-   "stop_price": 53.37,
-   "review_due": false,
-   "book": "core",
-   "t12": {
-    "bull": 130,
-    "base": 85,
-    "bear": 50
-   },
    "targets": {
     "t3": {
      "bull": 100.58,
@@ -869,22 +852,48 @@
      "bear": 50.0
     }
    },
-   "stake": 47.29
+   "shares": 0.664559,
+   "value": 47.95,
+   "pl": 0.66,
+   "pl_pct": 1.4,
+   "spy_ret_pct": 1.05,
+   "alpha_pct": 0.35,
+   "stop_price": 53.37,
+   "day_pct": -4.28,
+   "vs_ref_pct": 132.8,
+   "review_due": false
   },
   {
    "ticker": "KOS",
    "name": "Kosmos Energy",
    "category": "News",
+   "book": "core",
    "flag_date": "2026-08-11",
    "flag_price": 2.56,
    "ref_label": "Pre-spike close",
    "ref_price": null,
    "news_tag": "Venezuela / oil",
    "thesis": "Jumped 13% Monday as the Venezuela blockade aftermath tightens heavy-crude supply. Small-cap offshore producer = high beta to any further supply disruption. Pure world-news flag.",
-   "current_price": 2.525,
-   "prev_close": 2.88,
+   "score": {
+    "catalyst": 21,
+    "momentum": 18,
+    "liquidity": 9,
+    "risk": 6,
+    "valuation": 10
+   },
+   "score_total": 64,
+   "stop_pct": -25,
+   "review_date": "2026-11-10",
+   "status": "open",
+   "spy_flag_price": 770.56,
+   "stake": 45.86,
+   "t12": {
+    "bull": 4.5,
+    "base": 3.2,
+    "bear": 1.8
+   },
+   "current_price": 2.555,
    "spark": [
-    2.98,
     2.89,
     2.87,
     2.54,
@@ -928,36 +937,9 @@
     2.51,
     2.56,
     2.51,
-    2.525
+    2.53,
+    2.555
    ],
-   "shares": 17.914062,
-   "value": 45.23,
-   "pl": -0.63,
-   "pl_pct": -1.37,
-   "day_pct": 0.6,
-   "vs_ref_pct": null,
-   "status": "open",
-   "spy_flag_price": 770.56,
-   "score": {
-    "catalyst": 21,
-    "momentum": 18,
-    "liquidity": 9,
-    "risk": 6,
-    "valuation": 10
-   },
-   "score_total": 64,
-   "stop_pct": -25,
-   "review_date": "2026-11-10",
-   "spy_ret_pct": 0.81,
-   "alpha_pct": -2.18,
-   "stop_price": 1.92,
-   "review_due": false,
-   "book": "core",
-   "t12": {
-    "bull": 4.5,
-    "base": 3.2,
-    "bear": 1.8
-   },
    "targets": {
     "t3": {
      "bull": 3.53,
@@ -975,22 +957,48 @@
      "bear": 1.8
     }
    },
-   "stake": 45.86
+   "shares": 17.914062,
+   "value": 45.77,
+   "pl": -0.09,
+   "pl_pct": -0.2,
+   "spy_ret_pct": 1.05,
+   "alpha_pct": -1.25,
+   "stop_price": 1.92,
+   "day_pct": 0.99,
+   "vs_ref_pct": null,
+   "review_due": false
   },
   {
    "ticker": "TSM",
    "name": "Taiwan Semiconductor",
    "category": "News",
+   "book": "core",
    "flag_date": "2026-08-11",
    "flag_price": 422.06,
    "ref_label": null,
    "ref_price": null,
    "news_tag": "AI chips / Taiwan",
-   "thesis": "Moved on Monday's tape as AI capex headlines continue. The world's chip chokepoint: benefits from every AI announcement, carries every Taiwan-strait headline as tail risk. The control-adjacent large-cap on the board.",
-   "current_price": 433.235,
-   "prev_close": 404.54,
+   "thesis": "Moved on Monday\u2019s tape as AI capex headlines continue. The world\u2019s chip chokepoint: benefits from every AI announcement, carries every Taiwan-strait headline as tail risk. The control-adjacent large-cap on the board.",
+   "score": {
+    "catalyst": 19,
+    "momentum": 15,
+    "liquidity": 15,
+    "risk": 12,
+    "valuation": 10
+   },
+   "score_total": 71,
+   "stop_pct": -15,
+   "review_date": "2026-11-10",
+   "status": "open",
+   "spy_flag_price": 770.56,
+   "stake": 50.88,
+   "t12": {
+    "bull": 560,
+    "base": 480,
+    "bear": 340
+   },
+   "current_price": 428.8,
    "spark": [
-    408.75,
     421.07,
     423.93,
     441.4,
@@ -1034,36 +1042,9 @@
     418.47,
     422.06,
     429.15,
-    433.235
+    430.49,
+    428.8
    ],
-   "shares": 0.120552,
-   "value": 52.23,
-   "pl": 1.35,
-   "pl_pct": 2.65,
-   "day_pct": 0.95,
-   "vs_ref_pct": null,
-   "status": "open",
-   "spy_flag_price": 770.56,
-   "score": {
-    "catalyst": 19,
-    "momentum": 15,
-    "liquidity": 15,
-    "risk": 12,
-    "valuation": 10
-   },
-   "score_total": 71,
-   "stop_pct": -15,
-   "review_date": "2026-11-10",
-   "spy_ret_pct": 0.81,
-   "alpha_pct": 1.84,
-   "stop_price": 358.75,
-   "review_due": false,
-   "book": "core",
-   "t12": {
-    "bull": 560,
-    "base": 480,
-    "bear": 340
-   },
    "targets": {
     "t3": {
      "bull": 491.03,
@@ -1081,7 +1062,16 @@
      "bear": 340.0
     }
    },
-   "stake": 50.88
+   "shares": 0.120552,
+   "value": 51.69,
+   "pl": 0.81,
+   "pl_pct": 1.6,
+   "spy_ret_pct": 1.05,
+   "alpha_pct": 0.55,
+   "stop_price": 358.75,
+   "day_pct": -0.39,
+   "vs_ref_pct": null,
+   "review_due": false
   },
   {
    "ticker": "NIQ",
@@ -1105,10 +1095,14 @@
    "stop_pct": -15,
    "review_date": "2026-08-18",
    "status": "open",
+   "spy_flag_price": 770.56,
+   "stake": 53.02,
    "direction": "bull",
    "eval_date": "2026-08-18",
-   "current_price": 16.73,
+   "current_price": 17.04,
    "spark": [
+    8.24,
+    8.32,
     8.35,
     8.16,
     8.27,
@@ -1136,15 +1130,12 @@
     11.15,
     11.0,
     10.74,
-    10.6,
-    10.63,
     10.43,
     10.75,
     11.07,
     11.7,
     11.97,
     11.38,
-    11.17,
     11.56,
     11.7,
     11.66,
@@ -1153,20 +1144,19 @@
     11.68,
     16.58,
     16.81,
-    16.73
+    16.86,
+    17.04
    ],
-   "spy_flag_price": 770.56,
    "shares": 3.197829,
-   "value": 53.5,
-   "pl": 0.48,
-   "pl_pct": 0.9,
-   "spy_ret_pct": 0.81,
-   "alpha_pct": 0.09,
+   "value": 54.49,
+   "pl": 1.47,
+   "pl_pct": 2.77,
+   "spy_ret_pct": 1.05,
+   "alpha_pct": 1.72,
    "stop_price": 14.09,
-   "day_pct": -0.48,
+   "day_pct": 1.07,
    "vs_ref_pct": null,
-   "review_due": false,
-   "stake": 53.02
+   "review_due": false
   },
   {
    "ticker": "ONON",
@@ -1190,11 +1180,12 @@
    "stop_pct": -15,
    "review_date": "2026-08-18",
    "status": "open",
+   "spy_flag_price": 770.56,
+   "stake": 50.93,
    "direction": "bear",
    "eval_date": "2026-08-18",
-   "current_price": 31.07,
+   "current_price": 32.11,
    "spark": [
-    38.0,
     39.21,
     38.58,
     38.69,
@@ -1238,20 +1229,19 @@
     38.78,
     30.91,
     31.01,
-    31.07
+    31.59,
+    32.11
    ],
-   "spy_flag_price": 770.56,
    "shares": 1.647687,
-   "value": 51.19,
-   "pl": 0.26,
-   "pl_pct": 0.52,
-   "spy_ret_pct": 0.81,
-   "alpha_pct": -0.29,
+   "value": 52.91,
+   "pl": 1.98,
+   "pl_pct": 3.88,
+   "spy_ret_pct": 1.05,
+   "alpha_pct": 2.83,
    "stop_price": 26.27,
-   "day_pct": 0.19,
+   "day_pct": 1.65,
    "vs_ref_pct": null,
-   "review_due": false,
-   "stake": 50.93
+   "review_due": false
   },
   {
    "ticker": "FRMI",
@@ -1275,11 +1265,12 @@
    "stop_pct": -15,
    "review_date": "2026-08-18",
    "status": "open",
+   "spy_flag_price": 770.56,
+   "stake": 46.05,
    "direction": "bull",
    "eval_date": "2026-08-18",
-   "current_price": 6.815,
+   "current_price": 6.43,
    "spark": [
-    6.89,
     6.95,
     7.14,
     7.48,
@@ -1323,20 +1314,19 @@
     5.88,
     7.12,
     7.6,
-    6.815
+    6.6,
+    6.43
    ],
-   "spy_flag_price": 770.56,
    "shares": 6.467697,
-   "value": 44.08,
-   "pl": -1.97,
-   "pl_pct": -4.28,
-   "spy_ret_pct": 0.81,
-   "alpha_pct": -5.09,
+   "value": 41.59,
+   "pl": -4.46,
+   "pl_pct": -9.69,
+   "spy_ret_pct": 1.05,
+   "alpha_pct": -10.74,
    "stop_price": 6.05,
-   "day_pct": -10.33,
+   "day_pct": -2.58,
    "vs_ref_pct": null,
-   "review_due": false,
-   "stake": 46.05
+   "review_due": false
   },
   {
    "ticker": "HTZ",
@@ -1360,14 +1350,15 @@
    "stop_pct": -35,
    "review_date": "2026-11-10",
    "status": "open",
+   "spy_flag_price": 770.56,
+   "stake": 37.89,
    "t12": {
     "bull": 5.0,
     "base": 3.2,
     "bear": 1.4
    },
-   "current_price": 2.536,
+   "current_price": 2.36,
    "spark": [
-    4.98,
     5.04,
     5.13,
     5.13,
@@ -1411,9 +1402,9 @@
     2.12,
     2.45,
     2.8,
-    2.5357
+    2.345,
+    2.36
    ],
-   "spy_flag_price": 770.56,
    "targets": {
     "t3": {
      "bull": 3.73,
@@ -1432,16 +1423,15 @@
     }
    },
    "shares": 15.465306,
-   "value": 39.22,
-   "pl": 1.33,
-   "pl_pct": 3.51,
-   "spy_ret_pct": 0.81,
-   "alpha_pct": 2.7,
+   "value": 36.5,
+   "pl": -1.39,
+   "pl_pct": -3.67,
+   "spy_ret_pct": 1.05,
+   "alpha_pct": -4.72,
    "stop_price": 1.59,
-   "day_pct": -9.43,
+   "day_pct": 0.64,
    "vs_ref_pct": null,
-   "review_due": false,
-   "stake": 37.89
+   "review_due": false
   },
   {
    "ticker": "PLUG",
@@ -1465,14 +1455,15 @@
    "stop_pct": -35,
    "review_date": "2026-11-10",
    "status": "open",
+   "spy_flag_price": 770.56,
+   "stake": 30.43,
    "t12": {
     "bull": 4.5,
     "base": 2.6,
     "bear": 1.2
    },
-   "current_price": 2.32,
+   "current_price": 2.31,
    "spark": [
-    2.86,
     2.83,
     2.76,
     2.8,
@@ -1516,9 +1507,9 @@
     2.11,
     2.22,
     2.29,
-    2.3199
+    2.3,
+    2.31
    ],
-   "spy_flag_price": 770.56,
    "targets": {
     "t3": {
      "bull": 3.36,
@@ -1537,16 +1528,15 @@
     }
    },
    "shares": 13.707207,
-   "value": 31.8,
-   "pl": 1.37,
-   "pl_pct": 4.5,
-   "spy_ret_pct": 0.81,
-   "alpha_pct": 3.69,
+   "value": 31.66,
+   "pl": 1.23,
+   "pl_pct": 4.05,
+   "spy_ret_pct": 1.05,
+   "alpha_pct": 3.0,
    "stop_price": 1.44,
-   "day_pct": 1.31,
+   "day_pct": 0.43,
    "vs_ref_pct": null,
-   "review_due": false,
-   "stake": 30.43
+   "review_due": false
   },
   {
    "ticker": "GERN",
@@ -1570,12 +1560,14 @@
    "stop_pct": -35,
    "review_date": "2026-11-10",
    "status": "open",
+   "spy_flag_price": 770.56,
+   "stake": 31.68,
    "t12": {
     "bull": 3.5,
     "base": 2.1,
     "bear": 0.9
    },
-   "current_price": 1.555,
+   "current_price": 1.48,
    "spark": [
     1.1,
     1.14,
@@ -1605,7 +1597,6 @@
     1.44,
     1.44,
     1.44,
-    1.41,
     1.45,
     1.42,
     1.48,
@@ -1621,9 +1612,9 @@
     1.48,
     1.63,
     1.57,
-    1.555
+    1.54,
+    1.48
    ],
-   "spy_flag_price": 770.56,
    "targets": {
     "t3": {
      "bull": 2.56,
@@ -1642,16 +1633,15 @@
     }
    },
    "shares": 19.435583,
-   "value": 30.22,
-   "pl": -1.46,
-   "pl_pct": -4.6,
-   "spy_ret_pct": 0.81,
-   "alpha_pct": -5.41,
+   "value": 28.76,
+   "pl": -2.92,
+   "pl_pct": -9.2,
+   "spy_ret_pct": 1.05,
+   "alpha_pct": -10.25,
    "stop_price": 1.06,
-   "day_pct": -0.96,
+   "day_pct": -3.9,
    "vs_ref_pct": null,
-   "review_due": false,
-   "stake": 31.68
+   "review_due": false
   },
   {
    "ticker": "RKLB",
@@ -1675,14 +1665,15 @@
    "stop_pct": -40,
    "review_date": "2027-08-11",
    "status": "open",
+   "spy_flag_price": 770.56,
+   "stake": 80.91,
    "t12": {
     "bull": 140,
     "base": 95,
     "bear": 45
    },
-   "current_price": 80.57,
+   "current_price": 81.09,
    "spark": [
-    105.05,
     114.78,
     102.39,
     109.25,
@@ -1726,9 +1717,9 @@
     80.04,
     80.01,
     81.17,
-    80.57
+    80.1,
+    81.09
    ],
-   "spy_flag_price": 770.56,
    "targets": {
     "t3": {
      "bull": 110.0,
@@ -1747,16 +1738,15 @@
     }
    },
    "shares": 1.011249,
-   "value": 81.48,
-   "pl": 0.57,
-   "pl_pct": 0.7,
-   "spy_ret_pct": 0.81,
-   "alpha_pct": -0.11,
+   "value": 82.0,
+   "pl": 1.09,
+   "pl_pct": 1.35,
+   "spy_ret_pct": 1.05,
+   "alpha_pct": 0.3,
    "stop_price": 48.01,
-   "day_pct": -0.74,
+   "day_pct": 1.24,
    "vs_ref_pct": null,
-   "review_due": false,
-   "stake": 80.91
+   "review_due": false
   },
   {
    "ticker": "ASTS",
@@ -1780,14 +1770,15 @@
    "stop_pct": -40,
    "review_date": "2027-08-11",
    "status": "open",
+   "spy_flag_price": 770.56,
+   "stake": 75.93,
    "t12": {
     "bull": 160,
     "base": 90,
     "bear": 30
    },
-   "current_price": 71.77,
+   "current_price": 71.99,
    "spark": [
-    87.32,
     97.56,
     82.41,
     87.57,
@@ -1831,9 +1822,9 @@
     68.76,
     71.63,
     74.31,
-    71.77
+    71.52,
+    71.99
    ],
-   "spy_flag_price": 770.56,
    "targets": {
     "t3": {
      "bull": 115.81,
@@ -1852,16 +1843,15 @@
     }
    },
    "shares": 1.060031,
-   "value": 76.08,
-   "pl": 0.15,
-   "pl_pct": 0.2,
-   "spy_ret_pct": 0.81,
-   "alpha_pct": -0.61,
+   "value": 76.31,
+   "pl": 0.38,
+   "pl_pct": 0.5,
+   "spy_ret_pct": 1.05,
+   "alpha_pct": -0.55,
    "stop_price": 42.98,
-   "day_pct": -3.42,
+   "day_pct": 0.66,
    "vs_ref_pct": null,
-   "review_due": false,
-   "stake": 75.93
+   "review_due": false
   },
   {
    "ticker": "OKLO",
@@ -1885,14 +1875,15 @@
    "stop_pct": -40,
    "review_date": "2027-08-11",
    "status": "open",
+   "spy_flag_price": 770.56,
+   "stake": 68.46,
    "t12": {
     "bull": 110,
     "base": 60,
     "bear": 18
    },
-   "current_price": 46.718,
+   "current_price": 46.66,
    "spark": [
-    54.02,
     57.86,
     57.49,
     60.74,
@@ -1936,9 +1927,9 @@
     44.49,
     47.01,
     45.13,
-    46.718
+    46.45,
+    46.66
    ],
-   "spy_flag_price": 770.56,
    "targets": {
     "t3": {
      "bull": 78.5,
@@ -1957,16 +1948,15 @@
     }
    },
    "shares": 1.456286,
-   "value": 68.03,
-   "pl": -0.43,
-   "pl_pct": -0.62,
-   "spy_ret_pct": 0.81,
-   "alpha_pct": -1.43,
+   "value": 67.95,
+   "pl": -0.51,
+   "pl_pct": -0.74,
+   "spy_ret_pct": 1.05,
+   "alpha_pct": -1.79,
    "stop_price": 28.21,
-   "day_pct": 3.52,
+   "day_pct": 0.45,
    "vs_ref_pct": null,
-   "review_due": false,
-   "stake": 68.46
+   "review_due": false
   },
   {
    "ticker": "TEM",
@@ -1990,14 +1980,15 @@
    "stop_pct": -40,
    "review_date": "2027-08-11",
    "status": "open",
+   "spy_flag_price": 770.56,
+   "stake": 74.69,
    "t12": {
     "bull": 120,
     "base": 80,
     "bear": 35
    },
-   "current_price": 54.07,
+   "current_price": 52.84,
    "spark": [
-    49.48,
     49.59,
     47.82,
     52.32,
@@ -2041,9 +2032,9 @@
     55.06,
     55.69,
     54.61,
-    54.07
+    54.29,
+    52.84
    ],
-   "spy_flag_price": 770.56,
    "targets": {
     "t3": {
      "bull": 87.84,
@@ -2062,16 +2053,15 @@
     }
    },
    "shares": 1.341174,
-   "value": 72.52,
-   "pl": -2.17,
-   "pl_pct": -2.91,
-   "spy_ret_pct": 0.81,
-   "alpha_pct": -3.72,
+   "value": 70.87,
+   "pl": -3.82,
+   "pl_pct": -5.12,
+   "spy_ret_pct": 1.05,
+   "alpha_pct": -6.17,
    "stop_price": 33.41,
-   "day_pct": -0.99,
+   "day_pct": -2.67,
    "vs_ref_pct": null,
-   "review_due": false,
-   "stake": 74.69
+   "review_due": false
   }
  ],
  "watchlist": [
@@ -2120,6 +2110,14 @@
    "invested": 999.98,
    "n_open": 20,
    "n_closed": 0
+  },
+  {
+   "date": "2026-08-14",
+   "value": 1023.08,
+   "spy_value": 1010.54,
+   "invested": 999.98,
+   "n_open": 20,
+   "n_closed": 0
   }
  ],
  "closed": [],
@@ -2140,14 +2138,10 @@
    "status": "open",
    "oi": 31094,
    "iv": 0.33,
+   "entry_spot": 226.44,
    "note": "3.8% OTM weekly, OI 31k, 1.9% spread. Cleanest large-cap expression of the AI signal already driving SKHY/CRWV/TSM in the core book.",
    "target_premium": 9.3,
    "stop_premium": 0.775,
-   "current_bid": 1.19,
-   "current_ask": 1.21,
-   "value": 119.0,
-   "pl": -36.0,
-   "pl_pct": -23.2,
    "conf": 71,
    "conf_band": "B",
    "conf_parts": {
@@ -2167,7 +2161,11 @@
     "days_left_at_exit": 4,
     "iv_vs_realized": 0.84
    },
-   "entry_spot": 226.44
+   "current_bid": 1.1,
+   "current_ask": 1.12,
+   "value": 110.0,
+   "pl": -45.0,
+   "pl_pct": -29.0
   },
   {
    "contract": "AAPL260821C00320000",
@@ -2185,14 +2183,10 @@
    "status": "open",
    "oi": 29116,
    "iv": 0.24,
+   "entry_spot": 305.38,
    "note": "4.8% OTM weekly, OI 29k, 3.7% spread. Deliberately catalyst-free \u2014 the control against the NVDA catalyst trade.",
    "target_premium": 3.24,
    "stop_premium": 0.27,
-   "current_bid": 0.35,
-   "current_ask": 0.36,
-   "value": 140.0,
-   "pl": -76.0,
-   "pl_pct": -35.2,
    "conf": 55,
    "conf_band": "C",
    "conf_parts": {
@@ -2212,7 +2206,11 @@
     "days_left_at_exit": 4,
     "iv_vs_realized": 0.69
    },
-   "entry_spot": 305.38
+   "current_bid": 0.47,
+   "current_ask": 0.56,
+   "value": 188.0,
+   "pl": -28.0,
+   "pl_pct": -13.0
   },
   {
    "contract": "QQQ260821C00750000",
@@ -2253,11 +2251,11 @@
     "days_left_at_exit": 4,
     "iv_vs_realized": 0.61
    },
-   "current_bid": 1.2,
-   "current_ask": 1.22,
-   "value": 120.0,
-   "pl": -23.0,
-   "pl_pct": -16.1
+   "current_bid": 1.1,
+   "current_ask": 1.12,
+   "value": 110.0,
+   "pl": -33.0,
+   "pl_pct": -23.1
   },
   {
    "contract": "PLTR260821C00180000",
@@ -2298,11 +2296,11 @@
     "days_left_at_exit": 4,
     "iv_vs_realized": 0.41
    },
-   "current_bid": 3.25,
-   "current_ask": 3.35,
-   "value": 325.0,
-   "pl": 78.0,
-   "pl_pct": 31.6
+   "current_bid": 3.4,
+   "current_ask": 3.5,
+   "value": 340.0,
+   "pl": 93.0,
+   "pl_pct": 37.7
   },
   {
    "contract": "XLE260821C00062000",
@@ -2343,11 +2341,11 @@
     "days_left_at_exit": 4,
     "iv_vs_realized": 0.9
    },
-   "current_bid": 0.4,
-   "current_ask": 0.45,
-   "value": 240.0,
-   "pl": 18.0,
-   "pl_pct": 8.1
+   "current_bid": 0.64,
+   "current_ask": 0.67,
+   "value": 384.0,
+   "pl": 162.0,
+   "pl_pct": 73.0
   },
   {
    "contract": "IWM260821C00311000",
@@ -2389,7 +2387,7 @@
     "iv_vs_realized": 0.84
    },
    "current_bid": 0.26,
-   "current_ask": 0.27,
+   "current_ask": 0.28,
    "value": 130.0,
    "pl": -90.0,
    "pl_pct": -40.9
@@ -2433,11 +2431,371 @@
     "days_left_at_exit": 4,
     "iv_vs_realized": 0.82
    },
+   "current_bid": 1.09,
+   "current_ask": 1.12,
+   "value": 327.0,
+   "pl": 120.0,
+   "pl_pct": 58.0
+  },
+  {
+   "contract": "SPY260817C00782000",
+   "underlying": "SPY",
+   "type": "call",
+   "strike": 782.0,
+   "expiry": "2026-08-17",
+   "source_call": "1dte: SPY composite BULLISH 89/100 \u2014 trend 30/30, VIX 14.57, breadth 88%",
+   "entry_date": "2026-08-14",
+   "entry_ask": 0.6,
+   "entry_bid": 0.59,
+   "contracts_n": 4,
+   "cost": 240.0,
+   "exit_by": "2026-08-17",
+   "status": "open",
+   "oi": 2781.0,
+   "iv": 0.0682,
+   "entry_spot": 777.84,
+   "note": "0.53% OTM, 1.7% spread, OI 2781.0. Breakeven ratio 0.99 \u2014 needs 0.61% vs 0.62% implied over the hold.",
+   "target_premium": 3.6,
+   "stop_premium": 0.3,
+   "conf": 79,
+   "conf_band": "A",
+   "conf_parts": {
+    "execution": 21,
+    "breakeven": 20,
+    "signal": 25,
+    "clock": 3,
+    "iv_cost": 10
+   },
+   "conf_detail": {
+    "spread_pct": 1.7,
+    "oi": 2781.0,
+    "required_move_pct": 0.61,
+    "expected_move_pct": 0.62,
+    "be_ratio": 0.99,
+    "signal_tier": "model_strong",
+    "days_left_at_exit": 0,
+    "iv_vs_realized": 0.51
+   },
    "current_bid": 0.71,
-   "current_ask": 0.74,
-   "value": 213.0,
-   "pl": 6.0,
-   "pl_pct": 2.9
+   "current_ask": 0.72,
+   "value": 284.0,
+   "pl": 44.0,
+   "pl_pct": 18.3
+  },
+  {
+   "contract": "XLE260821C00063000",
+   "underlying": "XLE",
+   "type": "call",
+   "strike": 63.0,
+   "expiry": "2026-08-21",
+   "source_call": "etf: SPY composite BULLISH 89 \u2014 index-level expression of the model call",
+   "entry_date": "2026-08-14",
+   "entry_ask": 0.33,
+   "entry_bid": 0.3,
+   "contracts_n": 7,
+   "cost": 231.0,
+   "exit_by": "2026-08-18",
+   "status": "open",
+   "oi": 7418.0,
+   "iv": 0.2214,
+   "entry_spot": 61.74,
+   "note": "2.03% OTM, 9.1% spread, OI 7418.0. Breakeven ratio 1.11 \u2014 needs 2.57% vs 2.32% implied over the hold.",
+   "target_premium": 1.98,
+   "stop_premium": 0.165,
+   "conf": 74,
+   "conf_band": "B",
+   "conf_parts": {
+    "execution": 16,
+    "breakeven": 15,
+    "signal": 25,
+    "clock": 8,
+    "iv_cost": 10
+   },
+   "conf_detail": {
+    "spread_pct": 9.1,
+    "oi": 7418.0,
+    "required_move_pct": 2.57,
+    "expected_move_pct": 2.32,
+    "be_ratio": 1.11,
+    "signal_tier": "model_strong",
+    "days_left_at_exit": 3,
+    "iv_vs_realized": 0.9
+   },
+   "current_bid": 0.3,
+   "current_ask": 0.33,
+   "value": 210.0,
+   "pl": -21.0,
+   "pl_pct": -9.1
+  },
+  {
+   "contract": "NFLX260821C00080000",
+   "underlying": "NFLX",
+   "type": "call",
+   "strike": 80.0,
+   "expiry": "2026-08-21",
+   "source_call": "bluechip: thematic alignment with an active world signal, no company-specific event",
+   "entry_date": "2026-08-14",
+   "entry_ask": 0.74,
+   "entry_bid": 0.73,
+   "contracts_n": 3,
+   "cost": 222.0,
+   "exit_by": "2026-08-18",
+   "status": "open",
+   "oi": 35657.0,
+   "iv": 0.3223,
+   "entry_spot": 78.25,
+   "note": "2.24% OTM, 1.4% spread, OI 35657.0. Breakeven ratio 0.94 \u2014 needs 3.18% vs 3.37% implied over the hold.",
+   "target_premium": 4.44,
+   "stop_premium": 0.37,
+   "conf": 74,
+   "conf_band": "B",
+   "conf_parts": {
+    "execution": 25,
+    "breakeven": 20,
+    "signal": 13,
+    "clock": 8,
+    "iv_cost": 8
+   },
+   "conf_detail": {
+    "spread_pct": 1.4,
+    "oi": 35657.0,
+    "required_move_pct": 3.18,
+    "expected_move_pct": 3.37,
+    "be_ratio": 0.94,
+    "signal_tier": "catalyst_soft",
+    "days_left_at_exit": 3,
+    "iv_vs_realized": 1.1
+   },
+   "current_bid": 0.74,
+   "current_ask": 0.77,
+   "value": 222.0,
+   "pl": 0.0,
+   "pl_pct": 0.0
+  },
+  {
+   "contract": "QQQ260821C00750000",
+   "underlying": "QQQ",
+   "type": "call",
+   "strike": 750.0,
+   "expiry": "2026-08-21",
+   "source_call": "etf: SPY composite BULLISH 89 \u2014 index-level expression of the model call",
+   "entry_date": "2026-08-14",
+   "entry_ask": 1.06,
+   "entry_bid": 1.04,
+   "contracts_n": 2,
+   "cost": 212.0,
+   "exit_by": "2026-08-18",
+   "status": "open",
+   "oi": 29069.0,
+   "iv": 0.1419,
+   "entry_spot": 733.26,
+   "note": "2.28% OTM, 1.9% spread, OI 29069.0. Breakeven ratio 1.63 \u2014 needs 2.43% vs 1.49% implied over the hold.",
+   "target_premium": 6.36,
+   "stop_premium": 0.53,
+   "conf": 73,
+   "conf_band": "B",
+   "conf_parts": {
+    "execution": 25,
+    "breakeven": 5,
+    "signal": 25,
+    "clock": 8,
+    "iv_cost": 10
+   },
+   "conf_detail": {
+    "spread_pct": 1.9,
+    "oi": 29069.0,
+    "required_move_pct": 2.43,
+    "expected_move_pct": 1.49,
+    "be_ratio": 1.63,
+    "signal_tier": "model_strong",
+    "days_left_at_exit": 3,
+    "iv_vs_realized": 0.6
+   },
+   "current_bid": 1.1,
+   "current_ask": 1.12,
+   "value": 220.0,
+   "pl": 8.0,
+   "pl_pct": 3.8
+  },
+  {
+   "contract": "NVDA260821C00232500",
+   "underlying": "NVDA",
+   "type": "call",
+   "strike": 232.5,
+   "expiry": "2026-08-21",
+   "source_call": "bluechip: thematic alignment with an active world signal, no company-specific event",
+   "entry_date": "2026-08-14",
+   "entry_ask": 1.55,
+   "entry_bid": 1.54,
+   "contracts_n": 1,
+   "cost": 155.0,
+   "exit_by": "2026-08-18",
+   "status": "open",
+   "oi": 12252.0,
+   "iv": 0.3152,
+   "entry_spot": 225.59,
+   "note": "3.06% OTM, 0.6% spread, OI 12252.0. Breakeven ratio 1.14 \u2014 needs 3.75% vs 3.3% implied over the hold.",
+   "target_premium": 9.3,
+   "stop_premium": 0.775,
+   "conf": 71,
+   "conf_band": "B",
+   "conf_parts": {
+    "execution": 25,
+    "breakeven": 15,
+    "signal": 13,
+    "clock": 8,
+    "iv_cost": 10
+   },
+   "conf_detail": {
+    "spread_pct": 0.6,
+    "oi": 12252.0,
+    "required_move_pct": 3.75,
+    "expected_move_pct": 3.3,
+    "be_ratio": 1.14,
+    "signal_tier": "catalyst_soft",
+    "days_left_at_exit": 3,
+    "iv_vs_realized": 0.83
+   },
+   "current_bid": 1.62,
+   "current_ask": 1.65,
+   "value": 162.0,
+   "pl": 7.0,
+   "pl_pct": 4.5
+  },
+  {
+   "contract": "PLTR260821C00185000",
+   "underlying": "PLTR",
+   "type": "call",
+   "strike": 185.0,
+   "expiry": "2026-08-21",
+   "source_call": "bluechip: thematic alignment with an active world signal, no company-specific event",
+   "entry_date": "2026-08-14",
+   "entry_ask": 1.89,
+   "entry_bid": 1.86,
+   "contracts_n": 1,
+   "cost": 189.0,
+   "exit_by": "2026-08-18",
+   "status": "open",
+   "oi": 14741.0,
+   "iv": 0.452,
+   "entry_spot": 177.67,
+   "note": "4.13% OTM, 1.6% spread, OI 14741.0. Breakeven ratio 1.1 \u2014 needs 5.19% vs 4.73% implied over the hold.",
+   "target_premium": 11.34,
+   "stop_premium": 0.945,
+   "conf": 71,
+   "conf_band": "B",
+   "conf_parts": {
+    "execution": 25,
+    "breakeven": 15,
+    "signal": 13,
+    "clock": 8,
+    "iv_cost": 10
+   },
+   "conf_detail": {
+    "spread_pct": 1.6,
+    "oi": 14741.0,
+    "required_move_pct": 5.19,
+    "expected_move_pct": 4.73,
+    "be_ratio": 1.1,
+    "signal_tier": "catalyst_soft",
+    "days_left_at_exit": 3,
+    "iv_vs_realized": 0.41
+   },
+   "current_bid": 1.81,
+   "current_ask": 1.84,
+   "value": 181.0,
+   "pl": -8.0,
+   "pl_pct": -4.2
+  },
+  {
+   "contract": "LUNR260821C00020000",
+   "underlying": "LUNR",
+   "type": "call",
+   "strike": 20.0,
+   "expiry": "2026-08-21",
+   "source_call": "mover: Q2 earnings, $1B revenue goal reaffirmed, +11.1%",
+   "entry_date": "2026-08-14",
+   "entry_ask": 0.96,
+   "entry_bid": 0.81,
+   "contracts_n": 2,
+   "cost": 192.0,
+   "exit_by": "2026-08-18",
+   "status": "open",
+   "oi": 3329.0,
+   "iv": 1.0008,
+   "entry_spot": 19.5,
+   "note": "2.56% OTM, 15.6% spread, OI 3329.0. Breakeven ratio 0.71 \u2014 needs 7.49% vs 10.48% implied over the hold.",
+   "target_premium": 5.76,
+   "stop_premium": 0.48,
+   "conf": 70,
+   "conf_band": "B",
+   "conf_parts": {
+    "execution": 7,
+    "breakeven": 25,
+    "signal": 22,
+    "clock": 8,
+    "iv_cost": 8
+   },
+   "conf_detail": {
+    "spread_pct": 15.6,
+    "oi": 3329.0,
+    "required_move_pct": 7.49,
+    "expected_move_pct": 10.48,
+    "be_ratio": 0.71,
+    "signal_tier": "catalyst_hard",
+    "days_left_at_exit": 3,
+    "iv_vs_realized": 1.14
+   },
+   "current_bid": 0.81,
+   "current_ask": 0.96,
+   "value": 162.0,
+   "pl": -30.0,
+   "pl_pct": -15.6
+  },
+  {
+   "contract": "IWM260821C00311000",
+   "underlying": "IWM",
+   "type": "call",
+   "strike": 311.0,
+   "expiry": "2026-08-21",
+   "source_call": "etf: SPY composite BULLISH 89 \u2014 index-level expression of the model call",
+   "entry_date": "2026-08-14",
+   "entry_ask": 0.26,
+   "entry_bid": 0.25,
+   "contracts_n": 9,
+   "cost": 234.0,
+   "exit_by": "2026-08-18",
+   "status": "open",
+   "oi": 5614.0,
+   "iv": 0.1236,
+   "entry_spot": 303.95,
+   "note": "2.32% OTM, 3.8% spread, OI 5614.0. Breakeven ratio 1.86 \u2014 needs 2.4% vs 1.29% implied over the hold.",
+   "target_premium": 1.56,
+   "stop_premium": 0.13,
+   "conf": 68,
+   "conf_band": "B",
+   "conf_parts": {
+    "execution": 20,
+    "breakeven": 5,
+    "signal": 25,
+    "clock": 8,
+    "iv_cost": 10
+   },
+   "conf_detail": {
+    "spread_pct": 3.8,
+    "oi": 5614.0,
+    "required_move_pct": 2.4,
+    "expected_move_pct": 1.29,
+    "be_ratio": 1.86,
+    "signal_tier": "model_strong",
+    "days_left_at_exit": 3,
+    "iv_vs_realized": 0.81
+   },
+   "current_bid": 0.26,
+   "current_ask": 0.28,
+   "value": 234.0,
+   "pl": 0.0,
+   "pl_pct": 0.0
   }
  ],
  "closed_options": [
@@ -2579,22 +2937,22 @@
   }
  ],
  "spy_state": {
-  "price": 776.78,
-  "sma20": 754.49,
-  "sma50": 748.46,
-  "ret5": 1.07,
-  "vix": 14.7,
-  "vix_chg5": -3.0,
+  "price": 778.685,
+  "sma20": 756.31,
+  "sma50": 748.97,
+  "ret5": 0.7,
+  "vix": 14.57,
+  "vix_chg5": -2.2,
   "breadth_pct": 88,
   "parts": {
    "trend": 30,
-   "momentum": 19,
+   "momentum": 17,
    "volatility": 20,
    "breadth": 13,
    "news": 9
   },
-  "day_pct": 0.56,
-  "score": 91,
+  "day_pct": 0.1,
+  "score": 89,
   "bias": "BULLISH"
  },
  "spy_calls": [
@@ -2610,6 +2968,21 @@
     "news": 9
    },
    "spy_close": 776.88,
+   "next_ret": null,
+   "outcome": null
+  },
+  {
+   "date": "2026-08-14",
+   "bias": "BULLISH",
+   "score": 89,
+   "parts": {
+    "trend": 30,
+    "momentum": 17,
+    "volatility": 20,
+    "breadth": 13,
+    "news": 9
+   },
+   "spy_close": 778.68,
    "next_ret": null,
    "outcome": null
   }
@@ -2634,67 +3007,120 @@
    "form": "SC 13D",
    "filer": "(none)",
    "subject": "No new activist stakes",
-   "note": "SEC current 13D feed returned zero new filings this window \u2014 no activist positions crossed 5% today."
+   "note": "SEC current 13D feed returned zero new filings this window."
   },
   {
    "date": "2026-08-13",
    "form": "4",
    "filer": "Rainbolt (BancFirst), Bardeen (NY Times)",
    "subject": "Insider transactions",
-   "note": "No Form 4 activity in any name we hold or watch. The Form 4 burst window is 4:00-6:30pm ET \u2014 the close scan is the one that catches these."
+   "note": "No Form 4 activity in any name we hold or watch. The Form 4 burst window is 4:00-6:30pm ET."
+  },
+  {
+   "date": "2026-08-14",
+   "form": "13F-HR",
+   "filer": "SEC current feed \u2014 40+ filings in the sampled window",
+   "subject": "Q2 2026 institutional holdings \u2014 deadline day",
+   "note": "Deadline is TODAY. Filers in this window are mid-size advisors (Alpine Woods, Meeder, AlpInvest, Gould Capital). Holdings are as of Jun 30 \u2014 up to 4.5 months stale. Sentiment only, never a trade signal. The large-fund cohort landed yesterday."
+  },
+  {
+   "date": "2026-08-14",
+   "form": "SC 13D",
+   "filer": "(none)",
+   "subject": "No new activist stakes",
+   "note": "SEC current 13D feed returned zero new filings this window \u2014 no activist crossed 5% in any name on the board."
+  },
+  {
+   "date": "2026-08-14",
+   "form": "4",
+   "filer": "Forrester Research, DyTb LLC, and others",
+   "subject": "Insider transactions",
+   "note": "No Form 4 activity in any held or watched name. The burst window is 4:00-6:30pm ET, so the close scan is the one that catches these \u2014 this morning scan structurally cannot."
   }
  ],
  "spy_entry_candidate": {
-  "scanned_at": "Aug 13, 2026 \u00b7 2:24 PM ET",
-  "spot_at_scan": 776.88,
-  "expiry": "2026-08-14",
+  "scanned_at": "Aug 14, 2026 \u00b7 10:07 AM ET",
+  "spot_at_scan": 778.68,
+  "expiry": "2026-08-17",
   "type": "call",
   "bias": "BULLISH",
-  "score": 91,
-  "realized_vol": 0.139,
+  "score": 89,
+  "realized_vol": 0.132,
   "best": {
-   "strike": 781.0,
+   "strike": 782.0,
    "otm": 0.53,
-   "bid": 0.39,
-   "ask": 0.4,
-   "spread_pct": 2.5,
-   "oi": 3771.0,
-   "iv": 0.0982,
-   "contracts_n": 6,
+   "bid": 0.59,
+   "ask": 0.6,
+   "spread_pct": 1.7,
+   "oi": 2781.0,
+   "iv": 0.0682,
+   "contracts_n": 4,
    "cost": 240.0,
-   "conf": 71,
-   "conf_band": "B",
+   "conf": 79,
+   "conf_band": "A",
    "conf_parts": {
-    "execution": 18,
-    "breakeven": 15,
+    "execution": 21,
+    "breakeven": 20,
     "signal": 25,
     "clock": 3,
     "iv_cost": 10
    },
    "conf_detail": {
-    "spread_pct": 2.5,
-    "oi": 3771.0,
-    "required_move_pct": 0.58,
-    "expected_move_pct": 0.51,
-    "be_ratio": 1.13,
+    "spread_pct": 1.7,
+    "oi": 2781.0,
+    "required_move_pct": 0.61,
+    "expected_move_pct": 0.62,
+    "be_ratio": 0.99,
     "signal_tier": "model_strong",
     "days_left_at_exit": 0,
-    "iv_vs_realized": 0.71
+    "iv_vs_realized": 0.51
    },
-   "target_premium": 2.4,
-   "stop_premium": 0.2
+   "target_premium": 3.6,
+   "stop_premium": 0.3
   },
   "passing": [
    {
-    "strike": 781.0,
+    "strike": 782.0,
     "otm": 0.53,
-    "bid": 0.39,
-    "ask": 0.4,
-    "spread_pct": 2.5,
-    "oi": 3771.0,
-    "iv": 0.0982,
-    "contracts_n": 6,
+    "bid": 0.59,
+    "ask": 0.6,
+    "spread_pct": 1.7,
+    "oi": 2781.0,
+    "iv": 0.0682,
+    "contracts_n": 4,
     "cost": 240.0,
+    "conf": 79,
+    "conf_band": "A",
+    "conf_parts": {
+     "execution": 21,
+     "breakeven": 20,
+     "signal": 25,
+     "clock": 3,
+     "iv_cost": 10
+    },
+    "conf_detail": {
+     "spread_pct": 1.7,
+     "oi": 2781.0,
+     "required_move_pct": 0.61,
+     "expected_move_pct": 0.62,
+     "be_ratio": 0.99,
+     "signal_tier": "model_strong",
+     "days_left_at_exit": 0,
+     "iv_vs_realized": 0.51
+    },
+    "target_premium": 3.6,
+    "stop_premium": 0.3
+   },
+   {
+    "strike": 783.0,
+    "otm": 0.66,
+    "bid": 0.41,
+    "ask": 0.42,
+    "spread_pct": 2.4,
+    "oi": 3282.0,
+    "iv": 0.0683,
+    "contracts_n": 5,
+    "cost": 210.0,
     "conf": 71,
     "conf_band": "B",
     "conf_parts": {
@@ -2705,70 +3131,86 @@
      "iv_cost": 10
     },
     "conf_detail": {
-     "spread_pct": 2.5,
-     "oi": 3771.0,
-     "required_move_pct": 0.58,
-     "expected_move_pct": 0.51,
-     "be_ratio": 1.13,
+     "spread_pct": 2.4,
+     "oi": 3282.0,
+     "required_move_pct": 0.72,
+     "expected_move_pct": 0.62,
+     "be_ratio": 1.16,
      "signal_tier": "model_strong",
      "days_left_at_exit": 0,
-     "iv_vs_realized": 0.71
+     "iv_vs_realized": 0.52
     },
-    "target_premium": 2.4,
-    "stop_premium": 0.2
+    "target_premium": 2.52,
+    "stop_premium": 0.21
    }
   ],
   "near_misses": [
    {
-    "strike": 779.0,
-    "otm": 0.27,
-    "ask": 0.9,
-    "spread_pct": 1.1,
-    "oi": 2923.0,
-    "fail": "premium $0.90 outside $0.30-$0.60"
-   },
-   {
     "strike": 780.0,
-    "otm": 0.4,
-    "ask": 0.61,
-    "spread_pct": 1.6,
-    "oi": 135741.0,
-    "fail": "premium $0.61 outside $0.30-$0.60"
+    "otm": 0.28,
+    "ask": 1.14,
+    "spread_pct": 0.9,
+    "oi": 7568.0,
+    "fail": "premium $1.14 outside $0.30-$0.60"
    },
    {
-    "strike": 782.0,
-    "otm": 0.66,
-    "ask": 0.26,
-    "spread_pct": 3.8,
-    "oi": 3245.0,
-    "fail": "premium $0.26 outside $0.30-$0.60"
-   },
-   {
-    "strike": 783.0,
-    "otm": 0.79,
-    "ask": 0.18,
-    "spread_pct": 5.6,
-    "oi": 2624.0,
-    "fail": "premium $0.18 outside $0.30-$0.60"
+    "strike": 781.0,
+    "otm": 0.41,
+    "ask": 0.83,
+    "spread_pct": 1.2,
+    "oi": 2151.0,
+    "fail": "premium $0.83 outside $0.30-$0.60"
    },
    {
     "strike": 784.0,
-    "otm": 0.92,
-    "ask": 0.12,
-    "spread_pct": 8.3,
-    "oi": 5222.0,
-    "fail": "premium $0.12 outside $0.30-$0.60"
+    "otm": 0.79,
+    "ask": 0.29,
+    "spread_pct": 3.4,
+    "oi": 1883.0,
+    "fail": "premium $0.29 outside $0.30-$0.60"
    },
    {
     "strike": 785.0,
+    "otm": 0.92,
+    "ask": 0.2,
+    "spread_pct": 5.0,
+    "oi": 4511.0,
+    "fail": "premium $0.20 outside $0.30-$0.60"
+   },
+   {
+    "strike": 786.0,
     "otm": 1.05,
-    "ask": 0.09,
-    "spread_pct": 11.1,
-    "oi": 8846.0,
-    "fail": "premium $0.09 outside $0.30-$0.60"
+    "ask": 0.14,
+    "spread_pct": 7.1,
+    "oi": 3365.0,
+    "fail": "premium $0.14 outside $0.30-$0.60"
+   },
+   {
+    "strike": 787.0,
+    "otm": 1.18,
+    "ask": 0.1,
+    "spread_pct": 10.0,
+    "oi": 1790.0,
+    "fail": "premium $0.10 outside $0.30-$0.60"
+   },
+   {
+    "strike": 788.0,
+    "otm": 1.31,
+    "ask": 0.08,
+    "spread_pct": 12.5,
+    "oi": 3941.0,
+    "fail": "premium $0.08 outside $0.30-$0.60"
+   },
+   {
+    "strike": 789.0,
+    "otm": 1.43,
+    "ask": 0.06,
+    "spread_pct": 16.7,
+    "oi": 1713.0,
+    "fail": "premium $0.06 outside $0.30-$0.60"
    }
   ],
   "informational": true,
-  "rule_note": "Today's one-strike 1DTE slot has already fired (SPY 784C) and stopped out, and the 8-contract daily cap is also used up \u2014 8 entered today. This panel is a LIVE ENTRY CHECK only; nothing here is logged to options_positions, because discretionary same-day re-entries would corrupt the 20-contract sample the book exists to measure."
+  "rule_note": "Today's one-strike 1DTE slot fired (see above) and is now tracked. 8 of 8 daily contract slots used. This panel is a LIVE ENTRY CHECK only; nothing here is logged twice, because discretionary same-day re-entries would corrupt the 20-contract sample the book exists to measure."
  }
 }
