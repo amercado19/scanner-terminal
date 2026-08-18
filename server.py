@@ -88,7 +88,7 @@ def get_spy():
         # small server-side freshness helper for the UI
         epoch = doc.get("updated_epoch")
         if epoch:
-            doc["age_seconds"] = int(dt.datetime.utcnow().timestamp()) - int(epoch)
+            doc["age_seconds"] = int(dt.datetime.now(dt.timezone.utc).timestamp()) - int(epoch)
         return JSONResponse(doc, headers={"Cache-Control": "no-store"})
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)

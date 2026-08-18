@@ -197,7 +197,7 @@ def fetch_gex(symbol: str) -> dict:
         raw = r.json()
         parsed = _parse_gex(raw)
         parsed["available"] = True
-        parsed["as_of"] = dt.datetime.utcnow().isoformat() + "Z"
+        parsed["as_of"] = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         parsed["stale"] = False
         _GEX_CACHE["data"] = parsed
         _GEX_CACHE["ts"] = now
@@ -449,11 +449,11 @@ def run_cycle() -> dict:
     }
     narrative = build_narrative(metrics_for_llm)
 
-    now = dt.datetime.utcnow()
+    now = dt.datetime.now(dt.timezone.utc)   # tz-aware => correct epoch on any host
     doc = {
         "_id": DOC_ID,
         "symbol": SYMBOL,
-        "updated_at": now.isoformat() + "Z",
+        "updated_at": now.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
         "updated_epoch": int(now.timestamp()),
         "data_source": source_label,
         "price": {
