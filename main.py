@@ -235,6 +235,56 @@ def _parse_gex(raw: dict) -> dict:
 
 
 # ----------------------------------------------------------------------------
+# Options-chain metrics (nearest expiry) via yfinance. Never raises.
+# ----------------------------------------------------------------------------
+def fetch_options_chain_metrics(spy_price: float) -> dict:
+    """ATM IV, 1-sigma expected move + bounds, and put/call volume ratio for the
+    nearest expiry. yfinance options data is delayed and can be blocked from
+    cloud IPs, so this is wrapped so a failure degrades gracefully."""
+    out = {"available": False}
+    try:
+        import yfinance as yf
+        spy = yf.Ticker(SYMBOL)
+        exps = spy.options
+        if not exps:
+            out["reason"] = "no expirations"
+            return out
+        target_exp = exps[0]                      # nearest expiration (0DTE if listed today)
+        chain = spy.option_chain(target_exp)
+        calls, puts = chain.calls, chain.puts
+
+        # Put/Call volume ratio
+        cvol = float(calls["volume"].fillna(0).sum())
+        pvol = float(puts["volume"].fillna(0).sum())
+        pcr = round(pvol / cvol, 2) if cvol > 0 else None
+
+        # ATM call IV = strike nearest spot. impliedVolatility is a FRACTION (0.14 = 14%).
+        idx = (calls["strike"] - spy_price).abs().idxmin()
+        atm_iv = float(calls.loc[idx, "impliedVolatility"])
+        if not (atm_iv > 0):
+            out["reason"] = "no ATM IV"
+            return out
+
+        # 1-sigma expected move (~1 trading day) = S * IV_fraction * sqrt(1/365)
+        em = spy_price * atm_iv * math.sqrt(1.0 / 365.0)
+
+        return {
+            "available": True,
+            "0dte_expiration": target_exp,
+            "atm_iv": round(atm_iv, 4),
+            "atm_iv_pct": f"{atm_iv * 100:.2f}%",
+            "expected_move": round(em, 2),
+            "expected_move_range": f"±${em:.2f}",
+            "upper_expected_bound": round(spy_price + em, 2),
+            "lower_expected_bound": round(spy_price - em, 2),
+            "put_call_ratio": pcr,
+        }
+    except Exception as e:
+        out["reason"] = f"error:{e}"
+        return out
+
+
+# ----------------------------------------------------------------------------
 # Deterministic rule engine  ==  THE TRADE TRIGGER (reproducible, backtestable)
 # ----------------------------------------------------------------------------
 def compute_rule_signal(price: float, vwap: float, bb: dict, gex: dict) -> dict:
@@ -442,6 +492,9 @@ def run_cycle() -> dict:
         warnings.append(f"GEX unavailable: {gex['reason']}")
 
     signal = compute_rule_signal(last, vwap, bb, gex)
+    options_ctx = fetch_options_chain_metrics(last)
+    if not options_ctx.get("available") and "reason" in options_ctx:
+        warnings.append(f"Options metrics unavailable: {options_ctx['reason']}")
 
     metrics_for_llm = {
         "symbol": SYMBOL, "price": last, "vwap": round(vwap, 2),
@@ -468,6 +521,7 @@ def run_cycle() -> dict:
         },
         "bollinger": bb,
         "gex": gex,
+        "options_chain_context": options_ctx,
         "signal": {
             "bias": signal["bias"],
             "action": signal["action"],

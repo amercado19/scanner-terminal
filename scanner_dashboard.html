@@ -134,6 +134,15 @@
       <div class="metric"><span class="k">Put Wall</span><span class="v" id="putWall">—</span></div>
     </div>
     <div class="card full">
+      <h3>Options Chain (0DTE)</h3>
+      <div class="metric"><span class="k">Expiration</span><span class="v" id="optExp">—</span></div>
+      <div class="metric"><span class="k">ATM IV</span><span class="v" id="atmIv">—</span></div>
+      <div class="metric"><span class="k">Expected Move (1σ)</span><span class="v" id="expMove">—</span></div>
+      <div class="metric"><span class="k">Upper Bound</span><span class="v" id="upperBound">—</span></div>
+      <div class="metric"><span class="k">Lower Bound</span><span class="v" id="lowerBound">—</span></div>
+      <div class="metric"><span class="k">Put/Call Ratio</span><span class="pill mid" id="pcr">—</span></div>
+    </div>
+    <div class="card full">
       <h3>Narrative</h3>
       <div id="narrTag" class="tag" style="display:none">LLM commentary — not a signal</div>
       <div class="narrative" id="narrative">—</div>
@@ -214,6 +223,20 @@ function render(doc){
   $("gexFlip").textContent = g.gamma_flip!=null?fmt(g.gamma_flip):"—";
   $("callWall").textContent = g.call_wall!=null?fmt(g.call_wall):"—";
   $("putWall").textContent = g.put_wall!=null?fmt(g.put_wall):"—";
+
+  // Options chain (0DTE)
+  const o = doc.options_chain_context || {};
+  const oOk = !!o.available;
+  $("optExp").textContent   = oOk && o["0dte_expiration"] ? o["0dte_expiration"] : "—";
+  $("atmIv").textContent    = oOk && o.atm_iv_pct ? o.atm_iv_pct : "—";
+  $("expMove").textContent  = oOk && o.expected_move_range ? o.expected_move_range : "—";
+  $("upperBound").textContent = oOk && o.upper_expected_bound!=null ? fmt(o.upper_expected_bound) : "—";
+  $("lowerBound").textContent = oOk && o.lower_expected_bound!=null ? fmt(o.lower_expected_bound) : "—";
+  const pcrEl = $("pcr");
+  if(oOk && o.put_call_ratio!=null){
+    pcrEl.textContent = fmt(o.put_call_ratio);
+    pcrEl.className = "pill " + (o.put_call_ratio>1 ? "below" : "above");  // >1 = put-heavy (bearish tilt)
+  } else { pcrEl.textContent = "—"; pcrEl.className = "pill mid"; }
 
   // Narrative
   const nr = doc.narrative || {};
