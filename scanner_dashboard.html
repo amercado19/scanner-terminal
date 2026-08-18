@@ -1,713 +1,256 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Scanner Terminal</title>
-<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAACDElEQVR42u2bvW3DMBCFScKtNkgfF7I2yAaqs4MzggbwCM4OrrOBN3BcyL020ABKYSigCZKixB/c8XidIcHA9+7u3dGWOHOIqqomhjDGceRL9/AcwdcIwXMGdxFCUIE3sQkq8CZGQQlexyoY8RDUsq9WAfkK4BSzbx2DRYBMou56Vnf94n27HEBJV8Dv27vx2v20p9ECOlAX+GKCuQig+oBr9tGa4HR+ri6H4cHY8OoFh+FBowJkUNkIbaaYjQAmeBIeIPe7Lzw6AULDoxIgBjzKFlgz4tAKMI+5UPs+6gqQ4UNnH1ULxIAHL0DM0ge3Ctv6Plb2UbRAyJGHRoB51Y0ND1KAtac5NfgXh+cB16ZhH7dbsEOODDmdp9XQ4FsgRemDE2Br6ftkn7GI/wxdm8Z6XW6JpYOOLySaFkhZ+mAESLHtgRXA5Ywfs/y9xqDraNPFsb2wun1dczkLN9rAngWO7SXJfg9OABn8++fzOQWAGO9ubdmbPuvaQQcOLYJXwGxsRw/wVP0fVAB1nEHNeBQBtOZm2QS3Tg9wAsjgqrPLkD4jE6wAqsFBBQwuwBZnhyyOswB11/87OyaTCyKA7PA6cKzlv/h7gO3RE8jGFuw0OAPfT3swu3vSCqAQ5TE5l1fLco1xHHmpgFkJitkvHiALQKkKZFZhukABXtsCOYugYysvT7t8Qc6vz/8B7+zaiU8cB7EAAAAASUVORK5CYII=">
-<link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAAE10lEQVR42u3dvXHUQBiA4V0N6XVADgG4A3dATA+4BAqgBOiBmA7owBBATgcq4Ihuxhj7TjpJq91vnzdjxn/gZz4+/d3ltGOHw+GYFK5xHPNe3zvDq0jIM8SKhDuDrEiwM8iKBDuDrEiwB5hVS2tYGmBWJNQZZEVaQQaYFWlaDzArEuoBZkVCPcCsSKgHmBUJ9eCfSZEaTGdFmtIDzIqEeoBZkVDboRV7hzad1fKUNqEVd0Kbzmp9SpvQijmhTWdFmNImtOLu0FII0NYNRVk7TGhZOSSgJaClmaAdEGrr3nz8VezA0IRWEcylUGcTWiWn8c9Przf9/i/8ClRqjdgaM9Aqtv+WwJySsxy60I+Xr5r6eYHW5qhLTWegVSVKoCWgVWJKl57sQCvU6gG0NkO9B36gNbtSl7GBVteYgdZizM+tFXvt2kAr1AGiu+2UUkrp+Pk8g7d/fv/z54dXD/Nd/m96m9BqBvNTn/8Q8J6TG2iYZ2N+6t6Ox6iBVnVNxVzTXg20VsNcQ0ArDGagFQoz0AqFGWiFwgy0QmEGWqEwA915T91s1DJmoGEOhTklLzQDciDMJjTMoTADDXO4gO68SNMZ6M6ncyuvhgS0uls1gO4cc8TpDHSnRcUMdAMdPx8vPibV+94MtL0ZaNmbgZa9GWitPZ17wQy0vRlo2ZuBFsxAy0Eg0KZzx5iBdhAYLo9gVdCUS9sPP+bcy9v2PJ1N6EYw25uBDov5uekMM9DNdemV9AV0CMzRngsEuuNgBjrMdF4Dc77Lq/yMa30doO3Nu2OsBXNKzkPbmy+gPJ2JqQmtCW1vtkMr7t4MdMd9v7lJ329uwu3NQCvc3gy0YAZaDgLL5bSdg8CztXK6zoRuZNUQ0PZmoGVvBlpB92YHhY035cLJcx9ze39/1ff0kKsJvRvmtT//HGbTGejdMK/9dWAGurl6ePNLO3THkAV0OMims5Wjecyn19GA2YQOMZXffPwFM9Ax9uTTdM4pr/JSYK3dQLRl+XA4HHv9y691uu3Du6+zID9uCWqYTehVW4r5EsrWnroGumPI6gz0aSW49n4JkIEWyECDDDPQgTB/+fa+qrUIaF0NWUCDLKBB1pQGmGGOVBWXvpdcgt76mb6pkB0UWjkWYz59/hxMa0MW0KthnoMaZDt0mGA2oUEW0CAL6B0wn+65uF1pj3eGA+jdpvLjG4hu7+93OW0ooJ9tysWRc3fCnUNZ4z3ZCgp6KWQB3QxkmIE2lQW0qSygQVaPoKdgPl0cufW7VK2ga7pH2ek6oENAFtDF1gupWtCmssKANpUVAvSUG4nmQHbgpl1Ab3GfMsx6WLGnvufcp3zKnW6qbkJfe5+ydE2bPyR7CerPT69hVtsHhSaymp3QT+GFWSEmNMgKMaFhVqm6fp9CBZzQ4zh6AzyFaBzH7M3rZYeWgJaAlq4A7cBQEQ4ITWhZOaQmQFs71Pq6YUIr9sphSqvl6WxCK/5BoSmtVqezCa34E9qUVqvT+eyEhlqtYb64ckCtljDbodXHDm1Kq8XpPHlCQ60WMM9aOaBW7Zhn79BQq2bMVx0UQq1aMaeU0iKcXtNDtUC+ekKb1qoV82LQUKsmzItXDiuIaoG8CWiwtff/7puuC2Cr9JpabP+FG+IS32fXAzrI4V27vyNXSq+UiC+oAAAAAElFTkSuQmCC">
-<meta name="theme-color" content="#0d0d0d">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Scanner">
-<link rel="manifest" href='data:application/manifest+json,{&quot;name&quot;: &quot;Scanner Terminal&quot;, &quot;short_name&quot;: &quot;Scanner&quot;, &quot;display&quot;: &quot;standalone&quot;, &quot;background_color&quot;: &quot;#0d0d0d&quot;, &quot;theme_color&quot;: &quot;#0d0d0d&quot;, &quot;icons&quot;: [{&quot;src&quot;: &quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAFAUlEQVR42u3dzU0bURRA4TejbN0Be7wgdJAOsqaHUAIFUAL0kDUdpAPwguzTwRTgLKJEDsI28//eu99ZRUpEJOucd+/YnqFJK7PZbPYJYem6rlnz/28Ij8hBNKRH5Bga4iNyCA3xETmEhviIHEJDfEQOoSU/SmUK91ryI3IEDfEReSVqyY/I06AlPyJH0JIfkSNoyY/IEbReKkSmnaokoMQp0JIfkSNoyY/IEbgGgGsApz+iTgETACaA0x9Rp4AJABPA6Y+oU8AEgAng9EfUKWACwAQAQgdg/UHUNcgEgAkACAAISGP/hwkAZMDV3asJAPKnlNLufrvI//vJS48op70JgKJEX2IKmADI8jRfagVyEYxR7B/26eXiskj5BYDJmCqCJeUXAIo9uQUAAQkAJBYAKohgrXAEgNCTQAAIjQAwC30+HFtzWggAq8pvAoD8AkDt8h9bc9a+WPZlOHyI/cPpLw1//vXz6N+9XFym9JDS7nab3YQwATC//Ac/5/DEz+GtUgFgEfmPRSAAFEtf+XPa/QWA1eR3DQDyCwDkFwDILwCQXwAgvwBAfgEgE059baEG+QWA0PILAKHlFwBCyy8AhJZfAAgtvwAQHgEg7OkvAAy6j1cAqF5+KxBCE+H0T8lTIYrl8F7d5rax+pgAIL8AYO8XAOz9AoDVRwAgvwDIb+8XAJz+AnD6k18A5Ce/AOz9EIC9H74LlDnnns//3r859Swf8psAVcn/FvILgPwQAJz+AghE7c/wFADILwCQXwBY8KJ3yO2WS/48AWD2038qaXOTPyUfhFl9Rso79uZ8EwD2fgEgp70/ElagHvy4vv735y/Pz1Xv/SYArD4CAPkFAHu/awDkydqnf4lvfZoAVh8IgPwQgL1fALD3CwAZEfmX1i1+Eb/ZbPZehv85/MR3CGM+JZ5L/tLfrTEBCpF/zM/wMCsBFC//HD/L6iMAez9mwSfBGYtPfgGEFR9WoPDyO/1NgLCnPvkFEHbd2d1vU5OaQc8HfQ+fAQigGPHfijs2AvILYHG+ff0+SvyPCFz640hcBJP/rPwwAYgPAeT8OBLiC8CJT3wBkJ/4AiA++QVA/Menmz/XK146AUQUHwIgPorAB2HkD01WN8XnejP6UPFzfIQ6Ml2BproZvY90Q25KceILIEv5+0RAfIS9CJ5j1YEAqhOf/AIgPgQQSf7d/Xay6xHvAAmgKPEPxV3z7VgIYDB9P8R6K/85gXP/NakIGsBU4kMA1ctPfFQRgFMfIQMgPsIGYN1ByACIj5ABDFl3Hp9u3IqI8gPI8cYU7/0LIKT4EEC26w5QdABXd6/pG/ERMQA3pyBkAL6jj5ABLCG+d2qQZQBLrDvkR19mfy7Q2N+TlZLv4WM+Zn8yXJ+vJfgKA0JcBBMfYSbAKcF391vyo/4AnPoIH8Bf4Z36CDsBiI/cyOrx6ECYawAgiwC6rmu8DIhI13WNCQArECAAIGoArgMQcf83AWACeAkgAGsQAq4/JgBMgGNlALWf/iYATIBzhQC1nv4mAEyAj5YC1Hb6mwAwAfoWA9Ry+p+dACJAzfJ/aAUSAWqV3zUAXANMVRJQ2unfawKIALXJ33sFEgFqkn/QNYAIUIv8KaU0SmYP1UKp4g+eAKYBapF/dAAiQMnyj16BrEQoVfxZAhACShF/1gCEgNzFXyQAISD368vFL2DFgLWlXzUAQWBN4d/yG87pYmf8jLwZAAAAAElFTkSuQmCC&quot;, &quot;sizes&quot;: &quot;192x192&quot;, &quot;type&quot;: &quot;image/png&quot;}, {&quot;src&quot;: &quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AAAOwElEQVR42u3dwVUc19qF4apaTCsDzcUAdwZkoLFyMCEQACGgHDxWBmTQYoDnyoAAyhNrLRkhaHBV9znffp7hfwdXtO+/3n2+xvY4cFTzPC8+BYBfPT4+jj6F4/FhizyAcWAAIPYARoEBgOADGAQGgOgDYAwYAIIPgEFgAAg/AIaAASD6ABgDBoDwA2AIGADCD4AhYACIPgDGgAEg/AAYApuaxB8A8loy+osFAHnXgDI/jPADYAgEDQDhB8AQeLuufwdA/AHQoKALgPAD4BoQdgEQfwC0KWwAiD8AGrWO0YcKAOvq4SuB5i8A4g+Aa0DYABB/AIyAbYw+NADYVotfCTR3ARB/AFwDwgaA+ANgBIQNAPEHwAgIGwDiD4AREDYAxB8AIyBsAIg/AEZA2AAQfwCMgNO1cEr7gQHACDjBABB/ADh9G6fqPyAAGAEnHADiDwDttHKq9gMBgBHQwAAQfwBor51T7z8AABgBDV4AAID2bDYAvP4BoN2WTr39gQHACGhwAIg/ALTfVr8DAACBVh0AXv8A0McVYGr1DwYAbNfaqbU/EACwfXP9DgAABPrfA8DrHwD6uwJMp/4DAADHb7CvAAAg0LsHgNc/APR7BXABAAAXAK9/AEi4ArgAAIALgNc/ACRcAaat/wsAgPZGgK8AACDQwQPA6x8A6lwBXAAAwAUAADAA/uX8DwB9OLTZLgAA4ALg9Q8ACVcAFwAAcAHw+geAhCuACwAAuAAAANEDwPkfAPr2UstdAADABcDrHwASrgAuAADgAgAAGAAAQMYA8P0/ANTyXNtdAADABQAAiBsAzv8AUNPTxrsAAED6BQAAMAAAgOoDwPf/AFDbz613AQCA5AsAAGAAAAAGAABQbgD4BUAAyPCj+S4AAJB6AQCAXl1cP/gQDAAAEuNvBBgAAIS+/I0AAwCAsPgbAQYAAKHxNwLeZvS3AAJQJf5P3d+c+9BcAABIij8uAAAER98VwAAAIPRlbwQYAAAUjbwRYAAAEBp5I8AAACAw8EbA4c58BABUi7z4v87fBghARCDF3wAAICyU4v8rXwEAhFtun/lVsO/i7wIAQJxvHz6KvwEAgBEg/gYAAEaA+BsAANTWW0zF3wAAwFjBAACgcljF3wAAICyw4m8AABAWWvE3AAAQXAwAAIwRDAAAhBcDAAAjwAAAgM5GgAFiAADgEoABAAAYAACU4+pgAABwYhfXDz4EAwAA8ff6NwAAEH8MAADEHwMAAPF/E+d/AwAAL38MAADEHwMAgHLxd/43AADw8scAAGArf3z/u4k/h9e/AQBAWPwxAAAQfwwAAHqL//3N+ZvP+c7/BgAAncdf1Ntx5iMA6Ndyu3QXf1wAAAiI/7cPH5/9sx4yCgwHAwCAn8LfU/xfGiwCbwAAcALHiv97RoBxYAAA8EJAe4m/S4ABAEBo/Lf4WTAAAOgg/r/jbxM0AAAIi7/wGwAAhMbfCDAAAAiNPwYAAOKPAQCA+GMAACD+GAAAiD8GAID4iz8GAID4iz8GAID4iz8GAID4i78BAID4i78BAID4YwAAIP4YAACIPwYAAOKPAQCA+GMAACD+GAAAvMXF9YP4YwAAiL/4YwAAiL/4YwAAiL/4YwAAiL/4YwAAiD8YAADijwEAgPhjAAAg/hgAAIg/BgAA4o8BAID4YwAAcCLijwEAEPb6F38MAADxBwMAoDLxxwAACHv9iz8GAID4gwEAIP5gAACUIf4YAABhr3/xxwAAEH8wAADEHwwAgDLub859CBgAAGmvfzAAAMLi7/WPAQAg/mAAAFQm/hgAAIGvfzAAAMLi7/WPAQAg/mAAAFQm/hgAAIGvfzAAAMLi7/WPAQAg/mAAAFQm/pzCmY8AaMlyu7z4n49XY7nXP7gAADTO6R8DAED8xR8DAADxxwAA8PoHAwBA/L3+MQAAxB8MAIAE4o8BABD4+gcDACAs/l7/GAAA4g8GAEBl4o8BABD4+gcDACAs/l7/GAAA4g8GAEBl4o8BABD4+gcDACAs/l7/GAAA4g8GAEBl4o8BABD4+gcDACAs/l7/GAAA4g8GAEBl4o8BABD4+gcDACAs/l7/GAAA4g8GAEBl4o8BABD4+gcDACAs/l7/GAAA4g9dO/MRAGtZbpd2/ju+iz+4AAAl4n+oP77/7S8IuAAAKeHfIv5e/7gAADRO/MEAAAJf/+IPBgAQFn/f+4MBAIRx+gcDABB/8QcDABB/8QcDAAAwAACv/x++ffjoQ8UAABB/MAAAxB8MAADAAADw+gcDAED8wQAAEP+VjFdjmb+mlX4WAwCgA17+YAAAga9/L2c/AwYAEBb/Kq//ngMq/gYAgPiHhVT8DQCAo6r6vX8vQR2vRvFv0JmPAKj++q9sjbAut4uXuwsAQK34+61/MAAA8QcMAKAy8QcDAAh8/QMGABAWf69/MAAA8QcMAKAy8QcDAAh8/QOH8w8Cglfc7XYv/ueX+70PqYH4e/2DCwAg/oABAFQm/mAAAIGvf8AAAMLi7/UPBgAg/oABAFQm/mAAAIGvf8AAAMLi7/UPBgAg/oABAFQm/rAu/yhgoIvXP9sZr0YfggsAQHvx9/oHAwAQf8AAACoTfzAAgMDXP2AAAGHx9/oHAwAQf8AAACoTfzAAgMDXP2AAAGHx9/oHAwAQf8AAACoTfzAAgA5cXD/4EMAAAMTf6x8MAED8xR+a518HTGl3u13z/x2X+33kXxvxBxcA6Db+a/05e/iz+t4fahnneV58DAh/G1q9BqSc/ser0f8D4QIAGC9J8QcDAATUz7AR8QcDAISzg5/F9/5gAABhnP7BAADEX/zBAAAQf+idfxAQsNnLHzAAgMDwe/1Du3wFAOIv/uACAAi/+IMBAAg/YAAAwu/1DzX4HQAQf/EHFwBA+MUfDABA+AEDABB+r3+owe8AgPiLP7gAAMJ/mPub82G5Xcp8juPV6H9MGACA8L8Wf8AAAELDP16NJa4AXv8YAIDwv/HF3/sIEH9S+SVAEP93x7/3iIo/LgCA8L8j/L1eAoQfhmGc53nxMVDB3W5X5mf589Nf3YR/ba+NCPEGFwAoJzn8wHH5HQAQf/EHFwBA+AEDABB+wAAAhB+owe8AgPgDLgCA8AMGACD8gAFAG177B95c7vc+JOEHMABA+AH+yy8BgvgDLgCA8AMGACD8gAEACD9Qg98BAPEHXAAA4QcMABB+4QcMABD+7X35+nkYhmG49JcB2JDfAYAG4w/gAgDCD2AAgPADGAAg/AAGAAg/wCH8EiDiL/6ACwAIv/ADBgAIv/ADBgAIv/ADNfgdAMRf/AEXABB+4QcSjPM8Lz6G47nb7Zr/M17u9119phfXDyXD39tfB8AFgI7j//Ofs/UAVQ0/wDH4HYAjBbWX+PcyWMQfwAWAjUdAS5cA4QcwALyig0aA8AMYAOIfNAKEH8AAIMyp4i/8gAEAQeEXf8AAAOEHMACgavyFHzAAQPgBDACoGH7xBzAAEH4AAwCqxl/4AQwAhB8AA4CK4a8Qf/8qYMAAQPy9+gEMAIT/d+5vzofLof9/B4PXP2AAIPwHhv9pQHsdAeIPHMvkI6BS/HsOqfgDLgAI/zvD3+MlQPgBAwDhXyH8a8f1tREh4ECPfAVA2fgD4ALA//Tnp7+Gi0/CD2AAEBN+L34AAwDxF34AAwDhF38AAwDhF34AAwDhF36ANvnbAMVf/AFcABB+4QcwABB+4QcoyVcA4i/+AC4ACL/wAxgACL/wA5TkKwDxF38AFwCEX/gBDACEX/gBSvIVgPiLP4ALAMIv/AAGAMIv/AAGALnx//L183C530d+5qk/N2AAEP7q//L1s78AAAYAwg+AAYDwA9Adfxug+Is/gAsAwg+AAYDwA1CSrwDEHwAXAIQfAAMA4QegJF8BiD8ALgAIPwAGAMIPQEm+AtjIxfWD+APgAiD8wg+AASD8nYXfvxIXwACgkfh78QNgAHj1e/0DYAAIv/gDYAAIv/gDYACIv/ADZBvneV58DG2G//7m/Nn/+91uJ+AAuACkhB8A1uKfBCj+ALgACL/wA+ACEOYUEb6/ORd/AAwAgwMADICSUfbqB+DU/A6AFz8ALgBsFWrxB8AACBoBzv0AtMhXAI0PCABwAegg4l78ABgAYSNA+AHoha8AjjwSAMAFoPPAO/cDYAAYBQBgAFQNvlc/AAaAVz8AGAAAgAEAADRqHIZhmOd58VEAQIbHx8fRBQAAAhkAAGAAAAAGAABgAAAABgAA0PMAeHx8HH0UAFDfj+a7AABA6gUAADAAAAADAAAoOwD8IiAA1PZz610AACD5AgAAGAAAQMoA8HsAAFDT08a7AABA+gUAAAgdAL4GAIBanmu7CwAAuAAAAAYAAJAzAPweAADU8LumuwAAgAuAKwAAVH/9uwAAgAsAAGAADL4GAIBevdZwFwAAcAFwBQCA6q9/FwAAcAFwBQCAhNe/CwAAuAAAAAbAE74GAIC2vaXVLgAA4ALgCgAA1V//77oAGAEA0Hf83zUAAID+vWsAuAIAQL+vfxcAAHABcAUAgITXvwsAALgAuAIAQMLrf5ULgBEAAH3Ff5UBAAD0Z5UB4AoAAP28/le9ABgBANBH/FcdAEYAAPQR/9UHAADQh9UHgCsAALTf1qmXPygAiH/jA8AIAIC2W+p3AAAg0KYDwBUAANps6NT7DwAA4t/gADACAKC9Zk7VfiAAEP+GBoARAADtNHKq/gMCgPg3MACMAAA4fROntB8YANLjf9IBYAQAIP6nM6V/AACQ2L7JBwEAec2bfCAAkNe6yQcDAHmNm3xAAJDXtqZjO8/z4n82AAh/wAXANQAA8Q8fAEYAAOK/ja7i6isBAIQ/5ALgGgCARoUPACMAAG1aR9cx9ZUAAMIfcgFwDQBAg8IvAK4BAAh/+AAwBAAQ/uABYAgAIPyvm/wFA4C8lkRE0jUAAOEPHADGAACiHz4ADAEAksMfPwAMAQDhT/75/aKcMQAg+gYAhgCA8BsAGAQAgm8AYAwAiL4BgEEAIPgGAEYBgNgbABgHACLfrH8AG1IB1CgHwf8AAAAASUVORK5CYII=&quot;, &quot;sizes&quot;: &quot;512x512&quot;, &quot;type&quot;: &quot;image/png&quot;}]}'>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="theme-color" content="#0a0e12"/>
+<title>SPY 0DTE Terminal</title>
 <style>
-:root[data-theme="dark"]{color-scheme:dark;
- --surface:#111511;--page:#070907;--ink:#f2fff2;--ink2:#b7c9b7;--muted:#7d8f7d;
- --grid:#1c241c;--axis:#2a382a;--border:rgba(84,240,120,.14);
- --s1:#54f078;--up:#54f078;--down:#ff5252;--warn:#ffd23e;}
-:root[data-theme="light"]{color-scheme:light;
- --surface:#fcfcfb;--page:#f9f9f7;--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;
- --grid:#e1e0d9;--axis:#c3c2b7;--border:rgba(11,11,11,.10);
- --s1:#2a78d6;--up:#006300;--down:#d03b3b;--warn:#c98500;}
-*{box-sizing:border-box;margin:0}
-body{font:13px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--page);color:var(--ink);padding:14px 16px 34px}
-h1{font-size:16px;font-weight:700;letter-spacing:.04em}h1 b{color:var(--s1)}
-.sub{color:var(--muted);font-size:11.5px;margin-top:2px}
-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px;flex-wrap:wrap}
-.toggle{border:1px solid var(--border);background:var(--surface);color:var(--ink2);border-radius:7px;padding:4px 10px;cursor:pointer;font-size:12px}
-.tabs{display:flex;gap:2px;border-bottom:1px solid var(--axis);margin-bottom:12px;flex-wrap:wrap}
-.tab{padding:7px 14px;font-size:12.5px;color:var(--ink2);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent}
-.tab.on{color:var(--s1);border-bottom-color:var(--s1);font-weight:650}
-.tab .n{color:var(--muted);font-size:11px;margin-left:4px}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(138px,1fr));gap:8px;margin-bottom:12px}
-.tile{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 12px}
-.tile .lbl{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-.tile .val{font-size:19px;font-weight:650;margin-top:2px;font-variant-numeric:tabular-nums}
-.tile .sm{font-size:11.5px;color:var(--ink2);margin-top:1px}
-.pos{color:var(--up)}.neg{color:var(--down)}
-.panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:12px}
-.panel h2{font-size:11.5px;font-weight:650;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
-.signals{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px}
-.sig{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:12px}
-.sig b{display:block;margin-bottom:2px;font-size:12px}
-.sig.flow b{display:inline;margin:0}
-.sig.flow span{line-height:1.6}
-.sig span{color:var(--ink2)}
-table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
-th{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;text-align:right;padding:6px 7px;border-bottom:1px solid var(--axis);font-weight:600;cursor:pointer;user-select:none;white-space:nowrap}
-th:first-child,td:first-child{text-align:left}
-td{padding:6px 7px;border-bottom:1px solid var(--grid);text-align:right;font-size:12.5px;white-space:nowrap}
-tr.thesis td{font-size:11.5px;color:var(--ink2);text-align:left;padding:2px 7px 8px;border-bottom:1px solid var(--axis);white-space:normal}
-tr.main:hover td{background:color-mix(in srgb,var(--s1) 8%,transparent)}
-.tk{font-weight:650;font-size:13px}
-.nm{color:var(--muted);font-size:10.5px}
-.tag{display:inline-block;font-size:9.5px;border:1px solid var(--border);border-radius:12px;padding:0 6px;color:var(--ink2);margin-left:5px;vertical-align:1px}
-.badge{display:inline-block;min-width:30px;text-align:center;font-size:11.5px;font-weight:650;border-radius:6px;padding:1px 6px;border:1px solid var(--border)}
-.dir{font-size:10px;font-weight:700;border-radius:5px;padding:1px 6px;letter-spacing:.03em}
-.dir.bull{color:var(--up);border:1px solid var(--up)}
-.dir.bear{color:var(--down);border:1px solid var(--down)}
-.review{font-size:9.5px;color:var(--warn);border:1px solid var(--warn);border-radius:12px;padding:0 5px;margin-left:4px;vertical-align:1px}
-.tgt{font-size:11px;color:var(--ink2)}
-.tgt b{color:var(--ink)}
-.chartwrap{position:relative}
-svg text{font:10px system-ui,sans-serif;fill:var(--muted)}
-.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:5px 8px;font-size:11.5px;box-shadow:0 2px 10px rgba(0,0,0,.3);display:none;z-index:5;white-space:nowrap}
-.legend{display:flex;gap:14px;font-size:11.5px;color:var(--ink2);margin-bottom:5px}
-.legend i{display:inline-block;width:13px;height:3px;border-radius:2px;vertical-align:middle;margin-right:4px}
-.foot{color:var(--muted);font-size:11px;margin-top:12px;line-height:1.55}
-.watch li{margin:2px 0 2px 15px;font-size:12px;color:var(--ink2)}
-.empty{color:var(--muted);font-size:12px;padding:6px 0}
-.ocard{border:1px solid var(--border);border-radius:9px;padding:11px 12px;margin-bottom:9px;background:rgba(255,255,255,.015)}
-.ohead{display:flex;gap:13px;align-items:flex-start}
-.oconf{flex:0 0 78px;border:2px solid;border-radius:9px;padding:6px 4px 5px;text-align:center}
-.oconfn{font-size:31px;font-weight:800;line-height:1.03;font-variant-numeric:tabular-nums}
-.oconfb{display:block;font-size:8.5px;font-weight:800;letter-spacing:.07em;color:#07090c;border-radius:3px;padding:1px 0;margin:3px 3px 0}
-.oconfl{font-size:8.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:3px}
-.otitle{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;margin-bottom:7px}
-.obig{font-size:19px;font-weight:750;letter-spacing:-.01em}
-.okeys{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:6px}
-.okey{background:var(--grid);border-radius:6px;padding:4px 7px 5px}
-.okey span{display:block;font-size:8.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
-.okey b{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
-.obar{margin-top:6px;font-size:11px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap}
-.odet{margin-top:9px;border-top:1px solid var(--border);padding-top:7px}
-.odet summary{cursor:pointer;font-size:11px;color:var(--ink2);list-style:none;user-select:none}
-.odet summary::-webkit-details-marker{display:none}
-.odet summary::before{content:'▸ ';color:var(--muted)}
-.odet[open] summary::before{content:'▾ '}
-.odl{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:2px 22px;margin-top:9px;font-size:11.5px}
-.odl>div{display:flex;justify-content:space-between;gap:14px;border-bottom:1px dotted var(--border);padding:3px 0}
-.odl span{color:var(--muted);white-space:nowrap}
-@media(max-width:620px){.oconf{flex:0 0 64px}.oconfn{font-size:25px}.obig{font-size:16px}}
-.tstrip{display:flex;align-items:flex-start;gap:9px;border:1px solid;border-radius:7px;padding:6px 9px;margin-top:9px;background:rgba(255,255,255,.02)}
-.tbadge{flex:0 0 auto;font-size:9.5px;font-weight:800;letter-spacing:.06em;color:#07090c;border-radius:4px;padding:2px 7px;white-space:nowrap}
-.ttext{font-size:11.5px;color:var(--ink2);line-height:1.45}
-.tbar{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-bottom:11px}
-.tbtn{font-size:12px;font-weight:650;padding:6px 12px}
-.tbar .nm{flex:1;min-width:220px;font-size:11px;line-height:1.45}
-.fresh{border:2px solid;border-radius:11px;padding:13px 14px}
-.dteWrap{border:2px solid var(--s1);border-radius:11px;padding:14px 15px 13px;background:linear-gradient(180deg,rgba(84,240,120,.07),transparent 65%)}
-.dteLbl{font-size:9.5px;font-weight:800;letter-spacing:.13em;color:var(--muted)}
-.dteStrike{font-size:40px;font-weight:800;letter-spacing:-.025em;line-height:1.08;margin:1px 0 3px;font-variant-numeric:tabular-nums}
-.dteSub{font-size:11.5px;color:var(--muted);margin-bottom:12px}
-.dteGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:7px}
-.dbox{background:var(--grid);border:1px solid var(--border);border-radius:7px;padding:6px 9px 7px}
-.dbox span{display:block;font-size:8.5px;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:1px}
-.dbox b{font-size:17px;font-weight:750;font-variant-numeric:tabular-nums}
-@media(max-width:620px){.dteStrike{font-size:30px}.dbox b{font-size:15px}}
-.chip{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.05em;border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:1px}
-.chip.bullish{color:var(--up);border:1px solid var(--up)}
-.chip.bearish{color:var(--down);border:1px solid var(--down)}
-.chip.neutral{color:var(--muted);border:1px solid var(--muted)}
-.sigcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:9px}
-.scard{border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:color-mix(in srgb,var(--s1) 3%,transparent)}
-.scard .dir{font-size:14px;font-weight:800;letter-spacing:.06em}
-.scard table{margin-top:6px}
-.scard td{padding:2px 0;border:none;font-size:12px}
-.scard td:first-child{color:var(--muted);text-align:left}
-.pipe{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:11px;color:var(--ink2)}
-.pipe b{color:var(--s1)}
-.pipe .arr{color:var(--muted)}
-.view{display:none}.view.on{display:block}
-</style></head><body>
-<header>
- <div><h1>SCANNER <b>TERMINAL</b></h1><div class="sub" id="stamp"></div></div>
- <div style="display:flex;gap:6px;align-items:center">
-  <button class="toggle" id="rescan" onclick="manualRefresh()" style="border-color:var(--s1);color:var(--s1)">⟳ Refresh prices</button>
-  <button class="toggle" onclick="flip()">Light / dark</button></div>
-</header>
-<div class="tabs" id="tabs"></div>
-<div id="views"></div>
-<div class="foot" id="foot"></div>
-<script>
-const D={"positions": [{"ticker": "SPCX", "name": "SpaceX", "category": "IPO", "book": "core", "flag_date": "2026-08-11", "flag_price": 133.29, "ref_label": "IPO offer (Jun 12, 2026)", "ref_price": 135.0, "news_tag": "Space / defense", "thesis": "Largest IPO in history ($1.75T valuation, $85.7B raised) digesting below its $161 day-one close. Starlink growth and defense contracts are the catalyst stream; post-IPO lockup supply is the risk.", "score": {"catalyst": 22, "momentum": 15, "liquidity": 15, "risk": 8, "valuation": 6}, "score_total": 66, "stop_pct": -25, "review_date": "2026-11-10", "status": "open", "spy_flag_price": 770.56, "stake": 47.29, "t12": {"bull": 220, "base": 160, "bear": 100}, "current_price": 137.87, "spark": [160.95, 192.5, 211.39, 191.82, 185.0, 154.6, 156.11, 154.54, 153.0, 153.23, 164.19, 170.86, 157.54, 162.0, 160.42, 149.47, 148.3, 152.16, 145.3, 139.14, 136.08, 135.27, 131.11, 123.99, 119.85, 123.54, 115.26, 118.24, 115.07, 113.5, 116.41, 112.55, 112.2, 108.37, 114.53, 125.33, 108.27, 114.92, 133.11, 138.74, 133.29, 146.15, 141.29, 137.87], "targets": {"t3": {"bull": 176.64, "base": 146.64, "bear": 116.64}, "t6": {"bull": 194.6, "base": 152.18, "bear": 109.75}, "t12i": {"bull": 220.0, "base": 160.0, "bear": 100.0}}, "shares": 0.35479, "value": 48.91, "pl": 1.62, "pl_pct": 3.44, "spy_ret_pct": 1.05, "alpha_pct": 2.39, "stop_price": 99.97, "day_pct": -2.42, "vs_ref_pct": 2.1, "review_due": false}, {"ticker": "SKHY", "name": "SK hynix (US listing)", "category": "IPO", "book": "core", "flag_date": "2026-08-11", "flag_price": 141.65, "ref_label": "US IPO (Jul 10, 2026)", "ref_price": 149.0, "news_tag": "AI memory / HBM", "thesis": "HBM memory is the supply bottleneck of the AI buildout. Fresh US listing at $149; trades roughly flat vs offer while AI capex headlines keep coming. TSM strength corroborates the chip-cycle signal.", "score": {"catalyst": 24, "momentum": 12, "liquidity": 14, "risk": 10, "valuation": 9}, "score_total": 69, "stop_pct": -25, "review_date": "2026-11-10", "status": "open", "spy_flag_price": 770.56, "stake": 49.44, "t12": {"bull": 230, "base": 170, "bear": 105}, "current_price": 171.31, "spark": [168.01, 152.35, 193.92, 176.46, 152.31, 154.03, 151.16, 171.94, 165.27, 169.5, 154.57, 143.02, 130.17, 126.79, 149.0, 143.73, 142.72, 154.38, 151.03, 143.53, 137.91, 135.29, 141.65, 154.41, 165.67, 171.31], "targets": {"t3": {"bull": 185.82, "base": 155.82, "bear": 123.33}, "t6": {"bull": 204.12, "base": 161.7, "bear": 115.73}, "t12i": {"bull": 230.0, "base": 170.0, "bear": 105.0}}, "shares": 0.349029, "value": 59.79, "pl": 10.35, "pl_pct": 20.94, "spy_ret_pct": 1.05, "alpha_pct": 19.89, "stop_price": 106.24, "day_pct": 3.4, "vs_ref_pct": 15.0, "review_due": false}, {"ticker": "APMD", "name": "Apnimed", "category": "IPO", "book": "core", "flag_date": "2026-08-11", "flag_price": 24.87, "ref_label": "IPO $16 (Jul 30, 2026)", "ref_price": 16.0, "news_tag": "Biotech", "thesis": "Best performer of the 2026 IPO cohort (+~55% vs offer). First oral drug candidate for obstructive sleep apnea \u2014 huge untreated market. Biotech leadership is the strongest sector signal in this year\u2019s IPO tape.", "score": {"catalyst": 25, "momentum": 20, "liquidity": 8, "risk": 7, "valuation": 7}, "score_total": 67, "stop_pct": -35, "review_date": "2026-11-10", "status": "open", "spy_flag_price": 770.56, "stake": 48.01, "t12": {"bull": 45, "base": 30, "bear": 14}, "current_price": 29.395, "spark": [25.0, 25.0, 25.71, 26.51, 27.88, 27.0, 27.94, 24.87, 26.65, 28.79, 29.395], "targets": {"t3": {"bull": 34.94, "base": 27.44, "bear": 19.44}, "t6": {"bull": 39.1, "base": 28.5, "bear": 17.18}, "t12i": {"bull": 45.0, "base": 30.0, "bear": 14.0}}, "shares": 1.930438, "value": 56.75, "pl": 8.74, "pl_pct": 18.19, "spy_ret_pct": 1.05, "alpha_pct": 17.14, "stop_price": 16.17, "day_pct": 2.1, "vs_ref_pct": 83.7, "review_due": false}, {"ticker": "SCTX", "name": "Scribe Therapeutics", "category": "IPO", "book": "core", "flag_date": "2026-08-11", "flag_price": 23.44, "ref_label": "IPO $15 (Jul 23, 2026)", "ref_price": 15.0, "news_tag": "Gene editing", "thesis": "CRISPR-by-design platform, +~55% vs offer in three weeks. Rides the same 2026 biotech-IPO strength as Apnimed; higher science risk, earlier pipeline.", "score": {"catalyst": 20, "momentum": 21, "liquidity": 7, "risk": 6, "valuation": 6}, "score_total": 60, "stop_pct": -35, "review_date": "2026-11-10", "status": "open", "spy_flag_price": 770.56, "stake": 42.99, "t12": {"bull": 42, "base": 28, "bear": 12}, "current_price": 19.2, "spark": [18.97, 18.06, 18.36, 20.4, 19.48, 20.84, 22.06, 23.8, 25.41, 26.0, 24.93, 23.44, 23.01, 20.37, 19.2], "targets": {"t3": {"bull": 32.72, "base": 25.72, "bear": 17.72}, "t6": {"bull": 36.56, "base": 26.66, "bear": 15.35}, "t12i": {"bull": 42.0, "base": 28.0, "bear": 12.0}}, "shares": 1.834044, "value": 35.21, "pl": -7.78, "pl_pct": -18.09, "spy_ret_pct": 1.05, "alpha_pct": -19.14, "stop_price": 15.24, "day_pct": -5.74, "vs_ref_pct": 28.0, "review_due": false}, {"ticker": "IOND", "name": "Ionic Digital", "category": "IPO", "book": "core", "flag_date": "2026-08-11", "flag_price": 59.1, "ref_label": "IPO $53 (Jul 28, 2026)", "ref_price": 53.0, "news_tag": "Crypto infra", "thesis": "Crypto-mining/infrastructure listing up ~12% vs offer. Crypto stocks led Monday\u2019s movers, but options markets are positioned for an August BTC pullback \u2014 this position tests whether equity flow beats that caution.", "score": {"catalyst": 15, "momentum": 12, "liquidity": 8, "risk": 7, "valuation": 8}, "score_total": 50, "stop_pct": -25, "review_date": "2026-11-10", "status": "open", "spy_flag_price": 770.56, "stake": 35.83, "t12": {"bull": 95, "base": 65, "bear": 38}, "current_price": 66.0, "spark": [62.9, 68.0, 69.95, 70.01, 69.04, 61.44, 59.2, 58.65, 63.12, 59.4, 59.1, 64.91, 66.0, 66.0], "targets": {"t3": {"bull": 77.05, "base": 62.05, "bear": 48.55}, "t6": {"bull": 84.49, "base": 63.27, "bear": 44.18}, "t12i": {"bull": 95.0, "base": 65.0, "bear": 38.0}}, "shares": 0.606261, "value": 40.01, "pl": 4.18, "pl_pct": 11.68, "spy_ret_pct": 1.05, "alpha_pct": 10.63, "stop_price": 44.33, "day_pct": 0.0, "vs_ref_pct": 24.5, "review_due": false}, {"ticker": "STDN", "name": "Standard Nuclear", "category": "IPO", "book": "core", "flag_date": "2026-08-11", "flag_price": 12.08, "ref_label": "IPO $15 (Jul 16, 2026)", "ref_price": 15.0, "news_tag": "Nuclear / AI power", "thesis": "Busted IPO (-45% at the July low) that has bounced ~47% off the bottom. The AI-datacenter power crunch keeps nuclear in the news cycle. Highest-risk flag on the board \u2014 this tests the busted-IPO-rebound pattern.", "score": {"catalyst": 18, "momentum": 16, "liquidity": 6, "risk": 4, "valuation": 5}, "score_total": 49, "stop_pct": -35, "review_date": "2026-11-10", "status": "open", "spy_flag_price": 770.56, "stake": 35.11, "t12": {"bull": 28, "base": 15, "bear": 6}, "current_price": 13.245, "spark": [12.3, 10.4, 9.02, 8.91, 9.65, 8.78, 8.3, 7.7, 7.54, 7.33, 7.6, 7.89, 7.68, 8.41, 8.23, 8.2, 8.44, 11.45, 12.08, 11.48, 12.09, 13.245], "targets": {"t3": {"bull": 20.04, "base": 13.54, "bear": 9.04}, "t6": {"bull": 23.34, "base": 14.14, "bear": 7.78}, "t12i": {"bull": 28.0, "base": 15.0, "bear": 6.0}}, "shares": 2.906457, "value": 38.5, "pl": 3.39, "pl_pct": 9.64, "spy_ret_pct": 1.05, "alpha_pct": 8.59, "stop_price": 7.85, "day_pct": 9.55, "vs_ref_pct": -11.7, "review_due": false}, {"ticker": "CRWV", "name": "CoreWeave", "category": "IPO-2025", "book": "core", "flag_date": "2026-08-11", "flag_price": 90.32, "ref_label": "IPO $40 (Mar 2025)", "ref_price": 40.0, "news_tag": "AI infrastructure", "thesis": "The 2025 IPO that worked: AI GPU cloud with a ~$99B backlog and OpenAI/Meta contracts. Tests whether IPO winners keep winning once seasoned.", "score": {"catalyst": 23, "momentum": 14, "liquidity": 14, "risk": 9, "valuation": 6}, "score_total": 66, "stop_pct": -25, "review_date": "2026-11-10", "status": "open", "spy_flag_price": 770.56, "stake": 47.29, "t12": {"bull": 160, "base": 110, "bear": 60}, "current_price": 105.88, "spark": [95.74, 100.55, 106.71, 117.03, 115.21, 117.95, 111.29, 105.72, 100.88, 98.76, 96.58, 95.51, 99.54, 85.685, 81.745, 86.46, 83.53, 90.0, 89.7, 88.88, 83.31, 79.94, 77.12, 72.91, 73.21, 73.06, 79.58, 82.64, 81.1, 71.88, 70.79, 67.3, 60.82, 73.9, 71.77, 85.76, 91.9, 89.89, 85.33, 90.67, 88.19, 90.32, 107.73, 106.29, 105.88], "targets": {"t3": {"bull": 125.16, "base": 100.16, "bear": 75.16}, "t6": {"bull": 139.59, "base": 104.24, "bear": 68.88}, "t12i": {"bull": 160.0, "base": 110.0, "bear": 60.0}}, "shares": 0.523583, "value": 55.44, "pl": 8.15, "pl_pct": 17.23, "spy_ret_pct": 1.05, "alpha_pct": 16.18, "stop_price": 67.74, "day_pct": -0.39, "vs_ref_pct": 164.7, "review_due": false}, {"ticker": "CRCL", "name": "Circle Internet Group", "category": "IPO-2025", "book": "core", "flag_date": "2026-08-11", "flag_price": 71.16, "ref_label": "IPO $31 (Jun 2025)", "ref_price": 31.0, "news_tag": "Stablecoins", "thesis": "USDC issuer earning Treasury yield on reserves. Stablecoin regulation and crypto-payments adoption are recurring world-news catalysts; rate cuts are the main headwind to its interest income.", "score": {"catalyst": 20, "momentum": 16, "liquidity": 13, "risk": 9, "valuation": 8}, "score_total": 66, "stop_pct": -25, "review_date": "2026-11-10", "status": "open", "spy_flag_price": 770.56, "stake": 47.29, "t12": {"bull": 130, "base": 85, "bear": 50}, "current_price": 72.154, "spark": [82.63, 77.84, 83.37, 79.72, 80.59, 80.23, 79.95, 75.68, 70.98, 68.81, 73.57, 75.96, 62.63, 61.95, 64.62, 68.65, 65.15, 64.07, 63.01, 66.14, 63.0, 63.22, 65.69, 60.64, 60.46, 65.45, 71.08, 66.16, 62.18, 62.36, 65.67, 64.32, 61.36, 64.24, 62.61, 60.35, 63.25, 63.28, 63.28, 66.67, 67.05, 71.16, 71.28, 75.38, 72.1535], "targets": {"t3": {"bull": 100.58, "base": 78.08, "bear": 60.58}, "t6": {"bull": 112.77, "base": 80.95, "bear": 56.2}, "t12i": {"bull": 130.0, "base": 85.0, "bear": 50.0}}, "shares": 0.664559, "value": 47.95, "pl": 0.66, "pl_pct": 1.4, "spy_ret_pct": 1.05, "alpha_pct": 0.35, "stop_price": 53.37, "day_pct": -4.28, "vs_ref_pct": 132.8, "review_due": false}, {"ticker": "KOS", "name": "Kosmos Energy", "category": "News", "book": "core", "flag_date": "2026-08-11", "flag_price": 2.56, "ref_label": "Pre-spike close", "ref_price": null, "news_tag": "Venezuela / oil", "thesis": "Jumped 13% Monday as the Venezuela blockade aftermath tightens heavy-crude supply. Small-cap offshore producer = high beta to any further supply disruption. Pure world-news flag.", "score": {"catalyst": 21, "momentum": 18, "liquidity": 9, "risk": 6, "valuation": 10}, "score_total": 64, "stop_pct": -25, "review_date": "2026-11-10", "status": "open", "spy_flag_price": 770.56, "stake": 45.86, "t12": {"bull": 4.5, "base": 3.2, "bear": 1.8}, "current_price": 2.555, "spark": [2.89, 2.87, 2.54, 2.49, 2.5, 2.45, 2.46, 2.3, 2.12, 2.18, 2.18, 2.08, 2.11, 2.03, 2.07, 2.09, 2.21, 2.29, 2.18, 2.1, 2.44, 2.5, 2.32, 2.15, 2.24, 2.3, 2.42, 2.65, 2.74, 2.63, 2.44, 2.34, 2.48, 2.56, 2.69, 2.53, 2.42, 2.35, 2.47, 2.48, 2.51, 2.56, 2.51, 2.53, 2.555], "targets": {"t3": {"bull": 3.53, "base": 2.88, "bear": 2.18}, "t6": {"bull": 3.93, "base": 3.01, "bear": 2.02}, "t12i": {"bull": 4.5, "base": 3.2, "bear": 1.8}}, "shares": 17.914062, "value": 45.77, "pl": -0.09, "pl_pct": -0.2, "spy_ret_pct": 1.05, "alpha_pct": -1.25, "stop_price": 1.92, "day_pct": 0.99, "vs_ref_pct": null, "review_due": false}, {"ticker": "TSM", "name": "Taiwan Semiconductor", "category": "News", "book": "core", "flag_date": "2026-08-11", "flag_price": 422.06, "ref_label": null, "ref_price": null, "news_tag": "AI chips / Taiwan", "thesis": "Moved on Monday\u2019s tape as AI capex headlines continue. The world\u2019s chip chokepoint: benefits from every AI announcement, carries every Taiwan-strait headline as tail risk. The control-adjacent large-cap on the board.", "score": {"catalyst": 19, "momentum": 15, "liquidity": 15, "risk": 12, "valuation": 10}, "score_total": 71, "stop_pct": -15, "review_date": "2026-11-10", "status": "open", "spy_flag_price": 770.56, "stake": 50.88, "t12": {"bull": 560, "base": 480, "bear": 340}, "current_price": 428.8, "spark": [421.07, 423.93, 441.4, 425.83, 432.15, 462.12, 467.67, 436.39, 440.83, 434.99, 432.35, 455.1, 477.57, 444.23, 434.16, 451.79, 432.57, 436.98, 436.96, 434.11, 421.58, 420.39, 419.48, 409.74, 398.37, 402.3, 424.61, 421.21, 415.58, 403.41, 399.09, 392.31, 374.67, 403.31, 404.25, 406.11, 417.17, 414.0, 418.2, 420.04, 418.47, 422.06, 429.15, 430.49, 428.8], "targets": {"t3": {"bull": 491.03, "base": 451.03, "bear": 381.03}, "t6": {"bull": 519.6, "base": 463.03, "bear": 364.03}, "t12i": {"bull": 560.0, "base": 480.0, "bear": 340.0}}, "shares": 0.120552, "value": 51.69, "pl": 0.81, "pl_pct": 1.6, "spy_ret_pct": 1.05, "alpha_pct": 0.55, "stop_price": 358.75, "day_pct": -0.39, "vs_ref_pct": null, "review_due": false}, {"ticker": "NIQ", "name": "NIQ Global Intelligence", "category": "News", "book": "vol24", "flag_date": "2026-08-11", "flag_price": 16.58, "ref_label": null, "ref_price": null, "news_tag": "Earnings +42%", "thesis": "Beat and raised for the fifth straight quarter on AI-native analytics; +42% on 10M shares. Call: BULL \u2014 post-earnings-announcement drift favors continuation over 5 days.", "score": {"catalyst": 26, "momentum": 22, "liquidity": 12, "risk": 8, "valuation": 8}, "score_total": 76, "stop_pct": -15, "review_date": "2026-08-18", "status": "open", "spy_flag_price": 770.56, "stake": 53.02, "direction": "bull", "eval_date": "2026-08-18", "current_price": 17.04, "spark": [8.24, 8.32, 8.35, 8.16, 8.27, 8.53, 8.38, 8.17, 8.28, 8.02, 8.09, 8.2, 7.97, 8.63, 8.68, 9.35, 9.62, 9.88, 9.82, 11.0, 10.94, 11.22, 11.25, 11.07, 11.05, 10.99, 11.15, 11.0, 10.74, 10.43, 10.75, 11.07, 11.7, 11.97, 11.38, 11.56, 11.7, 11.66, 11.67, 11.68, 11.68, 16.58, 16.81, 16.86, 17.04], "shares": 3.197829, "value": 54.49, "pl": 1.47, "pl_pct": 2.77, "spy_ret_pct": 1.05, "alpha_pct": 1.72, "stop_price": 14.09, "day_pct": 1.07, "vs_ref_pct": null, "review_due": false}, {"ticker": "ONON", "name": "On Holding", "category": "News", "book": "vol24", "flag_date": "2026-08-11", "flag_price": 30.91, "ref_label": null, "ref_price": null, "news_tag": "Earnings \u221220%", "thesis": "Gapped down 20% on 42M shares after results. Call: BEAR \u2014 downside post-earnings drift; sportswear peers weak. Invalidated if it reclaims the gap.", "score": {"catalyst": 24, "momentum": 18, "liquidity": 13, "risk": 9, "valuation": 9}, "score_total": 73, "stop_pct": -15, "review_date": "2026-08-18", "status": "open", "spy_flag_price": 770.56, "stake": 50.93, "direction": "bear", "eval_date": "2026-08-18", "current_price": 32.11, "spark": [39.21, 38.58, 38.69, 38.06, 37.72, 38.88, 36.21, 35.14, 36.92, 36.58, 37.07, 35.42, 35.42, 35.56, 36.83, 36.87, 36.62, 36.38, 36.77, 38.54, 37.92, 37.74, 37.46, 38.2, 37.2, 37.65, 37.24, 36.65, 34.84, 35.82, 37.06, 37.89, 37.91, 37.1, 36.24, 37.95, 37.61, 38.19, 37.34, 37.55, 38.78, 30.91, 31.01, 31.59, 32.11], "shares": 1.647687, "value": 52.91, "pl": 1.98, "pl_pct": 3.88, "spy_ret_pct": 1.05, "alpha_pct": 2.83, "stop_price": 26.27, "day_pct": 1.65, "vs_ref_pct": null, "review_due": false}, {"ticker": "FRMI", "name": "Fermi Inc.", "category": "News", "book": "vol24", "flag_date": "2026-08-11", "flag_price": 7.12, "ref_label": null, "ref_price": null, "news_tag": "$6.5B AI lease", "thesis": "Signed a $6.5B AI-campus lease that could triple contracted revenue; +21% on 49M shares. Call: BULL \u2014 contracted-revenue news, not hype, and the 2026 busted-IPO base gives room.", "score": {"catalyst": 25, "momentum": 20, "liquidity": 11, "risk": 5, "valuation": 5}, "score_total": 66, "stop_pct": -15, "review_date": "2026-08-18", "status": "open", "spy_flag_price": 770.56, "stake": 46.05, "direction": "bull", "eval_date": "2026-08-18", "current_price": 6.43, "spark": [6.95, 7.14, 7.48, 7.88, 8.66, 9.5, 8.97, 8.69, 7.99, 8.8, 9.49, 9.45, 9.16, 8.52, 8.06, 8.21, 7.38, 7.36, 7.32, 6.59, 6.31, 6.74, 6.25, 5.93, 6.05, 6.12, 6.65, 6.58, 6.32, 7.4, 7.23, 6.28, 5.86, 6.73, 5.69, 6.03, 6.31, 6.19, 6.19, 6.18, 5.88, 7.12, 7.6, 6.6, 6.43], "shares": 6.467697, "value": 41.59, "pl": -4.46, "pl_pct": -9.69, "spy_ret_pct": 1.05, "alpha_pct": -10.74, "stop_price": 6.05, "day_pct": -2.58, "vs_ref_pct": null, "review_due": false}, {"ticker": "HTZ", "name": "Hertz Global", "category": "Penny", "book": "penny", "flag_date": "2026-08-11", "flag_price": 2.45, "ref_label": null, "ref_price": null, "news_tag": "Q2 beat + squeeze", "thesis": "Q2 revenue beat (Aug 7) plus 587k-contract options frenzy and retail momentum. Speculative squeeze mechanics, not fundamentals \u2014 treated as such.", "score": {"catalyst": 18, "momentum": 20, "liquidity": 12, "risk": 5, "valuation": 6}, "score_total": 61, "stop_pct": -35, "review_date": "2026-11-10", "status": "open", "spy_flag_price": 770.56, "stake": 37.89, "t12": {"bull": 5.0, "base": 3.2, "bear": 1.4}, "current_price": 2.36, "spark": [5.04, 5.13, 5.13, 4.99, 4.83, 5.05, 5.14, 5.06, 3.0, 2.68, 2.64, 2.3, 2.265, 2.2, 2.12, 2.05, 2.1, 1.97, 2.17, 2.05, 1.83, 1.84, 1.9, 1.87, 1.8, 1.76, 1.85, 1.93, 1.905, 1.81, 2.0, 1.765, 1.67, 1.655, 1.585, 1.53, 1.51, 1.56, 2.02, 2.27, 2.12, 2.45, 2.8, 2.345, 2.36], "targets": {"t3": {"bull": 3.73, "base": 2.83, "bear": 1.93}, "t6": {"bull": 4.25, "base": 2.98, "bear": 1.71}, "t12i": {"bull": 5.0, "base": 3.2, "bear": 1.4}}, "shares": 15.465306, "value": 36.5, "pl": -1.39, "pl_pct": -3.67, "spy_ret_pct": 1.05, "alpha_pct": -4.72, "stop_price": 1.59, "day_pct": 0.64, "vs_ref_pct": null, "review_due": false}, {"ticker": "PLUG", "name": "Plug Power", "category": "Penny", "book": "penny", "flag_date": "2026-08-11", "flag_price": 2.22, "ref_label": null, "ref_price": null, "news_tag": "Hydrogen restructuring", "thesis": "Most-active tape (145M shares) at $2.22 after restructuring; down 92% over 5 years. Pure turnaround lottery ticket \u2014 flagged to test whether penny momentum means anything.", "score": {"catalyst": 12, "momentum": 14, "liquidity": 12, "risk": 4, "valuation": 7}, "score_total": 49, "stop_pct": -35, "review_date": "2026-11-10", "status": "open", "spy_flag_price": 770.56, "stake": 30.43, "t12": {"bull": 4.5, "base": 2.6, "bear": 1.2}, "current_price": 2.31, "spark": [2.83, 2.76, 2.8, 2.71, 2.65, 2.85, 2.79, 2.71, 2.61, 2.57, 2.54, 2.59, 2.71, 2.64, 2.64, 2.64, 2.48, 2.46, 2.38, 2.23, 2.17, 2.27, 2.21, 2.15, 2.17, 2.13, 2.27, 2.23, 2.19, 2.09, 2.06, 1.96, 1.9, 2.09, 2.06, 2.08, 2.16, 2.1, 2.07, 2.18, 2.11, 2.22, 2.29, 2.3, 2.31], "targets": {"t3": {"bull": 3.36, "base": 2.41, "bear": 1.71}, "t6": {"bull": 3.83, "base": 2.49, "bear": 1.5}, "t12i": {"bull": 4.5, "base": 2.6, "bear": 1.2}}, "shares": 13.707207, "value": 31.66, "pl": 1.23, "pl_pct": 4.05, "spy_ret_pct": 1.05, "alpha_pct": 3.0, "stop_price": 1.44, "day_pct": 0.43, "vs_ref_pct": null, "review_due": false}, {"ticker": "GERN", "name": "Geron", "category": "Penny", "book": "penny", "flag_date": "2026-08-11", "flag_price": 1.63, "ref_label": null, "ref_price": null, "news_tag": "Commercial-stage biotech", "thesis": "Approved drug (Rytelo) with real revenue at a $1B cap; +10% day amid biotech strength. The least lottery-like of the penny book.", "score": {"catalyst": 14, "momentum": 15, "liquidity": 9, "risk": 5, "valuation": 8}, "score_total": 51, "stop_pct": -35, "review_date": "2026-11-10", "status": "open", "spy_flag_price": 770.56, "stake": 31.68, "t12": {"bull": 3.5, "base": 2.1, "bear": 0.9}, "current_price": 1.48, "spark": [1.1, 1.14, 1.15, 1.15, 1.18, 1.23, 1.26, 1.34, 1.35, 1.39, 1.37, 1.32, 1.3, 1.28, 1.27, 1.36, 1.44, 1.49, 1.56, 1.56, 1.5, 1.42, 1.38, 1.42, 1.42, 1.44, 1.44, 1.44, 1.45, 1.42, 1.48, 1.45, 1.4, 1.34, 1.29, 1.28, 1.34, 1.63, 1.57, 1.48, 1.48, 1.63, 1.57, 1.54, 1.48], "targets": {"t3": {"bull": 2.56, "base": 1.86, "bear": 1.26}, "t6": {"bull": 2.95, "base": 1.96, "bear": 1.11}, "t12i": {"bull": 3.5, "base": 2.1, "bear": 0.9}}, "shares": 19.435583, "value": 28.76, "pl": -2.92, "pl_pct": -9.2, "spy_ret_pct": 1.05, "alpha_pct": -10.25, "stop_price": 1.06, "day_pct": -3.9, "vs_ref_pct": null, "review_due": false}, {"ticker": "RKLB", "name": "Rocket Lab", "category": "Longterm", "book": "longterm", "flag_date": "2026-08-11", "flag_price": 80.01, "ref_label": null, "ref_price": null, "news_tag": "Space infrastructure", "thesis": "Founder-led (Beck); only credible SpaceX alternative at small/medium launch plus vertically-integrated space systems; Neutron is the 5x catalyst. Criteria: founder-led \u2713, category \u2713, TAM \u2713.", "score": {"catalyst": 24, "momentum": 15, "liquidity": 12, "risk": 8, "valuation": 6}, "score_total": 65, "stop_pct": -40, "review_date": "2027-08-11", "status": "open", "spy_flag_price": 770.56, "stake": 80.91, "t12": {"bull": 140, "base": 95, "bear": 45}, "current_price": 81.09, "spark": [114.78, 102.39, 109.25, 104.63, 107.98, 107.24, 100.29, 95.12, 85.41, 80.69, 84.54, 98.01, 101.65, 100.07, 100.46, 93.09, 83.41, 83.35, 82.55, 81.04, 76.73, 78.81, 76.2, 67.35, 67.62, 65.74, 69.12, 69.75, 69.99, 63.91, 66.94, 63.89, 58.6, 64.68, 64.95, 70.43, 74.48, 74.82, 75.67, 82.83, 80.04, 80.01, 81.17, 80.1, 81.09], "targets": {"t3": {"bull": 110.0, "base": 87.5, "bear": 62.51}, "t6": {"bull": 122.43, "base": 90.61, "bear": 55.25}, "t12i": {"bull": 140.0, "base": 95.0, "bear": 45.0}}, "shares": 1.011249, "value": 82.0, "pl": 1.09, "pl_pct": 1.35, "spy_ret_pct": 1.05, "alpha_pct": 0.3, "stop_price": 48.01, "day_pct": 1.24, "vs_ref_pct": null, "review_due": false}, {"ticker": "ASTS", "name": "AST SpaceMobile", "category": "Longterm", "book": "longterm", "flag_date": "2026-08-11", "flag_price": 71.63, "ref_label": null, "ref_price": null, "news_tag": "Direct-to-device satellite", "thesis": "Satellite-to-ordinary-phone broadband; carrier deals (AT&T/Verizon/Vodafone) validate. Binary outcome: constellation economics work or they do not. The most Tesla-2013-shaped risk profile on the board.", "score": {"catalyst": 25, "momentum": 15, "liquidity": 11, "risk": 5, "valuation": 5}, "score_total": 61, "stop_pct": -40, "review_date": "2027-08-11", "status": "open", "spy_flag_price": 770.56, "stake": 75.93, "t12": {"bull": 160, "base": 90, "bear": 30}, "current_price": 71.99, "spark": [97.56, 82.41, 87.57, 82.25, 85.43, 80.66, 73.19, 72.87, 68.01, 65.62, 71.45, 86.77, 88.86, 86.1, 85.13, 80.64, 74.21, 74.95, 73.88, 73.32, 67.58, 68.82, 66.31, 55.01, 57.8, 57.42, 63.34, 61.95, 59.18, 56.2, 58.29, 56.55, 53.03, 58.44, 58.98, 63.52, 70.31, 68.38, 67.36, 71.94, 68.76, 71.63, 74.31, 71.52, 71.99], "targets": {"t3": {"bull": 115.81, "base": 80.81, "bear": 50.81}, "t6": {"bull": 134.12, "base": 84.62, "bear": 42.19}, "t12i": {"bull": 160.0, "base": 90.0, "bear": 30.0}}, "shares": 1.060031, "value": 76.31, "pl": 0.38, "pl_pct": 0.5, "spy_ret_pct": 1.05, "alpha_pct": -0.55, "stop_price": 42.98, "day_pct": 0.66, "vs_ref_pct": null, "review_due": false}, {"ticker": "OKLO", "name": "Oklo", "category": "Longterm", "book": "longterm", "flag_date": "2026-08-11", "flag_price": 47.01, "ref_label": null, "ref_price": null, "news_tag": "SMR nuclear / AI power", "thesis": "Small modular reactors aimed at AI datacenter power; Altman-linked; pre-revenue so this is optionality on the power crunch becoming policy. Highest risk of the long-term book.", "score": {"catalyst": 22, "momentum": 15, "liquidity": 10, "risk": 4, "valuation": 4}, "score_total": 55, "stop_pct": -40, "review_date": "2027-08-11", "status": "open", "spy_flag_price": 770.56, "stake": 68.46, "t12": {"bull": 110, "base": 60, "bear": 18}, "current_price": 46.66, "spark": [57.86, 57.49, 60.74, 57.45, 58.82, 61.17, 58.4, 57.19, 54.06, 51.01, 50.0, 52.76, 52.33, 52.45, 52.36, 51.84, 47.9, 47.28, 49.27, 48.85, 45.81, 46.24, 45.69, 41.7, 41.11, 41.51, 44.13, 44.5, 44.0, 40.25, 41.81, 39.58, 36.84, 41.09, 38.83, 41.22, 43.33, 42.99, 42.19, 48.42, 44.49, 47.01, 45.13, 46.45, 46.66], "targets": {"t3": {"bull": 78.5, "base": 53.5, "bear": 32.5}, "t6": {"bull": 91.55, "base": 56.2, "bear": 26.5}, "t12i": {"bull": 110.0, "base": 60.0, "bear": 18.0}}, "shares": 1.456286, "value": 67.95, "pl": -0.51, "pl_pct": -0.74, "spy_ret_pct": 1.05, "alpha_pct": -1.79, "stop_price": 28.21, "day_pct": 0.45, "vs_ref_pct": null, "review_due": false}, {"ticker": "TEM", "name": "Tempus AI", "category": "Longterm", "book": "longterm", "flag_date": "2026-08-11", "flag_price": 55.69, "ref_label": null, "ref_price": null, "news_tag": "AI precision medicine", "thesis": "Founder-led (Lefkofsky); proprietary clinical+molecular data moat feeding AI diagnostics; the pick-and-shovel of AI medicine. Criteria: founder-led \u2713, data moat \u2713, real revenue \u2713.", "score": {"catalyst": 22, "momentum": 14, "liquidity": 11, "risk": 7, "valuation": 6}, "score_total": 60, "stop_pct": -40, "review_date": "2027-08-11", "status": "open", "spy_flag_price": 770.56, "stake": 74.69, "t12": {"bull": 120, "base": 80, "bear": 35}, "current_price": 52.84, "spark": [49.59, 47.82, 52.32, 50.56, 48.79, 50.84, 47.85, 48.61, 51.94, 54.87, 56.14, 58.31, 57.93, 61.6, 60.27, 60.7, 60.09, 57.27, 61.5, 58.23, 55.93, 58.67, 57.25, 53.59, 52.47, 48.41, 48.98, 46.96, 46.01, 42.69, 42.91, 42.9, 41.55, 44.29, 43.87, 46.05, 47.05, 46.7, 46.12, 52.05, 55.06, 55.69, 54.61, 54.29, 52.84], "targets": {"t3": {"bull": 87.84, "base": 67.84, "bear": 45.34}, "t6": {"bull": 101.16, "base": 72.88, "bear": 41.06}, "t12i": {"bull": 120.0, "base": 80.0, "bear": 35.0}}, "shares": 1.341174, "value": 70.87, "pl": -3.82, "pl_pct": -5.12, "spy_ret_pct": 1.05, "alpha_pct": -6.17, "stop_price": 33.41, "day_pct": -2.67, "vs_ref_pct": null, "review_due": false}], "closed": [], "history": [{"date": "2026-08-11", "value": 1000.0, "spy_value": 1000.0, "invested": 1000.0, "n_open": 20, "n_closed": 0}, {"date": "2026-08-12", "value": 1031.6, "spy_value": 1002.5, "invested": 999.98, "n_open": 20, "n_closed": 0}, {"date": "2026-08-13", "value": 1024.05, "spy_value": 1008.12, "invested": 999.98, "n_open": 20, "n_closed": 0}, {"date": "2026-08-14", "value": 1023.08, "spy_value": 1010.54, "invested": 999.98, "n_open": 20, "n_closed": 0}], "meta": {"name": "News + IPO Scanner", "created": "2026-08-11", "stake_per_position_usd": null, "mode": "paper", "notes": "Flag price = market price at scan time on flag date. Shares are fractional. P/L is hypothetical; no fees/slippage modeled. Measurement instrument, not a live strategy.", "last_scan": "Aug 14, 2026 \u00b7 10:07 AM ET", "benchmark": "SPY", "score_rubric": "catalyst/30 momentum/25 liquidity/15 risk/15(higher=safer) valuation/15; set at flag time", "exit_rules": "auto-close if price <= flag*(1+stop_pct/100); review_date forces thesis re-check", "books": {"core": "News+IPO flags", "vol24": "24h volatility, direction call, 5-day eval", "penny": "$0.50\u2013$5 listed only", "longterm": "Written criteria, 1\u20133y horizon"}, "direction_rule": "vol24 calls evaluated at eval_date: hit if sign(move since flag) matches call; feature killed if <=50% after 30 calls", "options_rules": "Options book. UP TO 8 CONTRACTS/DAY across four feeders: SPY 1DTE (exactly 1), ETF universe, blue-chip universe, catalyst movers/earnings. GATES UNCHANGED: 2-10% OTM (0.2-1.5% for 1DTE), OI>=500, spread<=20% of ask, contracts_n = floor(250/(ask*100)), cost<=$250, BUY at ask, mark/exit at bid. Separate pool from the $1,000 stock portfolio. Target = 6x entry ask, stop = 0.5x entry ask (10:1, set by Andres 2026-08-12 over advisory objection). Exit at first of: target, stop, 2 trading days, expiry. Confidence score frozen at entry; bands A>=75, B 60-74, C 45-59, D<45; the score RANKS, it does not gate. KILL RULE 1 (book): closes if total P/L < 0 after 20 resolved positions. KILL RULE 2 (score): after 20 resolved scored contracts, if mean P/L%% of A+B does not exceed C+D, option_score.py is deleted from the pipeline. Prior study: median -100%% per trade.", "finnhub_key": "d9ubm9hr01qs9cmc2nngd9ubm9hr01qs9cmc2no0", "portfolio": {"capital": 1000, "allocations": {"core": 450, "longterm": 300, "vol24": 150, "penny": 100}, "band_stakes": {"core": {"strong": 65, "standard": 45, "spec": 25}, "vol24": 30, "penny": 20, "longterm": 60}, "weighting": "score-weighted within book at rebase; new flags sized by score band from book cash; exits return cash to book", "rebased": "2026-08-12"}, "book_cash": {"core": 0.01, "longterm": 0.01, "vol24": 0.0, "penny": 0.0}, "signals": [{"title": "Venezuela oil fallout", "sentiment": "bullish", "sector": "Energy", "body": "Blockade aftermath keeps heavy crude tight; KOS is the high-beta expression."}, {"title": "AI buildout, phase 2", "sentiment": "bullish", "sector": "Tech", "body": "SKHY (memory), CRWV (GPU cloud), TSM (fab) up the stack; power crunch feeds STDN and OKLO."}, {"title": "Record IPO window", "sentiment": "bullish", "sector": "IPOs", "body": "$251B raised 2026; biotech leads cohort. Anthropic, OpenAI, Strava filings on watch."}, {"title": "Earnings vol harvest", "sentiment": "neutral", "sector": "Earnings", "body": "NIQ +42% / ONON \u221220% / FRMI +21% \u2014 the 24h book calls direction and gets graded in 5 days."}, {"title": "Crypto crosscurrents", "sentiment": "bearish", "sector": "Crypto", "body": "Options positioned for August BTC dip vs strong equity tape \u2014 IOND, CRCL test it."}], "candidate_feeders": {"note": "Feeder sources for the options scan. Gates are UNCHANGED \u2014 feeders only widen the candidate funnel.", "yahoo_screeners": ["day_gainers", "day_losers", "most_actives", "small_cap_gainers", "growth_technology_stocks", "aggressive_small_caps", "undervalued_growth_stocks"], "finnhub_earnings_calendar": "https://finnhub.io/api/v1/calendar/earnings?from={today}&to={t+2}&token={key}", "finnhub_ipo_calendar": "https://finnhub.io/api/v1/calendar/ipo?from={t-30}&to={t+14}&token={key}", "finnhub_news": "https://finnhub.io/api/v1/news?category=general&token={key}", "bluechip_universe": ["AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "TSLA", "TSM", "AMD", "AVGO", "NFLX", "JPM", "XOM", "COIN", "PLTR"], "etf_universe": ["SPY", "QQQ", "IWM", "DIA", "SMH", "XLE", "XLF", "XLK"], "unavailable": "finnhub upgrade/downgrade endpoint is 403 on free tier"}, "spy_model": {"created": "2026-08-13", "rule": "Composite 0-100 from five fixed components: trend/30, momentum/25, volatility/20, breadth/15, news/10. >=60 BULLISH, <=40 BEARISH, else NEUTRAL. Weights FROZEN 2026-08-13.", "grading": "Every scan publishes a next-session direction call BEFORE the session. Graded on SPY close-to-close. NEUTRAL calls recorded but not graded.", "kill": "If direction hit rate < 55% after 30 graded calls, stop the 1DTE book and record the finding."}, "dte1_rules": {"created": "2026-08-13", "underlying": "SPY only", "premium_band": "ask between $0.30 and $0.60 per contract (user-set 2026-08-13)", "otm_band": "0.2%-1.5% OTM", "strike": "exactly ONE strike per day, nearest to the band midpoint that passes all gates", "direction": "taken from the SPY composite bias; NEUTRAL days trade nothing", "gates": "OI >= 500, spread <= 20% of ask, contracts = floor(250/(ask*100)), total cost <= $250, expiry = next session", "exits": "target 6x ask / stop 0.5x ask (10:1) or expiry", "prior": "The 811-day study found 0-2DTE SPY OTM has median -100% per trade. Same 20-position kill rule."}, "whale": {"next_13f_deadline": "2026-08-14", "days_to_13f": 0, "in_13f_window": true, "notes": {"13F (institutions >$100M)": "45 days after quarter end \u2014 Feb 14, May 15, Aug 14, Nov 14. Positions are up to 4.5 months stale; treat as sentiment, never as a trade signal.", "Form 4 (insiders)": "within 2 business days of the trade \u2014 the most timely legal disclosure. Filing burst typically 4:00-6:30pm ET.", "SC 13D (activist >5%)": "within 10 days of crossing 5% \u2014 the highest-signal filing; often moves the stock on the filing itself.", "SC 13G (passive >5%)": "annual/quarterly amendments; low signal.", "Block/dark prints": "cluster in the opening 30 min (9:30-10:00 ET) and the closing auction (3:50-4:00 ET). Free feeds do not expose these reliably.", "Options sweeps": "cluster first hour and last hour; requires paid flow data."}}, "options_daily_cap": 8, "confidence_score": {"created": "2026-08-13", "file": "option_score.py", "components": "execution/25 (spread 15 + OI 10) \u00b7 breakeven/25 \u00b7 signal/25 \u00b7 clock/15 \u00b7 iv_cost/10", "bands": "A>=75, B 60-74, C 45-59, D<45", "frozen": "Weights frozen 2026-08-13.", "note": "The breakeven component has the most prior support: a ratio above 1.0 means paying for a larger move than the chain itself implies."}}, "watchlist": [{"ticker": "JMKE", "note": "Jersey Mike's IPO Jul 30 @ $23 \u2014 below offer, no news catalyst; not flagged"}, {"ticker": "QMLS", "note": "QumulusAI -80% from IPO \u2014 falling knife, no flag until stabilization"}, {"ticker": "REF", "note": "Reformation IPO Jul 30 @ $15 \u2014 consumer, thin thesis; watching"}, {"ticker": "FIG", "note": "Figma \u2014 2025 busted IPO; watch for AI-design catalyst"}, {"ticker": "ANTHR/OPENAI/STRAVA", "note": "Filed 2026 IPOs (Anthropic, OpenAI, Strava) \u2014 flag at debut"}], "invested": 999.98, "total_val": 1023.0599999999998, "closed_pl": 0, "cash": {"core": 0.01, "longterm": 0.01, "vol24": 0.0, "penny": 0.0}, "total_cash": 0.02, "portfolio": {"capital": 1000, "allocations": {"core": 450, "longterm": 300, "vol24": 150, "penny": 100}, "band_stakes": {"core": {"strong": 65, "standard": 45, "spec": 25}, "vol24": 30, "penny": 20, "longterm": 60}, "weighting": "score-weighted within book at rebase; new flags sized by score band from book cash; exits return cash to book", "rebased": "2026-08-12"}, "signals": [{"title": "Venezuela oil fallout", "sentiment": "bullish", "sector": "Energy", "body": "Blockade aftermath keeps heavy crude tight; KOS is the high-beta expression."}, {"title": "AI buildout, phase 2", "sentiment": "bullish", "sector": "Tech", "body": "SKHY (memory), CRWV (GPU cloud), TSM (fab) up the stack; power crunch feeds STDN and OKLO."}, {"title": "Record IPO window", "sentiment": "bullish", "sector": "IPOs", "body": "$251B raised 2026; biotech leads cohort. Anthropic, OpenAI, Strava filings on watch."}, {"title": "Earnings vol harvest", "sentiment": "neutral", "sector": "Earnings", "body": "NIQ +42% / ONON \u221220% / FRMI +21% \u2014 the 24h book calls direction and gets graded in 5 days."}, {"title": "Crypto crosscurrents", "sentiment": "bearish", "sector": "Crypto", "body": "Options positioned for August BTC dip vs strong equity tape \u2014 IOND, CRCL test it."}], "spy": {"price": 778.685, "sma20": 756.31, "sma50": 748.97, "ret5": 0.7, "vix": 14.57, "vix_chg5": -2.2, "breadth_pct": 88, "parts": {"trend": 30, "momentum": 17, "volatility": 20, "breadth": 13, "news": 9}, "day_pct": 0.1, "score": 89, "bias": "BULLISH"}, "spy_calls": [{"date": "2026-08-13", "bias": "BULLISH", "score": 91, "parts": {"trend": 30, "momentum": 19, "volatility": 20, "breadth": 13, "news": 9}, "spy_close": 776.88, "next_ret": null, "outcome": null}, {"date": "2026-08-14", "bias": "BULLISH", "score": 89, "parts": {"trend": 30, "momentum": 17, "volatility": 20, "breadth": 13, "news": 9}, "spy_close": 778.68, "next_ret": null, "outcome": null}], "whale": {"next_13f_deadline": "2026-08-14", "days_to_13f": 0, "in_13f_window": true, "notes": {"13F (institutions >$100M)": "45 days after quarter end \u2014 Feb 14, May 15, Aug 14, Nov 14. Positions are up to 4.5 months stale; treat as sentiment, never as a trade signal.", "Form 4 (insiders)": "within 2 business days of the trade \u2014 the most timely legal disclosure. Filing burst typically 4:00-6:30pm ET.", "SC 13D (activist >5%)": "within 10 days of crossing 5% \u2014 the highest-signal filing; often moves the stock on the filing itself.", "SC 13G (passive >5%)": "annual/quarterly amendments; low signal.", "Block/dark prints": "cluster in the opening 30 min (9:30-10:00 ET) and the closing auction (3:50-4:00 ET). Free feeds do not expose these reliably.", "Options sweeps": "cluster first hour and last hour; requires paid flow data."}}, "whale_events": [{"date": "2026-08-13", "form": "13F-HR", "filer": "SEC current feed (100+ filings/hr)", "subject": "Q2 2026 institutional holdings", "note": "13F deadline is TOMORROW (Aug 14) \u2014 the filing flood is underway. Positions are as of Jun 30, up to 4.5 months stale. Sentiment only, never a trade signal."}, {"date": "2026-08-13", "form": "13F-HR", "filer": "BNP Paribas / Nomura AM / Capital Fund Management", "subject": "Large multi-strategy books filed this morning", "note": "Large filers already in. Aggregate positioning readable tomorrow once the full cohort lands."}, {"date": "2026-08-13", "form": "SC 13D", "filer": "(none)", "subject": "No new activist stakes", "note": "SEC current 13D feed returned zero new filings this window."}, {"date": "2026-08-13", "form": "4", "filer": "Rainbolt (BancFirst), Bardeen (NY Times)", "subject": "Insider transactions", "note": "No Form 4 activity in any name we hold or watch. The Form 4 burst window is 4:00-6:30pm ET."}, {"date": "2026-08-14", "form": "13F-HR", "filer": "SEC current feed \u2014 40+ filings in the sampled window", "subject": "Q2 2026 institutional holdings \u2014 deadline day", "note": "Deadline is TODAY. Filers in this window are mid-size advisors (Alpine Woods, Meeder, AlpInvest, Gould Capital). Holdings are as of Jun 30 \u2014 up to 4.5 months stale. Sentiment only, never a trade signal. The large-fund cohort landed yesterday."}, {"date": "2026-08-14", "form": "SC 13D", "filer": "(none)", "subject": "No new activist stakes", "note": "SEC current 13D feed returned zero new filings this window \u2014 no activist crossed 5% in any name on the board."}, {"date": "2026-08-14", "form": "4", "filer": "Forrester Research, DyTb LLC, and others", "subject": "Insider transactions", "note": "No Form 4 activity in any held or watched name. The burst window is 4:00-6:30pm ET, so the close scan is the one that catches these \u2014 this morning scan structurally cannot."}], "spy_val": 1010.52, "stamp": "Aug 14, 2026 \u00b7 10:07 AM ET", "options": [{"contract": "NVDA260821C00235000", "underlying": "NVDA", "type": "call", "strike": 235.0, "expiry": "2026-08-21", "source_call": "bluechip: AI buildout phase 2 world signal \u2014 HBM/GPU demand headlines are the live catalyst stream; SPY bias BULLISH 85", "entry_date": "2026-08-13", "entry_ask": 1.55, "entry_bid": 1.52, "contracts_n": 1, "cost": 155.0, "exit_by": "2026-08-17", "status": "open", "oi": 31094, "iv": 0.33, "entry_spot": 226.44, "note": "3.8% OTM weekly, OI 31k, 1.9% spread. Cleanest large-cap expression of the AI signal already driving SKHY/CRWV/TSM in the core book.", "target_premium": 9.3, "stop_premium": 0.775, "conf": 71, "conf_band": "B", "conf_parts": {"execution": 25, "breakeven": 10, "signal": 13, "clock": 13, "iv_cost": 10}, "conf_detail": {"spread_pct": 1.9, "oi": 31094, "required_move_pct": 4.46, "expected_move_pct": 3.45, "be_ratio": 1.29, "signal_tier": "catalyst_soft", "days_left_at_exit": 4, "iv_vs_realized": 0.84}, "current_bid": 1.1, "current_ask": 1.12, "value": 110.0, "pl": -45.0, "pl_pct": -29.0}, {"contract": "AAPL260821C00320000", "underlying": "AAPL", "type": "call", "strike": 320.0, "expiry": "2026-08-21", "source_call": "bluechip: broad-tape test \u2014 SPY BULLISH 85 with 75% sector breadth; AAPL is the mega-cap laggard, so this measures whether index-level bullishness transmits to a name with no idiosyncratic catalyst", "entry_date": "2026-08-13", "entry_ask": 0.54, "entry_bid": 0.52, "contracts_n": 4, "cost": 216.0, "exit_by": "2026-08-17", "status": "open", "oi": 29116, "iv": 0.24, "entry_spot": 305.38, "note": "4.8% OTM weekly, OI 29k, 3.7% spread. Deliberately catalyst-free \u2014 the control against the NVDA catalyst trade.", "target_premium": 3.24, "stop_premium": 0.27, "conf": 55, "conf_band": "C", "conf_parts": {"execution": 22, "breakeven": 5, "signal": 5, "clock": 13, "iv_cost": 10}, "conf_detail": {"spread_pct": 3.7, "oi": 29116, "required_move_pct": 4.96, "expected_move_pct": 2.51, "be_ratio": 1.98, "signal_tier": "control", "days_left_at_exit": 4, "iv_vs_realized": 0.69}, "current_bid": 0.47, "current_ask": 0.56, "value": 188.0, "pl": -28.0, "pl_pct": -13.0}, {"contract": "QQQ260821C00750000", "underlying": "QQQ", "type": "call", "strike": 750.0, "expiry": "2026-08-21", "source_call": "etf: SPY composite BULLISH 85 \u2014 QQQ is the highest-beta index expression of a strong-model day", "entry_date": "2026-08-13", "entry_ask": 1.43, "entry_bid": 1.41, "contracts_n": 1, "cost": 143.0, "exit_by": "2026-08-17", "status": "open", "oi": 30587.0, "iv": 0.1491, "entry_spot": 732.86, "note": "2.3% OTM weekly, 1.4% spread, OI 30587. Needs a 1.62x move vs what the chain implies over the 2-day hold.", "target_premium": 8.58, "stop_premium": 0.715, "conf": 78, "conf_band": "A", "conf_parts": {"execution": 25, "breakeven": 5, "signal": 25, "clock": 13, "iv_cost": 10}, "conf_detail": {"spread_pct": 1.4, "oi": 30587.0, "required_move_pct": 2.53, "expected_move_pct": 1.56, "be_ratio": 1.62, "signal_tier": "model_strong", "days_left_at_exit": 4, "iv_vs_realized": 0.61}, "current_bid": 1.1, "current_ask": 1.12, "value": 110.0, "pl": -33.0, "pl_pct": -23.1}, {"contract": "PLTR260821C00180000", "underlying": "PLTR", "type": "call", "strike": 180.0, "expiry": "2026-08-21", "source_call": "bluechip: AI buildout phase 2 world signal; PLTR is the software-layer expression, 1.01 breakeven ratio is the cheapest move-per-dollar on the board", "entry_date": "2026-08-13", "entry_ask": 2.47, "entry_bid": 2.41, "contracts_n": 1, "cost": 247.0, "exit_by": "2026-08-17", "status": "open", "oi": 13564.0, "iv": 0.4422, "entry_spot": 174.3, "note": "3.3% OTM weekly, 2.4% spread, OI 13564. Needs a 1.01x move vs what the chain implies over the 2-day hold.", "target_premium": 14.82, "stop_premium": 1.235, "conf": 73, "conf_band": "B", "conf_parts": {"execution": 22, "breakeven": 15, "signal": 13, "clock": 13, "iv_cost": 10}, "conf_detail": {"spread_pct": 2.4, "oi": 13564.0, "required_move_pct": 4.69, "expected_move_pct": 4.63, "be_ratio": 1.01, "signal_tier": "catalyst_soft", "days_left_at_exit": 4, "iv_vs_realized": 0.41}, "current_bid": 3.4, "current_ask": 3.5, "value": 340.0, "pl": 93.0, "pl_pct": 37.7}, {"contract": "XLE260821C00062000", "underlying": "XLE", "type": "call", "strike": 62.0, "expiry": "2026-08-21", "source_call": "etf: Venezuela oil fallout signal \u2014 same thesis as the KOS core flag, expressed at sector level where the chain is liquid", "entry_date": "2026-08-13", "entry_ask": 0.37, "entry_bid": 0.33, "contracts_n": 6, "cost": 222.0, "exit_by": "2026-08-17", "status": "open", "oi": 23426.0, "iv": 0.2189, "entry_spot": 60.76, "note": "2.0% OTM weekly, 10.8% spread, OI 23426. Needs a 1.16x move vs what the chain implies over the 2-day hold.", "target_premium": 2.22, "stop_premium": 0.185, "conf": 65, "conf_band": "B", "conf_parts": {"execution": 14, "breakeven": 15, "signal": 13, "clock": 13, "iv_cost": 10}, "conf_detail": {"spread_pct": 10.8, "oi": 23426.0, "required_move_pct": 2.65, "expected_move_pct": 2.29, "be_ratio": 1.16, "signal_tier": "catalyst_soft", "days_left_at_exit": 4, "iv_vs_realized": 0.9}, "current_bid": 0.64, "current_ask": 0.67, "value": 384.0, "pl": 162.0, "pl_pct": 73.0}, {"contract": "IWM260821C00311000", "underlying": "IWM", "type": "call", "strike": 311.0, "expiry": "2026-08-21", "source_call": "etf: Breadth is 75% \u2014 if the bullish call is real it should show up in small caps, which is where breadth claims are actually testable", "entry_date": "2026-08-13", "entry_ask": 0.44, "entry_bid": 0.41, "contracts_n": 5, "cost": 220.0, "exit_by": "2026-08-17", "status": "open", "oi": 5637.0, "iv": 0.13, "entry_spot": 304.2, "note": "2.2% OTM weekly, 6.8% spread, OI 5637. Needs a 1.75x move vs what the chain implies over the 2-day hold.", "target_premium": 2.64, "stop_premium": 0.22, "conf": 62, "conf_band": "B", "conf_parts": {"execution": 16, "breakeven": 5, "signal": 18, "clock": 13, "iv_cost": 10}, "conf_detail": {"spread_pct": 6.8, "oi": 5637.0, "required_move_pct": 2.38, "expected_move_pct": 1.36, "be_ratio": 1.75, "signal_tier": "model", "days_left_at_exit": 4, "iv_vs_realized": 0.84}, "current_bid": 0.26, "current_ask": 0.28, "value": 130.0, "pl": -90.0, "pl_pct": -40.9}, {"contract": "NFLX260821C00079000", "underlying": "NFLX", "type": "call", "strike": 79.0, "expiry": "2026-08-21", "source_call": "bluechip: Deliberately thesis-free. Scored 61 purely on execution and breakeven, so it tests whether the mechanical components carry the score without any narrative", "entry_date": "2026-08-13", "entry_ask": 0.69, "entry_bid": 0.67, "contracts_n": 3, "cost": 207.0, "exit_by": "2026-08-17", "status": "open", "oi": 5714.0, "iv": 0.3149, "entry_spot": 76.91, "note": "2.7% OTM weekly, 2.9% spread, OI 5714. Needs a 1.10x move vs what the chain implies over the 2-day hold.", "target_premium": 4.14, "stop_premium": 0.345, "conf": 61, "conf_band": "B", "conf_parts": {"execution": 20, "breakeven": 15, "signal": 3, "clock": 13, "iv_cost": 10}, "conf_detail": {"spread_pct": 2.9, "oi": 5714.0, "required_move_pct": 3.61, "expected_move_pct": 3.3, "be_ratio": 1.1, "signal_tier": "none", "days_left_at_exit": 4, "iv_vs_realized": 0.82}, "current_bid": 1.09, "current_ask": 1.12, "value": 327.0, "pl": 120.0, "pl_pct": 58.0}, {"contract": "SPY260817C00782000", "underlying": "SPY", "type": "call", "strike": 782.0, "expiry": "2026-08-17", "source_call": "1dte: SPY composite BULLISH 89/100 \u2014 trend 30/30, VIX 14.57, breadth 88%", "entry_date": "2026-08-14", "entry_ask": 0.6, "entry_bid": 0.59, "contracts_n": 4, "cost": 240.0, "exit_by": "2026-08-17", "status": "open", "oi": 2781.0, "iv": 0.0682, "entry_spot": 777.84, "note": "0.53% OTM, 1.7% spread, OI 2781.0. Breakeven ratio 0.99 \u2014 needs 0.61% vs 0.62% implied over the hold.", "target_premium": 3.6, "stop_premium": 0.3, "conf": 79, "conf_band": "A", "conf_parts": {"execution": 21, "breakeven": 20, "signal": 25, "clock": 3, "iv_cost": 10}, "conf_detail": {"spread_pct": 1.7, "oi": 2781.0, "required_move_pct": 0.61, "expected_move_pct": 0.62, "be_ratio": 0.99, "signal_tier": "model_strong", "days_left_at_exit": 0, "iv_vs_realized": 0.51}, "current_bid": 0.71, "current_ask": 0.72, "value": 284.0, "pl": 44.0, "pl_pct": 18.3}, {"contract": "XLE260821C00063000", "underlying": "XLE", "type": "call", "strike": 63.0, "expiry": "2026-08-21", "source_call": "etf: SPY composite BULLISH 89 \u2014 index-level expression of the model call", "entry_date": "2026-08-14", "entry_ask": 0.33, "entry_bid": 0.3, "contracts_n": 7, "cost": 231.0, "exit_by": "2026-08-18", "status": "open", "oi": 7418.0, "iv": 0.2214, "entry_spot": 61.74, "note": "2.03% OTM, 9.1% spread, OI 7418.0. Breakeven ratio 1.11 \u2014 needs 2.57% vs 2.32% implied over the hold.", "target_premium": 1.98, "stop_premium": 0.165, "conf": 74, "conf_band": "B", "conf_parts": {"execution": 16, "breakeven": 15, "signal": 25, "clock": 8, "iv_cost": 10}, "conf_detail": {"spread_pct": 9.1, "oi": 7418.0, "required_move_pct": 2.57, "expected_move_pct": 2.32, "be_ratio": 1.11, "signal_tier": "model_strong", "days_left_at_exit": 3, "iv_vs_realized": 0.9}, "current_bid": 0.3, "current_ask": 0.33, "value": 210.0, "pl": -21.0, "pl_pct": -9.1}, {"contract": "NFLX260821C00080000", "underlying": "NFLX", "type": "call", "strike": 80.0, "expiry": "2026-08-21", "source_call": "bluechip: thematic alignment with an active world signal, no company-specific event", "entry_date": "2026-08-14", "entry_ask": 0.74, "entry_bid": 0.73, "contracts_n": 3, "cost": 222.0, "exit_by": "2026-08-18", "status": "open", "oi": 35657.0, "iv": 0.3223, "entry_spot": 78.25, "note": "2.24% OTM, 1.4% spread, OI 35657.0. Breakeven ratio 0.94 \u2014 needs 3.18% vs 3.37% implied over the hold.", "target_premium": 4.44, "stop_premium": 0.37, "conf": 74, "conf_band": "B", "conf_parts": {"execution": 25, "breakeven": 20, "signal": 13, "clock": 8, "iv_cost": 8}, "conf_detail": {"spread_pct": 1.4, "oi": 35657.0, "required_move_pct": 3.18, "expected_move_pct": 3.37, "be_ratio": 0.94, "signal_tier": "catalyst_soft", "days_left_at_exit": 3, "iv_vs_realized": 1.1}, "current_bid": 0.74, "current_ask": 0.77, "value": 222.0, "pl": 0.0, "pl_pct": 0.0}, {"contract": "QQQ260821C00750000", "underlying": "QQQ", "type": "call", "strike": 750.0, "expiry": "2026-08-21", "source_call": "etf: SPY composite BULLISH 89 \u2014 index-level expression of the model call", "entry_date": "2026-08-14", "entry_ask": 1.06, "entry_bid": 1.04, "contracts_n": 2, "cost": 212.0, "exit_by": "2026-08-18", "status": "open", "oi": 29069.0, "iv": 0.1419, "entry_spot": 733.26, "note": "2.28% OTM, 1.9% spread, OI 29069.0. Breakeven ratio 1.63 \u2014 needs 2.43% vs 1.49% implied over the hold.", "target_premium": 6.36, "stop_premium": 0.53, "conf": 73, "conf_band": "B", "conf_parts": {"execution": 25, "breakeven": 5, "signal": 25, "clock": 8, "iv_cost": 10}, "conf_detail": {"spread_pct": 1.9, "oi": 29069.0, "required_move_pct": 2.43, "expected_move_pct": 1.49, "be_ratio": 1.63, "signal_tier": "model_strong", "days_left_at_exit": 3, "iv_vs_realized": 0.6}, "current_bid": 1.1, "current_ask": 1.12, "value": 220.0, "pl": 8.0, "pl_pct": 3.8}, {"contract": "NVDA260821C00232500", "underlying": "NVDA", "type": "call", "strike": 232.5, "expiry": "2026-08-21", "source_call": "bluechip: thematic alignment with an active world signal, no company-specific event", "entry_date": "2026-08-14", "entry_ask": 1.55, "entry_bid": 1.54, "contracts_n": 1, "cost": 155.0, "exit_by": "2026-08-18", "status": "open", "oi": 12252.0, "iv": 0.3152, "entry_spot": 225.59, "note": "3.06% OTM, 0.6% spread, OI 12252.0. Breakeven ratio 1.14 \u2014 needs 3.75% vs 3.3% implied over the hold.", "target_premium": 9.3, "stop_premium": 0.775, "conf": 71, "conf_band": "B", "conf_parts": {"execution": 25, "breakeven": 15, "signal": 13, "clock": 8, "iv_cost": 10}, "conf_detail": {"spread_pct": 0.6, "oi": 12252.0, "required_move_pct": 3.75, "expected_move_pct": 3.3, "be_ratio": 1.14, "signal_tier": "catalyst_soft", "days_left_at_exit": 3, "iv_vs_realized": 0.83}, "current_bid": 1.62, "current_ask": 1.65, "value": 162.0, "pl": 7.0, "pl_pct": 4.5}, {"contract": "PLTR260821C00185000", "underlying": "PLTR", "type": "call", "strike": 185.0, "expiry": "2026-08-21", "source_call": "bluechip: thematic alignment with an active world signal, no company-specific event", "entry_date": "2026-08-14", "entry_ask": 1.89, "entry_bid": 1.86, "contracts_n": 1, "cost": 189.0, "exit_by": "2026-08-18", "status": "open", "oi": 14741.0, "iv": 0.452, "entry_spot": 177.67, "note": "4.13% OTM, 1.6% spread, OI 14741.0. Breakeven ratio 1.1 \u2014 needs 5.19% vs 4.73% implied over the hold.", "target_premium": 11.34, "stop_premium": 0.945, "conf": 71, "conf_band": "B", "conf_parts": {"execution": 25, "breakeven": 15, "signal": 13, "clock": 8, "iv_cost": 10}, "conf_detail": {"spread_pct": 1.6, "oi": 14741.0, "required_move_pct": 5.19, "expected_move_pct": 4.73, "be_ratio": 1.1, "signal_tier": "catalyst_soft", "days_left_at_exit": 3, "iv_vs_realized": 0.41}, "current_bid": 1.81, "current_ask": 1.84, "value": 181.0, "pl": -8.0, "pl_pct": -4.2}, {"contract": "LUNR260821C00020000", "underlying": "LUNR", "type": "call", "strike": 20.0, "expiry": "2026-08-21", "source_call": "mover: Q2 earnings, $1B revenue goal reaffirmed, +11.1%", "entry_date": "2026-08-14", "entry_ask": 0.96, "entry_bid": 0.81, "contracts_n": 2, "cost": 192.0, "exit_by": "2026-08-18", "status": "open", "oi": 3329.0, "iv": 1.0008, "entry_spot": 19.5, "note": "2.56% OTM, 15.6% spread, OI 3329.0. Breakeven ratio 0.71 \u2014 needs 7.49% vs 10.48% implied over the hold.", "target_premium": 5.76, "stop_premium": 0.48, "conf": 70, "conf_band": "B", "conf_parts": {"execution": 7, "breakeven": 25, "signal": 22, "clock": 8, "iv_cost": 8}, "conf_detail": {"spread_pct": 15.6, "oi": 3329.0, "required_move_pct": 7.49, "expected_move_pct": 10.48, "be_ratio": 0.71, "signal_tier": "catalyst_hard", "days_left_at_exit": 3, "iv_vs_realized": 1.14}, "current_bid": 0.81, "current_ask": 0.96, "value": 162.0, "pl": -30.0, "pl_pct": -15.6}, {"contract": "IWM260821C00311000", "underlying": "IWM", "type": "call", "strike": 311.0, "expiry": "2026-08-21", "source_call": "etf: SPY composite BULLISH 89 \u2014 index-level expression of the model call", "entry_date": "2026-08-14", "entry_ask": 0.26, "entry_bid": 0.25, "contracts_n": 9, "cost": 234.0, "exit_by": "2026-08-18", "status": "open", "oi": 5614.0, "iv": 0.1236, "entry_spot": 303.95, "note": "2.32% OTM, 3.8% spread, OI 5614.0. Breakeven ratio 1.86 \u2014 needs 2.4% vs 1.29% implied over the hold.", "target_premium": 1.56, "stop_premium": 0.13, "conf": 68, "conf_band": "B", "conf_parts": {"execution": 20, "breakeven": 5, "signal": 25, "clock": 8, "iv_cost": 10}, "conf_detail": {"spread_pct": 3.8, "oi": 5614.0, "required_move_pct": 2.4, "expected_move_pct": 1.29, "be_ratio": 1.86, "signal_tier": "model_strong", "days_left_at_exit": 3, "iv_vs_realized": 0.81}, "current_bid": 0.26, "current_ask": 0.28, "value": 234.0, "pl": 0.0, "pl_pct": 0.0}], "closed_options": [{"contract": "ONON260814P00030000", "underlying": "ONON", "type": "put", "strike": 30.0, "expiry": "2026-08-14", "source_call": "ONON bear (earnings -20%)", "entry_date": "2026-08-11", "entry_ask": 0.15, "entry_bid": 0.08, "contracts_n": 13, "cost": 195.0, "exit_by": "2026-08-13", "status": "closed", "oi": 1091, "iv": 0.54, "note": "4.0% OTM, best OI on the board. Post-earnings IV crush works against this even if direction is right.", "current_bid": 0.06, "current_ask": 0.09, "value": 78.0, "pl": -117.0, "pl_pct": -60.0, "target_premium": 0.3, "stop_premium": 0.075, "exit_date": "2026-08-12", "exit_bid": 0.06, "exit_reason": "stopped", "outcome": "loss"}, {"contract": "NIQ260821C00017500", "underlying": "NIQ", "type": "call", "strike": 17.5, "expiry": "2026-08-21", "source_call": "NIQ bull (earnings +42%)", "entry_date": "2026-08-11", "entry_ask": 0.2, "entry_bid": 0.15, "contracts_n": 9, "cost": 180.0, "exit_by": "2026-08-13", "status": "closed", "oi": 0, "iv": 0.46, "note": "5.7% OTM. Thin chain (OI 0, 25% spread) \u2014 the spread alone must be overcome.", "current_bid": 0.15, "current_ask": 0.2, "value": 135.0, "pl": -45.0, "pl_pct": -25.0, "target_premium": 0.4, "stop_premium": 0.1, "exit_date": "2026-08-13", "exit_bid": 0.15, "exit_reason": "2-day exit", "outcome": "loss"}, {"contract": "FRMI260814C00008000", "underlying": "FRMI", "type": "call", "strike": 8.0, "expiry": "2026-08-14", "source_call": "FRMI bull ($6.5B AI lease)", "entry_date": "2026-08-11", "entry_ask": 0.3, "entry_bid": 0.25, "contracts_n": 6, "cost": 180.0, "exit_by": "2026-08-13", "status": "closed", "oi": 3665, "iv": 2.09, "note": "7.7% OTM. IV is 209% \u2014 the market has already priced a huge move; textbook \"paying most on the days you correctly identify as volatile\".", "current_bid": 0.25, "current_ask": 0.35, "value": 150.0, "pl": -30.0, "pl_pct": -16.7, "target_premium": 0.6, "stop_premium": 0.15, "exit_date": "2026-08-13", "exit_bid": 0.25, "exit_reason": "2-day exit", "outcome": "loss"}, {"contract": "SPY260814C00784000", "underlying": "SPY", "type": "call", "strike": 784.0, "expiry": "2026-08-14", "source_call": "1dte: SPY BULLISH score 85/100 \u2014 above 20 & 50 DMA, VIX 14.5 and falling, 75% of sectors above their own 20-DMA", "entry_date": "2026-08-13", "entry_ask": 0.44, "entry_bid": 0.43, "contracts_n": 5, "cost": 220.0, "exit_by": "2026-08-14", "status": "closed", "oi": 5222, "iv": 0.11, "note": "1DTE, one strike, $0.30-$0.60 band. 0.62% OTM, 2.3% spread \u2014 the cheapest execution on the board. This is the contract that isolates whether premium alone kills short-dated OTM buying.", "target_premium": 2.64, "stop_premium": 0.22, "current_bid": 0.2, "current_ask": 0.21, "value": 100.0, "pl": -120.0, "pl_pct": -54.5, "conf": 73, "conf_band": "B", "conf_parts": {"execution": 20, "breakeven": 15, "signal": 25, "clock": 3, "iv_cost": 10}, "conf_detail": {"spread_pct": 2.3, "oi": 5222, "required_move_pct": 0.68, "expected_move_pct": 0.58, "be_ratio": 1.18, "signal_tier": "model_strong", "days_left_at_exit": 0, "iv_vs_realized": 0.79}, "entry_spot": 779.15, "exit_date": "2026-08-13", "exit_bid": 0.2, "exit_reason": "stopped", "outcome": "loss"}], "opt_stats": {"open": 15, "resolved": 4, "wins": 0, "spent": 3860.0, "open_value": 3264.0, "recovered": 463.0, "total_pl": -133.0}, "conf_grade": {"B": {"n": 1, "sum_pl_pct": -54.5, "wins": 0, "sum_pl": -120.0, "avg_pl_pct": -54.5, "win_rate": 0.0}}, "conf_kill": {"verdict": "pending", "msg": "1/20 resolved contracts scored \u2014 too few to judge the score."}, "spy_cand": {"scanned_at": "Aug 14, 2026 \u00b7 10:07 AM ET", "spot_at_scan": 778.68, "expiry": "2026-08-17", "type": "call", "bias": "BULLISH", "score": 89, "realized_vol": 0.132, "best": {"strike": 782.0, "otm": 0.53, "bid": 0.59, "ask": 0.6, "spread_pct": 1.7, "oi": 2781.0, "iv": 0.0682, "contracts_n": 4, "cost": 240.0, "conf": 79, "conf_band": "A", "conf_parts": {"execution": 21, "breakeven": 20, "signal": 25, "clock": 3, "iv_cost": 10}, "conf_detail": {"spread_pct": 1.7, "oi": 2781.0, "required_move_pct": 0.61, "expected_move_pct": 0.62, "be_ratio": 0.99, "signal_tier": "model_strong", "days_left_at_exit": 0, "iv_vs_realized": 0.51}, "target_premium": 3.6, "stop_premium": 0.3}, "passing": [{"strike": 782.0, "otm": 0.53, "bid": 0.59, "ask": 0.6, "spread_pct": 1.7, "oi": 2781.0, "iv": 0.0682, "contracts_n": 4, "cost": 240.0, "conf": 79, "conf_band": "A", "conf_parts": {"execution": 21, "breakeven": 20, "signal": 25, "clock": 3, "iv_cost": 10}, "conf_detail": {"spread_pct": 1.7, "oi": 2781.0, "required_move_pct": 0.61, "expected_move_pct": 0.62, "be_ratio": 0.99, "signal_tier": "model_strong", "days_left_at_exit": 0, "iv_vs_realized": 0.51}, "target_premium": 3.6, "stop_premium": 0.3}, {"strike": 783.0, "otm": 0.66, "bid": 0.41, "ask": 0.42, "spread_pct": 2.4, "oi": 3282.0, "iv": 0.0683, "contracts_n": 5, "cost": 210.0, "conf": 71, "conf_band": "B", "conf_parts": {"execution": 18, "breakeven": 15, "signal": 25, "clock": 3, "iv_cost": 10}, "conf_detail": {"spread_pct": 2.4, "oi": 3282.0, "required_move_pct": 0.72, "expected_move_pct": 0.62, "be_ratio": 1.16, "signal_tier": "model_strong", "days_left_at_exit": 0, "iv_vs_realized": 0.52}, "target_premium": 2.52, "stop_premium": 0.21}], "near_misses": [{"strike": 780.0, "otm": 0.28, "ask": 1.14, "spread_pct": 0.9, "oi": 7568.0, "fail": "premium $1.14 outside $0.30-$0.60"}, {"strike": 781.0, "otm": 0.41, "ask": 0.83, "spread_pct": 1.2, "oi": 2151.0, "fail": "premium $0.83 outside $0.30-$0.60"}, {"strike": 784.0, "otm": 0.79, "ask": 0.29, "spread_pct": 3.4, "oi": 1883.0, "fail": "premium $0.29 outside $0.30-$0.60"}, {"strike": 785.0, "otm": 0.92, "ask": 0.2, "spread_pct": 5.0, "oi": 4511.0, "fail": "premium $0.20 outside $0.30-$0.60"}, {"strike": 786.0, "otm": 1.05, "ask": 0.14, "spread_pct": 7.1, "oi": 3365.0, "fail": "premium $0.14 outside $0.30-$0.60"}, {"strike": 787.0, "otm": 1.18, "ask": 0.1, "spread_pct": 10.0, "oi": 1790.0, "fail": "premium $0.10 outside $0.30-$0.60"}, {"strike": 788.0, "otm": 1.31, "ask": 0.08, "spread_pct": 12.5, "oi": 3941.0, "fail": "premium $0.08 outside $0.30-$0.60"}, {"strike": 789.0, "otm": 1.43, "ask": 0.06, "spread_pct": 16.7, "oi": 1713.0, "fail": "premium $0.06 outside $0.30-$0.60"}], "informational": true, "rule_note": "Today's one-strike 1DTE slot fired (see above) and is now tracked. 8 of 8 daily contract slots used. This panel is a LIVE ENTRY CHECK only; nothing here is logged twice, because discretionary same-day re-entries would corrupt the 20-contract sample the book exists to measure."}, "dir_stats": {"n": 0, "hits": 0, "open_calls": 3}};
-const fmt$=v=>(v<0?'-$':'$')+Math.abs(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
-const fmtP=v=>(v>0?'+':'')+v.toFixed(2)+'%';
-const cls=v=>v>0.001?'pos':(v<-0.001?'neg':'');
-const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-function flip(){const r=document.documentElement;r.setAttribute('data-theme',r.getAttribute('data-theme')==='dark'?'light':'dark');render();}
-const BOOKS=[['overview','Overview'],['spy','SPY / 1DTE'],['whale','Whale Watch'],['core','Core'],['vol24','24h Volatility'],['options','Options'],['penny','Penny'],['longterm','Long-term'],['journal','Journal'],['closed','Closed']];
-let tab='overview', sortKey='score_total', sortDir=-1;
-const by=b=>D.positions.filter(p=>(p.book||'core')===b);
-
-function setStamp(){document.getElementById('stamp').textContent='Last scan '+D.stamp+' · '+D.positions.length+' open / '+D.closed.length+' closed · $1,000 paper portfolio · weekday auto-scan'+(liveStamp?' · LIVE quotes '+liveStamp:'');}
-
-function scoreBadge(p){
- const s=p.score_total,col=s>=70?css('--up'):(s<50?css('--warn'):css('--muted'));
- const t=p.score?`catalyst ${p.score.catalyst}/30 · momentum ${p.score.momentum}/25 · liquidity ${p.score.liquidity}/15 · risk ${p.score.risk}/15 · valuation ${p.score.valuation}/15`:'';
- return`<span class="badge" title="${t}" style="color:${col};border-color:${col}">${s}</span>`;
-}
-function spark(p,w,h){
- const s=p.spark||[];if(s.length<2)return'';
- const mn=Math.min(...s),mx=Math.max(...s),rg=(mx-mn)||1;
- const pts=s.map((v,i)=>`${(i/(s.length-1)*w).toFixed(1)},${(h-2-(v-mn)/rg*(h-4)).toFixed(1)}`).join(' ');
- return`<svg width="${w}" height="${h}"><polyline points="${pts}" fill="none" stroke="${css(s[s.length-1]>=s[0]?'--up':'--down')}" stroke-width="1.5"/></svg>`;
-}
-function tgtCell(p,h){
- const t=p.targets&&p.targets[h];if(!t)return'<span class="tgt" style="color:var(--muted)">—</span>';
- return`<span class="tgt" title="bull ${fmt$(t.bull)} / base ${fmt$(t.base)} / bear ${fmt$(t.bear)}"><b>${fmt$(t.base)}</b><br><span style="color:var(--muted)">${fmt$(t.bear)}–${fmt$(t.bull)}</span></span>`;
-}
-function dirCell(p){
- if(!p.direction)return'—';
- return`<span class="dir ${p.direction}">${p.direction.toUpperCase()}</span>`+(p.direction_outcome?` ${p.direction_outcome==='hit'?'✓':'✗'}`:` <span class="nm">eval ${p.eval_date}</span>`);
-}
-function posTable(list,opts){
- if(!list.length)return'<div class="empty">No open positions in this book.</div>';
- const showDir=opts.dir,showTgt=opts.tgt;
- const cols=[['Position',null],['Score','score_total']]
-  .concat(showDir?[['Call',null]]:[])
-  .concat([['Stake','stake'],['Flag','flag_price'],['Now','current_price'],['Day','day_pct'],['P/L %','pl_pct'],['Alpha','alpha_pct']])
-  .concat(showTgt?[['3m tgt',null],['6m tgt',null],['12m tgt',null]]:[])
-  .concat([['Stop','stop_price'],['3 mo',null]]);
- const rows=[...list].sort((a,b)=>{if(!sortKey)return 0;const av=a[sortKey],bv=b[sortKey];return(typeof av==='string'?String(av).localeCompare(bv):av-bv)*sortDir;})
-  .map(p=>`<tr class="main">
-   <td><span class="tk">${p.ticker}</span><span class="tag">${p.news_tag}</span>${p.review_due?'<span class="review">review</span>':''}<br><span class="nm">${p.name}</span></td>
-   <td>${scoreBadge(p)}</td>
-   ${showDir?`<td>${dirCell(p)}</td>`:''}
-   <td>${fmt$(p.stake||0)}</td><td>${fmt$(p.flag_price)}</td><td>${fmt$(p.current_price)}</td>
-   <td class="${cls(p.day_pct)}">${fmtP(p.day_pct)}</td>
-   <td class="${cls(p.pl_pct)}">${fmtP(p.pl_pct)}</td>
-   <td class="${cls(p.alpha_pct)}"><b>${fmtP(p.alpha_pct)}</b></td>
-   ${showTgt?`<td>${tgtCell(p,'t3')}</td><td>${tgtCell(p,'t6')}</td><td>${tgtCell(p,'t12i')}</td>`:''}
-   <td style="color:var(--muted)">${fmt$(p.stop_price)}</td>
-   <td>${spark(p,90,26)}</td></tr>
-  <tr class="thesis"><td colspan="${cols.length}">${p.thesis}${p.ref_label?` <span class="nm">(ref: ${p.ref_label}${p.vs_ref_pct!=null?', '+fmtP(p.vs_ref_pct):''})</span>`:''}</td></tr>`).join('');
- return`<div style="overflow-x:auto"><table class="sortable"><thead><tr>${cols.map(([n,k])=>`<th data-k="${k||''}">${n}${k===sortKey?(sortDir<0?' ▼':' ▲'):''}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
-}
-function curveSvg(){
- const H=D.history;
- if(H.length<2)return'<div class="empty">Equity curve builds as daily scans accumulate — first point '+(H[0]?H[0].date:'today')+'. Divergence between the two lines = alpha.</div>';
- const W=Math.min(document.body.clientWidth-60,1100),Hh=190,padL=50,padB=18,padT=8;
- const vals=H.flatMap(h=>[h.value,h.spy_value]);
- const mn=Math.min(...vals)*0.998,mx=Math.max(...vals)*1.002;
- const x=i=>padL+i/(H.length-1)*(W-padL-8), y=v=>padT+(mx-v)/(mx-mn)*(Hh-padT-padB);
- let s=`<svg width="${W}" height="${Hh}">`;
- [mn,(mn+mx)/2,mx].forEach(g=>{s+=`<line x1="${padL}" x2="${W-4}" y1="${y(g)}" y2="${y(g)}" stroke="${css('--grid')}"/><text x="${padL-5}" y="${y(g)+3}" text-anchor="end">$${Math.round(g)}</text>`;});
- s+=`<polyline points="${H.map((h,i)=>x(i)+','+y(h.spy_value)).join(' ')}" fill="none" stroke="${css('--muted')}" stroke-width="2"/>`;
- s+=`<polyline points="${H.map((h,i)=>x(i)+','+y(h.value)).join(' ')}" fill="none" stroke="${css('--s1')}" stroke-width="2"/>`;
- H.forEach((h,i)=>{if(i%Math.ceil(H.length/8)===0||i===H.length-1)s+=`<text x="${x(i)}" y="${Hh-3}" text-anchor="middle">${h.date.slice(5)}</text>`;});
- return s+'</svg>';
-}
-function alphaBars(){
- const items=D.positions.map(p=>({t:p.ticker,v:p.alpha_pct})).sort((a,b)=>b.v-a.v);
- if(!items.length)return'<div class="empty">No open positions.</div>';
- const W=Math.min(document.body.clientWidth-60,1100),H=170,padL=40,padB=20,padT=10;
- const mx=Math.max(...items.map(i=>i.v),2),mn=Math.min(...items.map(i=>i.v),-2);
- const y=v=>padT+(mx-v)/(mx-mn)*(H-padT-padB);
- const bw=Math.max(10,Math.min(38,(W-padL)/items.length-6));
- let s=`<svg width="${W}" height="${H}">`;
- s+=`<line x1="${padL}" x2="${W-4}" y1="${y(0)}" y2="${y(0)}" stroke="${css('--axis')}"/><text x="${padL-5}" y="${y(0)+3}" text-anchor="end">0%</text>`;
- items.forEach((it,i)=>{
-  const x=padL+8+i*((W-padL-8)/items.length);
-  const y0=y(Math.max(it.v,0)),y1=y(Math.min(it.v,0));
-  s+=`<rect x="${x}" y="${y0}" width="${bw}" height="${Math.max(Math.abs(y1-y0),2)}" rx="3" fill="${it.v>=0?css('--up'):css('--down')}"><title>${it.t} alpha ${fmtP(it.v)}</title></rect>`;
-  s+=`<text x="${x+bw/2}" y="${H-5}" text-anchor="middle">${it.t}</text>`;
- });
- return s+'</svg>';
-}
-const SIGNALS=[
- ['Venezuela oil fallout','Blockade aftermath keeps heavy crude tight; KOS is the high-beta expression.'],
- ['AI buildout, phase 2','SKHY (memory), CRWV (GPU cloud), TSM (fab) up the stack; power crunch feeds STDN and OKLO.'],
- ['Record IPO window','$251B raised 2026; biotech leads cohort. Anthropic, OpenAI, Strava filings on watch.'],
- ['Earnings vol harvest','NIQ +42% / ONON −20% / FRMI +21% — the 24h book calls direction and gets graded in 5 days.'],
- ['Crypto crosscurrents','Options positioned for August BTC dip vs strong equity tape — IOND, CRCL test it.'],
-];
-function overview(){
- const totPL=D.total_val-D.invested+D.closed_pl;
- const alphaAvg=D.positions.length?D.positions.reduce((s,p)=>s+p.alpha_pct,0)/D.positions.length:0;
- const ds=D.dir_stats;
- const hitTxt=ds.n?`${ds.hits}/${ds.n} (${Math.round(100*ds.hits/ds.n)}%)`:'0 resolved';
- const cap=(D.portfolio&&D.portfolio.capital)||1000;
- const pv=D.total_val+D.total_cash;
- const kpis=[
-  ['Portfolio value',fmt$(pv),'started $'+cap.toLocaleString()+' · '+D.positions.length+' pos'],
-  ['Invested / cash',fmt$(D.invested),fmt$(D.total_cash)+' cash'],
-  ['Total P/L',`<span class="${cls(pv-cap)}">${fmt$(pv-cap)}</span>`,`<span class="${cls(pv-cap)}">${fmtP(100*(pv-cap)/cap)}</span>`],
-  ['Avg alpha vs SPY',`<span class="${cls(alphaAvg)}">${fmtP(alphaAvg)}</span>`,'per open position'],
-  ['Direction hit rate',hitTxt,ds.open_calls+' call(s) pending'],
-  ['Options book',`<span class="${cls(D.opt_stats.total_pl)}">${fmt$(D.opt_stats.total_pl)}</span>`,fmt$(D.opt_stats.spent)+' premium at risk'],
- ].map(([l,v,s])=>`<div class="tile"><div class="lbl">${l}</div><div class="val">${v}</div><div class="sm">${s}</div></div>`).join('');
- const alloc=(D.portfolio&&D.portfolio.allocations)||{};
- const bookRows=['core','vol24','penny','longterm'].map(b=>{
-  const l=by(b);if(!l.length&&!alloc[b])return'';
-  const inv=l.reduce((s2,p)=>s2+(p.stake||0),0), val=l.reduce((s2,p)=>s2+p.value,0);
-  const csh=(D.cash&&D.cash[b])||0, pl=val-inv, wt=100*(val+csh)/pv;
-  return`<tr><td style="text-align:left">${{core:'Core',vol24:'24h Volatility',penny:'Penny',longterm:'Long-term'}[b]}</td><td>${l.length}</td><td>${fmt$(alloc[b]||0)}</td><td>${fmt$(inv)}</td><td>${fmt$(csh)}</td><td>${fmt$(val+csh)}</td><td class="${cls(pl)}">${fmt$(pl)}</td><td>${wt.toFixed(1)}%</td></tr>`;
- }).join('');
- const holdings=[...D.positions].sort((a,b)=>b.value-a.value).slice(0,8).map(p=>
-  `<tr><td style="text-align:left"><span class="tk">${p.ticker}</span> <span class="tag">${p.book}</span></td><td>${fmt$(p.stake||0)}</td><td>${fmt$(p.value)}</td><td class="${cls(p.pl)}">${fmt$(p.pl)}</td><td>${(100*p.value/pv).toFixed(1)}%</td></tr>`).join('');
- const sigs=(D.signals&&D.signals.length)?D.signals:SIGNALS.map(([t,b])=>({title:t,body:b,sentiment:'neutral',sector:''}));
- function timingStock(p){
-  const dir=p.direction, pr=p.current_price, e=p.flag_price, st=p.stop_price;
-  const r=100*(pr/e-1), adverse=dir==='bull'?r:-r;
-  if((dir==='bull'&&pr<=st)||(dir==='bear'&&pr>=e*(1-p.stop_pct/100)*1.0&&false))return['INVALIDATED','neg'];
-  if(dir==='bull'&&pr<=st)return['INVALIDATED','neg'];
-  if(dir==='bear'&&r>=-p.stop_pct)return['INVALIDATED','neg'];
-  if(adverse<=-1)return['DISCOUNT — below entry','pos'];
-  if(adverse<=1.5)return['OPTIMAL — near entry','pos'];
-  if(adverse<=4)return['EXTENDED — chasing','warn'];
-  return['TOO LATE — moved '+(adverse>0?'+':'')+adverse.toFixed(1)+'%','neg'];
- }
- function timingOpt(o){
-  const est=o.live_est!=null?o.live_est:o.current_bid;
-  if(est==null)return['NO LIVE MARK','warn'];
-  if(est<=o.stop_premium)return['BROKEN — at/below stop','neg'];
-  if(est>=o.target_premium*0.9)return['TOO LATE — near target','neg'];
-  if(est<=o.entry_ask*1.15)return['OPTIMAL — near entry premium','pos'];
-  if(est<=o.entry_ask*1.5)return['EXTENDED — premium up '+Math.round(100*(est/o.entry_ask-1))+'%','warn'];
-  return['TOO LATE — premium up '+Math.round(100*(est/o.entry_ask-1))+'%','neg'];
- }
- const stockCards=by('vol24').map(p=>{
-  const [txt,cl]=timingStock(p);
-  return`<div class="scard"><span class="tk">${p.ticker}</span><span class="tag">STOCK CALL</span><span class="dir ${p.direction==='bull'?'pos':'neg'}" style="float:right">${p.direction==='bull'?'LONG':'SHORT'}</span>
-  <table><tr><td>Live price</td><td style="text-align:right"><b>${fmt$(p.current_price)}</b>${liveStamp?' <span class="chip bullish" style="font-size:8px">LIVE</span>':''}</td></tr>
-  <tr><td>Entry (flag)</td><td style="text-align:right">${fmt$(p.flag_price)}</td></tr>
-  <tr><td>Stop</td><td style="text-align:right" class="neg">${fmt$(p.stop_price)}</td></tr></table>
-  <div style="margin-top:6px"><span class="chip ${cl==='pos'?'bullish':cl==='neg'?'bearish':'neutral'}" style="margin-left:0">${txt}</span></div>
-  <div class="nm" style="margin-top:4px">stock position · graded ${p.eval_date.slice(5)}</div></div>`;
- });
- const optCards=D.options.map(o=>{
-  const [txt,cl]=timingOpt(o);
-  const u=D.positions.find(p=>p.ticker===o.underlying);
-  const est=o.live_est!=null?o.live_est:o.current_bid;
-  return`<div class="scard" style="border-color:color-mix(in srgb,var(--warn) 40%,var(--border))"><span class="tk">${o.underlying}</span><span class="tag" style="color:var(--warn);border-color:var(--warn)">OPTION</span><span class="dir ${o.type==='call'?'pos':'neg'}" style="float:right">${o.type==='call'?'LONG':'SHORT'}</span>
-  <div class="nm" style="margin-top:2px">${o.type.toUpperCase()} $${o.strike} exp ${o.expiry.slice(5)} · ${o.contracts_n} contract(s) = ${fmt$(o.cost)} of $250 budget</div>
-  <table>${u?`<tr><td>Stock live</td><td style="text-align:right"><b>${fmt$(u.current_price)}</b>${liveStamp?' <span class="chip bullish" style="font-size:8px">LIVE</span>':''}</td></tr>`:''}
-  <tr><td>Premium in</td><td style="text-align:right">${fmt$(o.entry_ask)}</td></tr>
-  <tr><td>Premium now</td><td style="text-align:right"><b>${est!=null?fmt$(est):'—'}</b>${o.live_est!=null?' <span class="nm">est</span>':''}</td></tr>
-  <tr><td>Target sale</td><td style="text-align:right" class="pos">${fmt$(o.target_premium)}</td></tr>
-  <tr><td>Stop loss</td><td style="text-align:right" class="neg">${fmt$(o.stop_premium)}</td></tr></table>
-  <div style="margin-top:6px"><span class="chip ${cl==='pos'?'bullish':cl==='neg'?'bearish':'neutral'}" style="margin-left:0">${txt}</span></div>
-  <div class="nm" style="margin-top:4px">forced exit ${o.exit_by.slice(5)} · R:R ${((o.target_premium-o.entry_ask)/(o.entry_ask-o.stop_premium)).toFixed(1)}</div></div>`;
- });
- const cardHtml=stockCards.concat(optCards).join('');
- const cards={length:stockCards.length+optCards.length};
- // performance summary + drawdown from real (small) history — no fabricated numbers
- const realized=[...D.closed,...D.closed_options];
- const wins=realized.filter(t=>t.pl>0), losses=realized.filter(t=>t.pl<=0);
- const gw=wins.reduce((s2,t)=>s2+t.pl,0), gl=Math.abs(losses.reduce((s2,t)=>s2+t.pl,0));
- const pf=gl>0?(gw/gl).toFixed(2):(gw>0?'∞':'—');
- const H=D.history; let maxdd=0,peak=-1e9;
- H.forEach(h=>{peak=Math.max(peak,h.value);maxdd=Math.min(maxdd,h.value/peak-1);});
- const small=realized.length<20?' <span class="nm">(n='+realized.length+' — too small to trust)</span>':'';
- const perf=[
-  ['Resolved trades',realized.length,''],['Win rate',realized.length?Math.round(100*wins.length/realized.length)+'%':'—',''],
-  ['Profit factor',pf,''],['Expectancy',realized.length?fmt$(realized.reduce((s2,t)=>s2+t.pl,0)/realized.length):'—','per trade'],
-  ['Max drawdown',`<span class="${maxdd<0?'neg':''}">${(100*maxdd).toFixed(1)}%</span>`,H.length+' days of history'],
- ].map(([l,v,s2])=>`<div class="tile"><div class="lbl">${l}</div><div class="val">${v}</div><div class="sm">${s2}</div></div>`).join('');
- let ddSvg='';
- if(H.length>=2){
-  const W=Math.min(document.body.clientWidth-60,1100),Hh=110,padL=50,padB=16,padT=6;
-  let pk=-1e9;const dd=H.map(h=>{pk=Math.max(pk,h.value);return h.value/pk-1;});
-  const mn=Math.min(...dd,-0.001);
-  const x=i=>padL+i/(H.length-1)*(W-padL-8),y=v=>padT+(0-v)/(0-mn)*(Hh-padT-padB);
-  ddSvg=`<svg width="${W}" height="${Hh}"><line x1="${padL}" x2="${W-4}" y1="${y(0)}" y2="${y(0)}" stroke="${css('--axis')}"/><text x="${padL-5}" y="${y(0)+3}" text-anchor="end">0%</text><text x="${padL-5}" y="${y(mn)+3}" text-anchor="end">${(100*mn).toFixed(1)}%</text><polyline points="${dd.map((v,i)=>x(i)+','+y(v)).join(' ')}" fill="none" stroke="${css('--down')}" stroke-width="2"/></svg>`;
- }
- return`<div class="kpis">${kpis}</div>
- <div class="panel"><h2>Live signals — stock calls vs option contracts (updates every 60s with live quotes)</h2>${cards.length?`<div class="sigcards">${cardHtml}</div>`:'<div class="empty">No open direction calls.</div>'}</div>
- <div class="panel"><h2>Active world signals</h2><div class="signals">${sigs.map(g=>`<div class="sig"><b>${g.title}<span class="chip ${g.sentiment}">${g.sentiment.toUpperCase()}</span>${g.sector?`<span class="tag">${g.sector}</span>`:''}</b><span>${g.body}</span></div>`).join('')}</div></div>
- <div class="panel"><h2>System performance — real numbers, no marketing${small}</h2><div class="kpis">${perf}</div>${ddSvg?`<h2 style="margin-top:10px">Drawdown</h2>${ddSvg}`:''}</div>
- <div class="panel"><h2>Portfolio vs same-day SPY stakes</h2>
-  <div class="legend"><span><i style="background:${css('--s1')}"></i>Scanner</span><span><i style="background:${css('--muted')}"></i>SPY</span></div>${curveSvg()}</div>
- <div class="panel"><h2>Alpha since flag, all books</h2>${alphaBars()}</div>
- <div class="panel"><h2>Portfolio allocation — $1,000 across four books, weighted by conviction (options pool separate)</h2><div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Book</th><th>Pos</th><th>Allocated</th><th>Invested</th><th>Cash</th><th>Value</th><th>P/L</th><th>Weight</th></tr></thead><tbody>${bookRows}</tbody></table></div>
- <h2 style="margin-top:12px">Largest holdings</h2><div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Position</th><th>Stake</th><th>Value</th><th>P/L</th><th>% of portfolio</th></tr></thead><tbody>${holdings}</tbody></table></div></div>
- <div class="panel"><h2>Watchlist</h2><ul class="watch">${D.watchlist.map(w=>`<li><b>${w.ticker}</b> — ${w.note}</li>`).join('')}</ul></div>`;
-}
-function optionsView(){
- const os=D.opt_stats;
- const realized=D.closed_options.reduce((t,o)=>t+(o.pl||0),0);
- const bandCol=b=>b==='A'?css('--up'):b==='B'?'#4ea8de':b==='C'?css('--warn'):css('--down');
- const kpi=[
-  ['Open contracts',D.options.length+' pos','$'+D.options.reduce((t,o)=>t+o.cost,0).toFixed(0)+' at risk · cap 8/day'],
-  ['Open P/L'+(liveStamp?' (live est)':''),`<span class="${cls(D.options.reduce((t,o)=>t+(o.pl||0),0))}">${fmt$(D.options.reduce((t,o)=>t+(o.pl||0),0))}</span>`,'mark: '+(liveStamp?'model est':'CBOE bid')],
-  ['Realized (closed)',`<span class="${cls(realized)}">${fmt$(realized)}</span>`,os.resolved+' resolved'],
-  ['Win rate',os.resolved?`${os.wins}/${os.resolved} (${Math.round(100*os.wins/os.resolved)}%)`:'0 resolved','kill: P/L<0 after 20'],
-  ['Avg confidence',(()=>{const s=D.options.filter(o=>o.conf!=null);return s.length?Math.round(s.reduce((t,o)=>t+o.conf,0)/s.length):'—'})(),'of open book'],
- ].map(([l,v,s2])=>`<div class="tile"><div class="lbl">${l}</div><div class="val">${v}</div><div class="sm">${s2}</div></div>`).join('');
-
- const card=o=>{
-  const live=o.live_est!=null, mark=live?o.live_est:o.current_bid;
-  const b=o.conf_band||'—', col=bandCol(b);
-  const p=o.conf_parts||{}, dt=o.conf_detail||{};
-  const toTgt=mark!=null&&o.target_premium?((o.target_premium-mark)/mark*100):null;
-  const toStop=mark!=null&&o.stop_premium?((mark-o.stop_premium)/mark*100):null;
-  const parts=[['Execution',p.execution,25,`spread ${dt.spread_pct}% · OI ${dt.oi}`],
-   ['Breakeven',p.breakeven,25,`needs ${dt.required_move_pct}% vs ${dt.expected_move_pct}% implied — ratio ${dt.be_ratio}`],
-   ['Signal',p.signal,25,dt.signal_tier||'—'],
-   ['Clock',p.clock,15,`${dt.days_left_at_exit} days of life left at planned exit`],
-   ['IV cost',p.iv_cost,10,dt.iv_vs_realized!=null?`IV is ${dt.iv_vs_realized}× 20-day realized`:'realized vol unavailable — neutral 5']]
-   .map(([l,v,mx,d])=>`<tr><td style="text-align:left">${l}</td><td><b>${v==null?'—':v}</b>/${mx}</td><td style="width:32%"><div style="background:var(--grid);height:6px;border-radius:4px"><div style="background:${v/mx>=0.6?css('--up'):(v/mx<=0.35?css('--down'):css('--warn'))};height:6px;width:${Math.round(100*(v||0)/mx)}%;border-radius:4px"></div></div></td><td style="color:var(--muted);text-align:right;font-size:11px">${d}</td></tr>`).join('');
-  return`<div class="ocard">
-   <div class="ohead">
-    <div class="oconf" style="border-color:${col}">
-      <div class="oconfn" style="color:${col}">${o.conf!=null?o.conf:'—'}</div>
-      <div class="oconfb" style="background:${col}">BAND ${b}</div>
-      <div class="oconfl">confidence</div>
-    </div>
-    <div style="flex:1;min-width:0">
-     <div class="otitle"><span class="tk">${o.underlying}</span> <span class="obig">$${o.strike} ${o.type.toUpperCase()}</span> <span class="tag">exp ${o.expiry.slice(5)}</span></div>
-     <div class="okeys">
-      <div class="okey"><span>Entry</span><b>${fmt$(o.entry_ask)}</b></div>
-      <div class="okey"><span>Target</span><b class="pos">${fmt$(o.target_premium)}</b></div>
-      <div class="okey"><span>Stop</span><b class="neg">${fmt$(o.stop_premium)}</b></div>
-      <div class="okey"><span>Mark${live?' est':''}</span><b>${mark!=null?fmt$(mark):'—'}</b></div>
-      <div class="okey"><span>Qty</span><b>${o.contracts_n} × ${fmt$(o.cost)}</b></div>
-      <div class="okey"><span>P/L</span><b class="${cls(o.pl||0)}">${fmt$(o.pl||0)} <span style="font-size:11px">${fmtP(o.pl_pct||0)}</span></b></div>
-     </div>
-     ${o.status!=='closed'?timingStrip(o):''}
-    <div class="obar">${toTgt!=null?`<span>${toTgt.toFixed(0)}% to target</span><span>·</span><span>${toStop.toFixed(0)}% to stop</span><span>·</span>`:''}<span>${o.status==='closed'?(o.exit_reason||'closed'):'exit by '+o.exit_by.slice(5)}</span></div>
-    </div>
-   </div>
-   <details class="odet"><summary>Details, score breakdown &amp; thesis</summary>
-    <table style="margin-top:8px"><tbody>${parts}</tbody></table>
-    <div class="odl">
-     <div><span>Contract</span>${o.contract}</div>
-     <div><span>Underlying at entry</span>${o.entry_spot!=null?fmt$(o.entry_spot):'—'}</div>
-     <div><span>Open interest</span>${o.oi}</div>
-     <div><span>IV at entry</span>${(o.iv*100).toFixed(0)}%</div>
-     <div><span>Entry bid/ask</span>${fmt$(o.entry_bid)} / ${fmt$(o.entry_ask)}</div>
-     <div><span>Entry date</span>${o.entry_date}</div>
-    </div>
-    <div class="sig" style="margin-top:8px"><span><b>Source:</b> ${o.source_call||'—'}</span></div>
-    ${o.note?`<div class="sig" style="margin-top:6px;border-color:var(--muted)"><span>${o.note}</span></div>`:''}
-   </details></div>`;
- };
- const sorted=D.options.slice().sort((a,b)=>(b.conf||0)-(a.conf||0));
- const openT=sorted.length?sorted.map(card).join(''):'<div class="empty">No open contracts.</div>';
-
- const bg=D.conf_grade||{}; const bandOrder=['A','B','C','D'];
- const gradeRows=bandOrder.filter(b=>bg[b]).map(b=>{const d=bg[b];
-   return`<tr><td style="text-align:left"><span class="oconfb" style="background:${bandCol(b)};display:inline-block">BAND ${b}</span></td><td>${d.n}</td><td class="${cls(d.avg_pl_pct)}"><b>${fmtP(d.avg_pl_pct)}</b></td><td>${d.win_rate}%</td><td class="${cls(d.sum_pl)}">${fmt$(d.sum_pl)}</td></tr>`}).join('');
- const kv=D.conf_kill||{};
- const gradePanel=`<div class="panel"><h2>Does the confidence score actually work?</h2>
-  ${gradeRows?`<div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Band</th><th>Resolved</th><th>Avg P/L %</th><th>Win rate</th><th>Total $</th></tr></thead><tbody>${gradeRows}</tbody></table></div>`:'<div class="empty">No scored contracts have resolved yet.</div>'}
-  <div class="sig" style="margin-top:10px;border-color:${kv.verdict==='dead'?css('--down'):kv.verdict==='alive'?css('--up'):css('--warn')}"><span><b>${(kv.verdict||'pending').toUpperCase()}</b> — ${kv.msg||''}</span></div></div>`;
-
- const closedT=D.closed_options.length?`<h2 style="margin-top:14px">Exited — realized results (permanent record)</h2><div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Contract</th><th>Conf</th><th>Qty</th><th>Entry</th><th>Exit bid</th><th>Realized $</th><th>Realized %</th><th>Exit date</th><th>Reason</th></tr></thead><tbody>${D.closed_options.map(o=>`<tr><td style="text-align:left"><span class="tk">${o.underlying}</span> <span class="tag">${o.type.toUpperCase()} $${o.strike}</span><br><span class="nm">${o.contract}</span></td><td>${o.conf!=null?`<b style="color:${bandCol(o.conf_band)}">${o.conf} ${o.conf_band}</b>`:'<span class="nm">unscored</span>'}</td><td>${o.contracts_n}</td><td>${fmt$(o.entry_ask)}</td><td>${fmt$(o.exit_bid!=null?o.exit_bid:o.current_bid)}</td><td class="${cls(o.pl)}" style="font-weight:650">${fmt$(o.pl)}</td><td class="${cls(o.pl_pct)}">${fmtP(o.pl_pct)}</td><td>${o.exit_date||''}</td><td style="color:var(--muted)">${o.exit_reason||''}</td></tr>`).join('')}</tbody></table></div>`:'';
-
- return`<div class="kpis">${kpi}</div>
- <div class="panel"><h2>Rules of this book</h2><div class="sig flow" style="border-color:var(--warn)"><span>Up to <b>8 contracts/day</b> across ETFs, blue chips, movers and earnings names. Gates are unchanged and non-negotiable: <b>2–10% OTM</b> (0.2–1.5% for 1DTE) · <b>OI ≥ 500</b> · <b>spread ≤ 20% of ask</b> · <b>cost ≤ $250</b>. Target = <b>6× entry ask</b>, stop = <b>0.5× ask</b> — a 10:1 ratio you set; forced exit after 2 trading days or at expiry, first trigger wins. Confidence <b>ranks</b> candidates, it does not gate them: every band gets traded so the score can be proven or killed. Prior study says the expected result is losing the premium; this book measures it and closes permanently if P/L is negative after 20 resolved positions.</span></div></div>
- ${gradePanel}
- <div class="panel"><h2>Open contracts — ranked by confidence</h2>
-  <div class="tbar">${timingBtn('tOpt')}<span class="nm">Re-prices every contract from live stock quotes and tells you, per contract, whether entering right now still gets roughly the flagged price. Premiums are Black-Scholes estimates off the live stock price and entry IV — not real quotes.</span></div>
-  ${openT}${closedT}</div>`;
-}
-function gauge(score){
- const w=260,h=90,cx=w/2,cy=h-6,r=64;
- const ang=Math.PI*(1-score/100);
- const x=cx+r*Math.cos(ang), y=cy-r*Math.sin(ang);
- const col=score>=60?css('--up'):(score<=40?css('--down'):css('--warn'));
- let s2=`<svg width="${w}" height="${h}">`;
- s2+=`<path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx-r*0.31} ${cy-r*0.95}" fill="none" stroke="${css('--down')}" stroke-width="9" opacity=".45"/>`;
- s2+=`<path d="M ${cx-r*0.31} ${cy-r*0.95} A ${r} ${r} 0 0 1 ${cx+r*0.31} ${cy-r*0.95}" fill="none" stroke="${css('--muted')}" stroke-width="9" opacity=".45"/>`;
- s2+=`<path d="M ${cx+r*0.31} ${cy-r*0.95} A ${r} ${r} 0 0 1 ${cx+r} ${cy}" fill="none" stroke="${css('--up')}" stroke-width="9" opacity=".45"/>`;
- s2+=`<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${col}" stroke-width="3"/>`;
- s2+=`<circle cx="${cx}" cy="${cy}" r="4" fill="${col}"/>`;
- s2+=`<text x="${cx}" y="${cy-22}" text-anchor="middle" style="font-size:22px;font-weight:700;fill:${col}">${score}</text>`;
- return s2+'</svg>';
-}
-function spyView(){
- const s=D.spy||{};
- if(!s.score)return '<div class="panel"><div class="empty">SPY model has not run yet — it populates on the next scan.</div></div>';
- const p=s.parts||{};
- const rows=[['Trend (SPY vs 20 & 50 DMA)',p.trend,30,`px ${fmt$(s.price)} · 20d ${fmt$(s.sma20)} · 50d ${fmt$(s.sma50)}`],
-   ['Momentum (5-day return)',p.momentum,25,fmtP(s.ret5)],
-   ['Volatility (VIX level + trend)',p.volatility,20,`VIX ${s.vix} (${fmtP(s.vix_chg5)} 5d)`],
-   ['Breadth (sector ETFs > 20DMA)',p.breadth,15,`${s.breadth_pct}% of 8 sectors`],
-   ['World news signals',p.news,10,'bullish minus bearish']]
-  .map(([l,v,mx,d])=>`<tr><td style="text-align:left">${l}</td><td><b>${v}</b> / ${mx}</td><td style="width:34%"><div style="background:var(--grid);height:7px;border-radius:4px"><div style="background:${v/mx>=0.6?css('--up'):(v/mx<=0.35?css('--down'):css('--warn'))};height:7px;width:${Math.round(100*v/mx)}%;border-radius:4px"></div></div></td><td style="color:var(--muted);text-align:right">${d}</td></tr>`).join('');
- const gcalls=(D.spy_calls||[]).filter(c=>c.outcome);
- const hits=gcalls.filter(c=>c.outcome==='hit').length;
- const rate=gcalls.length?Math.round(100*hits/gcalls.length):null;
- // --- today's 1DTE contract ---------------------------------------
- const all1=[...D.options,...D.closed_options].filter(o=>(o.source_call||'').indexOf('1dte')===0);
- all1.sort((a,b)=>(a.entry_date<b.entry_date?1:-1));
- const c1=all1[0];
- const dteCard=(()=>{
-  if(!c1)return`<div class="sig" style="border-color:var(--warn)"><span><b>No 1DTE contract selected yet.</b> The post-open scan picks exactly one strike per day. A day with none is a legitimate result — it means no strike cleared the $0.30–$0.60 / 0.2–1.5% OTM / OI≥500 / spread≤20% gates, or the bias was NEUTRAL.</span></div>`;
-  const open=c1.status!=='closed';
-  const live=c1.live_est!=null, mark=open?(live?c1.live_est:c1.current_bid):(c1.exit_bid!=null?c1.exit_bid:c1.current_bid);
-  const col=c1.conf_band==='A'?css('--up'):c1.conf_band==='B'?'#4ea8de':c1.conf_band==='C'?css('--warn'):css('--down');
-  const dist=s.price&&c1.strike?((c1.strike-s.price)/s.price*100):null;
-  const box=(l,v,c)=>`<div class="dbox"><span>${l}</span><b class="${c||''}">${v}</b></div>`;
-  return`<div class="dteWrap">
-   <div class="dteMain">
-    <div class="dteLbl">${open?'TODAY’S 1DTE CONTRACT':'TODAY’S 1DTE CONTRACT — CLOSED'}</div>
-    <div class="dteStrike">SPY $${c1.strike} <span style="font-size:24px">${c1.type.toUpperCase()}</span></div>
-    <div class="dteSub">${c1.contract} · expires ${c1.expiry}${dist!=null?` · strike is ${dist>=0?'+':''}${dist.toFixed(2)}% from SPY ${fmt$(s.price)} right now`:''}</div>
-   </div>
-   <div class="dteGrid">
-    ${box('Entry (ask)',fmt$(c1.entry_ask))}
-    ${box('Target',fmt$(c1.target_premium),'pos')}
-    ${box('Stop',fmt$(c1.stop_premium),'neg')}
-    ${box(open?(live?'Mark (est)':'Mark'):'Exit bid',mark!=null?fmt$(mark):'—')}
-    ${box('Contracts',c1.contracts_n+' × '+fmt$(c1.cost))}
-    ${box(open?'Open P/L':'Realized',fmt$(c1.pl||0)+' ('+fmtP(c1.pl_pct||0)+')',cls(c1.pl||0))}
-    ${c1.conf!=null?`<div class="dbox" style="border-color:${col}"><span>Confidence</span><b style="color:${col}">${c1.conf} · ${c1.conf_band}</b></div>`:''}
-    ${box('Status',open?('exit by '+c1.exit_by):(c1.exit_reason||'closed'),open?'':'neg')}
-   </div>
-   <div style="margin-top:10px">${timingStrip(c1)}</div>
-   ${c1.source_call?`<div class="sig" style="margin-top:9px"><span><b>Why this strike:</b> ${c1.source_call}</span></div>`:''}
-  </div>`;
- })();
- const prior1=all1.slice(1,11).map(o=>`<tr><td style="text-align:left">${o.entry_date}</td><td><b>$${o.strike} ${o.type.toUpperCase()}</b></td><td>${fmt$(o.entry_ask)}</td><td class="pos">${fmt$(o.target_premium)}</td><td class="neg">${fmt$(o.stop_premium)}</td><td>${o.contracts_n}</td><td class="${cls(o.pl||0)}"><b>${fmt$(o.pl||0)}</b></td><td style="color:var(--muted)">${o.exit_reason||'open'}</td></tr>`).join('');
- const callRows=(D.spy_calls||[]).slice().reverse().slice(0,15).map(c=>
-  `<tr><td style="text-align:left">${c.date}</td><td><span class="dir ${c.bias==='BULLISH'?'pos':(c.bias==='BEARISH'?'neg':'')}">${c.bias}</span></td><td>${c.score}</td><td>${c.spy_close?fmt$(c.spy_close):'—'}</td><td class="${c.next_ret!=null?cls(c.next_ret):''}">${c.next_ret!=null?fmtP(c.next_ret):'pending'}</td><td>${c.outcome?(c.outcome==='hit'?'<span class="pos">✓ hit</span>':'<span class="neg">✗ miss</span>'):'<span class="nm">—</span>'}</td></tr>`).join('');
- return `<div class="kpis">
-  <div class="tile"><div class="lbl">SPY</div><div class="val">${fmt$(s.price)}</div><div class="sm ${cls(s.day_pct)}">${fmtP(s.day_pct)} today</div></div>
-  <div class="tile"><div class="lbl">Composite bias</div><div class="val" style="color:${s.bias==='BULLISH'?css('--up'):(s.bias==='BEARISH'?css('--down'):css('--warn'))}">${s.bias}</div><div class="sm">score ${s.score}/100</div></div>
-  <div class="tile"><div class="lbl">Direction hit rate</div><div class="val">${rate!=null?rate+'%':'—'}</div><div class="sm">${gcalls.length} graded · kill &lt;55% @ 30</div></div>
-  <div class="tile"><div class="lbl">VIX</div><div class="val">${s.vix}</div><div class="sm ${cls(-s.vix_chg5)}">${fmtP(s.vix_chg5)} 5d</div></div>
-  <div class="tile"><div class="lbl">Breadth</div><div class="val">${s.breadth_pct}%</div><div class="sm">sectors above 20-DMA</div></div>
- </div>
- <div class="panel" style="text-align:center"><h2>Daily sentiment</h2>${gauge(s.score)}
-  <div class="nm" style="margin-top:4px">0—40 bearish · 40—60 neutral · 60—100 bullish · weights frozen 2026-08-13, never re-tuned</div></div>
- <div class="panel"><h2>Score components</h2><div style="overflow-x:auto"><table><tbody>${rows}</tbody></table></div></div>
- <div class="panel"><h2>Today’s 1DTE contract — the one strike</h2>
-  <div class="tbar">${timingBtn('tSpy')}<span class="nm">Pulls a live SPY quote, re-prices the strike, and says whether now is still a reasonable entry or the move is already gone.</span></div>
-  ${dteCard}</div>
- <div class="panel"><h2>Live entry check — is a fresh SPY 1DTE worth taking right now?</h2>
-  <div class="tbar">${timingBtn('tFresh')}<span class="nm">Runs the same gates against the most recent chain scan and re-prices from a live SPY quote. Answers "would a new contract qualify now", separately from how today's tracked contract did.</span></div>
-  ${freshPanel()}</div>
- ${prior1?`<div class="panel"><h2>Prior 1DTE contracts</h2><div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Date</th><th>Strike</th><th>Entry</th><th>Target</th><th>Stop</th><th>Qty</th><th>P/L</th><th>Outcome</th></tr></thead><tbody>${prior1}</tbody></table></div></div>`:''}
- <div class="panel"><h2>1DTE rules</h2><div class="sig flow" style="border-color:var(--warn)"><span>SPY only · exactly <b>one strike</b> per day · premium <b>$0.30–$0.60</b> · <b>0.2–1.5% OTM</b> (the 2–10% gate is meaningless at one day) · OI ≥ 500 · spread ≤ 20% · ≤ $250 total · target 6× / stop 0.5× · NEUTRAL days trade nothing. The direction call is published and graded <b>every day regardless</b>, so direction skill is measured separately from option economics — per the 811-day study, that separation is the whole point. Prior: 0–2DTE SPY OTM had median −100% per trade.</span></div></div>
- <div class="panel"><h2>Direction call record — published before the session, graded after</h2>${(D.spy_calls||[]).length?`<div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Call date</th><th>Bias</th><th>Score</th><th>SPY at call</th><th>Next session</th><th>Result</th></tr></thead><tbody>${callRows}</tbody></table></div>`:'<div class="empty">First call publishes on the next scan.</div>'}</div>`;
-}
-function whaleView(){
- const w=D.whale||{};
- const ev=D.whale_events||[];
- const notes=Object.entries(w.notes||{}).map(([k,v])=>`<div class="sig"><b>${k}</b><span>${v}</span></div>`).join('');
- const evRows=ev.slice().reverse().slice(0,25).map(e=>
-  `<tr><td style="text-align:left">${e.date||''}</td><td><span class="tag">${e.form||''}</span></td><td style="text-align:left"><b>${e.filer||''}</b></td><td style="text-align:left">${e.subject||''}</td><td style="color:var(--muted);text-align:left">${e.note||''}</td></tr>`).join('');
- return `<div class="kpis">
-  <div class="tile"><div class="lbl">Next 13F deadline</div><div class="val">${w.next_13f_deadline||'—'}</div><div class="sm">${w.days_to_13f!=null?w.days_to_13f+' day(s) away':''}</div></div>
-  <div class="tile"><div class="lbl">13F window</div><div class="val" style="color:${w.in_13f_window?css('--warn'):css('--muted')}">${w.in_13f_window?'OPEN':'closed'}</div><div class="sm">institutions filing now</div></div>
-  <div class="tile"><div class="lbl">Events logged</div><div class="val">${ev.length}</div><div class="sm">filings captured</div></div>
- </div>
- ${w.in_13f_window?`<div class="panel"><h2>Active window</h2><div class="sig" style="border-color:var(--warn)"><span><b>13F filings are landing now</b> — institutions with over $100M must disclose Q2 holdings by ${w.next_13f_deadline}. Read these as sentiment only: the positions are up to 4.5 months old and the fund may have already exited. Nothing here is a trade signal on its own.</span></div></div>`:''}
- <div class="panel"><h2>When large-holder information actually surfaces</h2><div class="signals">${notes}</div></div>
- <div class="panel"><h2>Captured filings</h2>${ev.length?`<div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Date</th><th>Form</th><th style="text-align:left">Filer</th><th style="text-align:left">Subject</th><th style="text-align:left">Note</th></tr></thead><tbody>${evRows}</tbody></table></div>`:'<div class="empty">No filings captured yet — the scans populate this from SEC EDGAR feeds (Form 4 insider trades, 13D activist stakes, 13F institutional holdings).</div>'}</div>`;
-}
-function journalView(){
- const trades=[...D.closed.map(t=>({...t,kind:'stock',label:t.ticker,entry:t.flag_price,exit:t.exit_price,date:t.exit_date,book:t.book||'core'})),
-               ...D.closed_options.map(o=>({...o,kind:'option',label:o.underlying+' '+o.type.toUpperCase()+' $'+o.strike,entry:o.entry_ask,exit:o.exit_bid!=null?o.exit_bid:o.current_bid,date:o.exit_date,book:'options'}))]
-  .sort((a,b)=>String(b.date).localeCompare(String(a.date)));
- const wins=trades.filter(t=>t.pl>0),losses=trades.filter(t=>t.pl<=0);
- const gw=wins.reduce((s2,t)=>s2+t.pl,0),gl=Math.abs(losses.reduce((s2,t)=>s2+t.pl,0));
- const kpi=[
-  ['Total realized P/L',`<span class="${cls(trades.reduce((s2,t)=>s2+t.pl,0))}">${fmt$(trades.reduce((s2,t)=>s2+t.pl,0))}</span>`,trades.length+' closed trades'],
-  ['Win rate',trades.length?Math.round(100*wins.length/trades.length)+'% ('+wins.length+'/'+trades.length+')':'—',''],
-  ['Profit factor',gl>0?(gw/gl).toFixed(2):(gw>0?'∞':'—'),''],
-  ['Avg win / avg loss',(wins.length?fmt$(gw/wins.length):'—')+' / '+(losses.length?fmt$(-gl/losses.length):'—'),''],
- ].map(([l,v,s2])=>`<div class="tile"><div class="lbl">${l}</div><div class="val">${v}</div><div class="sm">${s2}</div></div>`).join('');
- const byBook={};trades.forEach(t=>{byBook[t.book]=byBook[t.book]||{n:0,pl:0};byBook[t.book].n++;byBook[t.book].pl+=t.pl;});
- const worst=Object.entries(byBook).sort((a,b)=>a[1].pl-b[1].pl)[0];
- const breakdown=Object.entries(byBook).map(([b,v])=>`<tr><td style="text-align:left">${b}</td><td>${v.n}</td><td class="${cls(v.pl)}">${fmt$(v.pl)}</td></tr>`).join('');
- const rows=trades.map(t=>`<tr><td style="text-align:left"><span class="tk">${t.label}</span> <span class="tag">${t.kind}</span></td><td>${t.book}</td><td>${t.flag_date||t.entry_date||''}</td><td>${t.date||''}</td><td>${fmt$(t.entry)}</td><td>${fmt$(t.exit||0)}</td><td class="${cls(t.pl)}" style="font-weight:650">${fmt$(t.pl)}</td><td class="${cls(t.pl_pct)}">${fmtP(t.pl_pct)}</td><td style="color:var(--muted)">${t.exit_reason||t.direction_outcome||''}</td></tr>`).join('');
- return`<div class="kpis">${kpi}</div>
- ${worst&&worst[1].pl<0?`<div class="panel"><h2>Biggest weakness (so far)</h2><div class="sig" style="border-color:var(--down)"><span>The <b>${worst[0]}</b> book accounts for ${fmt$(worst[1].pl)} of realized losses across ${worst[1].n} trade(s). Its kill rule decides its fate — not vibes.</span></div></div>`:''}
- <div class="panel"><h2>Breakdown by book</h2><div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Book</th><th>Trades</th><th>Realized P/L</th></tr></thead><tbody>${breakdown||''}</tbody></table></div></div>
- <div class="panel"><h2>Every realized trade — permanent record</h2>${trades.length?`<div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Trade</th><th>Book</th><th>Entered</th><th>Exited</th><th>Entry</th><th>Exit</th><th>P/L $</th><th>P/L %</th><th>Reason</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="empty">No closed trades yet.</div>'}</div>`;
-}
-function closedView(){
- if(!D.closed.length)return'<div class="panel"><div class="empty">None yet. Positions close at stops, at 5-day direction evaluations, or on thesis invalidation.</div></div>';
- return'<div class="panel"><div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Position</th><th>Book</th><th>Flagged</th><th>Flag</th><th>Exited</th><th>Exit</th><th>P/L %</th><th>Reason</th></tr></thead><tbody>'+
-  D.closed.map(p=>`<tr><td style="text-align:left"><span class="tk">${p.ticker}</span></td><td>${p.book||'core'}</td><td>${p.flag_date}</td><td>${fmt$(p.flag_price)}</td><td>${p.exit_date||''}</td><td>${fmt$(p.exit_price||p.current_price)}</td><td class="${cls(p.pl_pct)}">${fmtP(p.pl_pct)}</td><td style="color:var(--muted)">${p.exit_reason||''}</td></tr>`).join('')+'</tbody></table></div></div>';
-}
-// ---- live quotes (Finnhub, browser-side; enabled when a key is baked in) ----
-const FKEY='d9ubm9hr01qs9cmc2nngd9ubm9hr01qs9cmc2no0';
-let liveStamp=null;
-async function liveTick(){
- if(!FKEY||FKEY.startsWith('__'))return;
- try{
-  const tickers=[...new Set(D.positions.map(p=>p.ticker))].concat(['SPY']);
-  const qs=await Promise.all(tickers.map(t=>
-   fetch('https://finnhub.io/api/v1/quote?symbol='+t+'&token='+FKEY).then(r=>r.json()).catch(()=>null)));
-  const map={};tickers.forEach((t,i)=>{if(qs[i]&&qs[i].c)map[t]=qs[i];});
-  const spy=map['SPY'];
-  if(spy&&spy.c&&D.spy){D.spy.price=spy.c;if(spy.pc)D.spy.day_pct=+(100*(spy.c/spy.pc-1)).toFixed(2);}
-  let touched=0;
-  D.positions.forEach(p=>{
-   const q=map[p.ticker];if(!q)return;touched++;
-   p.current_price=q.c;
-   if(q.pc)p.day_pct=+(100*(q.c/q.pc-1)).toFixed(2);
-   p.value=+(p.shares*q.c).toFixed(2);
-   p.pl=+(p.value-(p.stake||0)).toFixed(2);
-   p.pl_pct=+((q.c/p.flag_price-1)*100).toFixed(2);
-   if(spy&&p.spy_flag_price){
-    const sr=100*(spy.c/p.spy_flag_price-1);
-    p.spy_ret_pct=+sr.toFixed(2);
-    p.alpha_pct=+(p.pl_pct-sr).toFixed(2);
-   }
-   if(p.spark&&p.spark.length)p.spark[p.spark.length-1]=q.c;
-  });
-  // model-estimate open option premiums from live underlying (entry IV, r=4%)
-  const ncdf=x=>{const t=1/(1+0.2316419*Math.abs(x));const d=0.3989423*Math.exp(-x*x/2);let pr=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return x>0?1-pr:pr;};
-  D.options.forEach(o=>{
-   const q=map[o.underlying];if(!q||!o.iv)return;
-   const S=q.c,K=o.strike;
-   const T=Math.max((new Date(o.expiry+'T20:00:00Z')-new Date())/(365.25*864e5),1e-4);
-   const v=Math.max(o.iv,0.05),r=0.04;
-   const d1=(Math.log(S/K)+(r+v*v/2)*T)/(v*Math.sqrt(T)),d2=d1-v*Math.sqrt(T);
-   let prem=o.type==='call'?S*ncdf(d1)-K*Math.exp(-r*T)*ncdf(d2):K*Math.exp(-r*T)*ncdf(-d2)-S*ncdf(-d1);
-   prem=Math.max(prem,0);
-   o.live_est=+prem.toFixed(2);
-   o.value=+(prem*100*o.contracts_n).toFixed(2);
-   o.pl=+(o.value-o.cost).toFixed(2);
-   o.pl_pct=+(100*o.pl/o.cost).toFixed(1);
-   touched++;
-  });
-  if(touched){
-   D.total_val=D.positions.reduce((s,p)=>s+p.value,0);
-   liveStamp=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'America/New_York'})+' ET';
-   setStamp();render();
+  :root{
+    --bg:#0a0e12; --panel:#121820; --panel2:#0f151c; --line:#1e2833;
+    --txt:#e6edf3; --muted:#7d8b99; --accent:#3fb6ff;
+    --bull:#12c48b; --bear:#ff4d5e; --neutral:#c9a227; --wait:#5a6b7a;
+    --mono:'SF Mono',ui-monospace,'Roboto Mono',Menlo,Consolas,monospace;
   }
- }catch(e){/* keep scan-time values on any failure */}
-}
-async function manualRefresh(){
- const b=document.getElementById('rescan');
- if(!FKEY||FKEY.startsWith('__')){b.textContent='no live key';setTimeout(()=>b.textContent='⟳ Refresh prices',2000);return;}
- b.textContent='⟳ refreshing…';b.disabled=true;
- await liveTick();
- b.textContent='✓ refreshed';b.disabled=false;
- setTimeout(()=>b.textContent='⟳ Refresh prices',2500);
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  body{padding:env(safe-area-inset-top) 12px calc(env(safe-area-inset-bottom) + 24px)}
+  .wrap{max-width:520px;margin:0 auto}
+  header{display:flex;align-items:center;justify-content:space-between;
+    padding:16px 4px 12px;position:sticky;top:0;background:linear-gradient(180deg,var(--bg) 70%,transparent);z-index:5}
+  .brand{font-weight:700;letter-spacing:.5px;font-size:18px}
+  .brand span{color:var(--accent)}
+  .status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-family:var(--mono)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--wait);box-shadow:0 0 0 0 rgba(0,0,0,0)}
+  .dot.live{background:var(--bull);animation:pulse 2s infinite}
+  .dot.stale{background:var(--neutral)}
+  .dot.err{background:var(--bear)}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(18,196,139,.5)}70%{box-shadow:0 0 0 8px rgba(18,196,139,0)}100%{box-shadow:0 0 0 0 rgba(18,196,139,0)}}
+
+  .hero{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:12px}
+  .price-row{display:flex;align-items:baseline;justify-content:space-between}
+  .sym{font-size:13px;color:var(--muted);font-family:var(--mono);letter-spacing:1px}
+  .price{font-size:38px;font-weight:700;font-family:var(--mono);line-height:1}
+  .chg{font-size:14px;font-family:var(--mono);margin-top:4px}
+  .up{color:var(--bull)} .down{color:var(--bear)}
+
+  .badges{display:flex;gap:10px;margin-top:16px}
+  .badge{flex:1;border-radius:12px;padding:12px;text-align:center;border:1px solid var(--line);background:var(--panel2)}
+  .badge .lbl{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+  .badge .val{font-size:17px;font-weight:700;margin-top:4px;font-family:var(--mono)}
+  .b-bull{background:rgba(18,196,139,.12);border-color:rgba(18,196,139,.4)}
+  .b-bull .val{color:var(--bull)}
+  .b-bear{background:rgba(255,77,94,.12);border-color:rgba(255,77,94,.4)}
+  .b-bear .val{color:var(--bear)}
+  .b-neutral .val{color:var(--neutral)}
+  .b-wait .val{color:var(--wait)}
+
+  .conf{margin-top:16px}
+  .conf .bar{height:8px;border-radius:6px;background:var(--panel2);overflow:hidden;border:1px solid var(--line)}
+  .conf .fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--bull));transition:width .6s}
+  .conf .cap{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px;font-family:var(--mono)}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .card h3{margin:0 0 10px;font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;font-weight:600}
+  .metric{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;font-family:var(--mono)}
+  .metric .k{color:var(--muted)} .metric .v{font-weight:600}
+  .pill{font-size:10px;padding:2px 8px;border-radius:20px;font-family:var(--mono);font-weight:600}
+  .pill.above,.pill.pos{background:rgba(18,196,139,.15);color:var(--bull)}
+  .pill.below,.pill.neg{background:rgba(255,77,94,.15);color:var(--bear)}
+  .pill.mid{background:rgba(125,139,153,.15);color:var(--muted)}
+
+  .full{grid-column:1/-1}
+  .narrative{font-size:14px;line-height:1.55;color:#cdd8e2}
+  .tag{display:inline-block;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);
+    border:1px solid rgba(63,182,255,.35);border-radius:6px;padding:2px 6px;margin-bottom:8px}
+  ul.alerts{list-style:none;margin:0;padding:0}
+  ul.alerts li{font-size:13px;padding:8px 10px;background:var(--panel2);border-left:3px solid var(--accent);
+    border-radius:8px;margin-bottom:8px;line-height:1.4}
+  .warn li{border-left-color:var(--neutral);color:#d8c98a}
+  .foot{text-align:center;font-size:10px;color:var(--muted);margin-top:16px;line-height:1.5;font-family:var(--mono)}
+  .cfg{background:#1a1205;border:1px solid #4a3410;color:#e8c877;border-radius:12px;padding:12px;
+    font-size:12px;line-height:1.5;margin-bottom:12px;display:none}
+  .cfg code{background:#000;padding:1px 5px;border-radius:4px;color:#ffd479}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">SPY<span>·</span>0DTE</div>
+    <div class="status"><span id="dot" class="dot"></span><span id="statusText">connecting…</span></div>
+  </header>
+
+  <div id="cfgWarn" class="cfg">
+    ⚠ Set <code>API_BASE</code> at the top of this file to your deployed endpoint
+    (e.g. <code>https://spy-terminal-api.onrender.com</code>), then commit & push.
+  </div>
+
+  <section class="hero">
+    <div class="price-row">
+      <div>
+        <div class="sym" id="symbol">SPY</div>
+        <div class="price" id="price">—</div>
+        <div class="chg" id="change">—</div>
+      </div>
+      <div style="text-align:right">
+        <div class="sym">DATA</div>
+        <div style="font-size:11px;color:var(--muted);font-family:var(--mono);max-width:120px" id="dataSource">—</div>
+      </div>
+    </div>
+
+    <div class="badges">
+      <div class="badge" id="biasBadge"><div class="lbl">Bias</div><div class="val" id="bias">—</div></div>
+      <div class="badge" id="actionBadge"><div class="lbl">Option Action</div><div class="val" id="action">—</div></div>
+    </div>
+
+    <div class="conf">
+      <div class="cap"><span>Confluence</span><span id="confVal">—</span></div>
+      <div class="bar"><div class="fill" id="confFill"></div></div>
+    </div>
+  </section>
+
+  <div class="grid">
+    <div class="card">
+      <h3>VWAP</h3>
+      <div class="metric"><span class="k">Value</span><span class="v" id="vwap">—</span></div>
+      <div class="metric"><span class="k">Price vs VWAP</span><span class="v" id="vwapDev">—</span></div>
+      <div class="metric"><span class="k">Position</span><span class="pill mid" id="vwapPos">—</span></div>
+    </div>
+    <div class="card">
+      <h3>Bollinger (20,2)</h3>
+      <div class="metric"><span class="k">Upper</span><span class="v" id="bbU">—</span></div>
+      <div class="metric"><span class="k">Mid</span><span class="v" id="bbM">—</span></div>
+      <div class="metric"><span class="k">Lower</span><span class="v" id="bbL">—</span></div>
+      <div class="metric"><span class="k">Status</span><span class="pill mid" id="bbStatus">—</span></div>
+    </div>
+    <div class="card full">
+      <h3>0DTE Gamma Exposure</h3>
+      <div class="metric"><span class="k">Regime</span><span class="pill mid" id="gexRegime">—</span></div>
+      <div class="metric"><span class="k">Gamma Flip</span><span class="v" id="gexFlip">—</span></div>
+      <div class="metric"><span class="k">Call Wall</span><span class="v" id="callWall">—</span></div>
+      <div class="metric"><span class="k">Put Wall</span><span class="v" id="putWall">—</span></div>
+    </div>
+    <div class="card full">
+      <h3>Narrative</h3>
+      <div id="narrTag" class="tag" style="display:none">LLM commentary — not a signal</div>
+      <div class="narrative" id="narrative">—</div>
+    </div>
+    <div class="card full" id="alertsCard" style="display:none">
+      <h3>Structure Alerts</h3>
+      <ul class="alerts" id="alerts"></ul>
+    </div>
+    <div class="card full" id="warnCard" style="display:none">
+      <h3>Warnings</h3>
+      <ul class="alerts warn" id="warnings"></ul>
+    </div>
+  </div>
+
+  <div class="foot" id="foot">
+    Heuristic decision-support only. Not investment advice.<br/>
+    Last update: <span id="lastUpdate">—</span>
+  </div>
+</div>
+
+<script>
+// ============================================================================
+//  CONFIG — set this to your deployed read-only endpoint (server.py on Render).
+//  It must return the spy_live_data document at  <API_BASE>/api/spy
+// ============================================================================
+const API_BASE = "http://localhost:8000";   // LOCAL TEST. Change to your Render URL for deploy.
+const POLL_MS  = 30000;              // 30 seconds
+
+const $ = id => document.getElementById(id);
+const fmt = (n, d=2) => (n===null||n===undefined||isNaN(n)) ? "—" : Number(n).toFixed(d);
+
+function setStatus(cls, text){ const d=$("dot"); d.className="dot "+cls; $("statusText").textContent=text; }
+
+function render(doc){
+  $("symbol").textContent = doc.symbol || "SPY";
+  const p = doc.price || {};
+  $("price").textContent = fmt(p.last);
+  const chg = p.session_change, pct = p.session_change_pct;
+  const cEl = $("change");
+  if(chg!==undefined){
+    const up = chg>=0;
+    cEl.textContent = `${up?"+":""}${fmt(chg)}  (${up?"+":""}${fmt(pct)}%)`;
+    cEl.className = "chg " + (up?"up":"down");
+  }
+  $("dataSource").textContent = doc.data_source || "—";
+
+  // Bias badge
+  const bias = (doc.signal && doc.signal.bias) || "—";
+  const bEl = $("bias"); bEl.textContent = bias;
+  $("biasBadge").className = "badge " + ({BULLISH:"b-bull",BEARISH:"b-bear",NEUTRAL:"b-neutral"}[bias]||"");
+  // Action badge
+  const action = (doc.signal && doc.signal.action) || "—";
+  $("action").textContent = action;
+  $("actionBadge").className = "badge " + ({"BUY CALLS":"b-bull","BUY PUTS":"b-bear","WAIT":"b-wait"}[action]||"");
+
+  // Confluence
+  const conf = (doc.signal && doc.signal.confluence_score) || 0;
+  $("confVal").textContent = fmt(conf,0) + " / 100";
+  $("confFill").style.width = Math.max(0,Math.min(100,conf)) + "%";
+
+  // VWAP
+  const v = doc.vwap || {};
+  $("vwap").textContent = fmt(v.value);
+  $("vwapDev").textContent = (v.price_vs_vwap_pct>=0?"+":"") + fmt(v.price_vs_vwap_pct) + "%";
+  const vp = $("vwapPos"); vp.textContent = v.position||"—";
+  vp.className = "pill " + (v.position==="ABOVE"?"above":v.position==="BELOW"?"below":"mid");
+
+  // Bollinger
+  const bb = doc.bollinger || {};
+  $("bbU").textContent = fmt(bb.upper); $("bbM").textContent = fmt(bb.mid); $("bbL").textContent = fmt(bb.lower);
+  const bs = $("bbStatus"); bs.textContent = (bb.status||"—").replace(/_/g," ");
+  bs.className = "pill " + (/UPPER/.test(bb.status)?"below":/LOWER/.test(bb.status)?"above":"mid");
+
+  // GEX
+  const g = doc.gex || {};
+  const gr = $("gexRegime"); gr.textContent = (g.regime||"—") + (g.stale?" (cached)":"");
+  gr.className = "pill " + (g.regime==="positive"?"pos":g.regime==="negative"?"neg":"mid");
+  $("gexFlip").textContent = g.gamma_flip!=null?fmt(g.gamma_flip):"—";
+  $("callWall").textContent = g.call_wall!=null?fmt(g.call_wall):"—";
+  $("putWall").textContent = g.put_wall!=null?fmt(g.put_wall):"—";
+
+  // Narrative
+  const nr = doc.narrative || {};
+  $("narrative").textContent = nr.text || "—";
+  $("narrTag").style.display = nr.generated ? "inline-block" : "none";
+
+  // Alerts
+  const alerts = doc.alerts || [];
+  const aC = $("alertsCard"), aU = $("alerts");
+  if(alerts.length){ aC.style.display="block"; aU.innerHTML=alerts.map(a=>`<li>${a}</li>`).join(""); }
+  else aC.style.display="none";
+
+  // Warnings
+  const warns = doc.warnings || [];
+  const wC = $("warnCard"), wU = $("warnings");
+  if(warns.length){ wC.style.display="block"; wU.innerHTML=warns.map(w=>`<li>${w}</li>`).join(""); }
+  else wC.style.display="none";
+
+  const age = doc.age_seconds;
+  $("lastUpdate").textContent = new Date(doc.updated_at).toLocaleTimeString()
+      + (age!=null? `  (${age}s ago)` : "");
+  if(age!=null && age>300) setStatus("stale", `stale · ${age}s old`);
+  else setStatus("live","live");
 }
 
-// ---- entry-timing verdict -------------------------------------------------
-// Answers one question: if you were acting on this flag RIGHT NOW, would you
-// be getting roughly the flagged price, a worse one, or is it already over?
-// The premium used is a Black-Scholes estimate from the LIVE stock price and
-// the ENTRY implied vol -- it is not a real quote. IV moves during the day, so
-// treat this as a direction-of-travel read, not a fill price.
-function mktState(){
- const n=new Date();
- const et=new Date(n.toLocaleString('en-US',{timeZone:'America/New_York'}));
- const dow=et.getDay(), mins=et.getHours()*60+et.getMinutes();
- if(dow===0||dow===6)return{open:false,left:0,label:'weekend'};
- if(mins<570)return{open:false,left:0,label:'pre-market'};
- if(mins>=960)return{open:false,left:0,label:'after hours'};
- return{open:true,left:960-mins,label:'open'};
-}
-function timing(o){
- const m=mktState();
- const mark=o.live_est!=null?o.live_est:o.current_bid;
- const est=o.live_est!=null;
- if(o.status==='closed')return{v:'CLOSED',c:'var(--muted)',t:'This contract already exited — '+(o.exit_reason||'closed')+'. Not an entry.'};
- if(mark==null)return{v:'NO DATA',c:'var(--muted)',t:'No live mark available. Hit the timing button to pull fresh prices.'};
- if(o.target_premium&&mark>=o.target_premium)return{v:'TOO LATE',c:'var(--warn)',t:'Already at or past the target ('+fmt$(o.target_premium)+'). The move happened. This is an exit, not an entry.'};
- if(o.stop_premium&&mark<=o.stop_premium)return{v:'DEAD',c:'var(--down)',t:'At or below the stop ('+fmt$(o.stop_premium)+'). The flagged trade is over — entering now is a different trade with no thesis behind it.'};
- const dte=Math.ceil((new Date(o.expiry+'T20:00:00Z')-new Date())/864e5);
- if(!m.open)return{v:'MARKET '+m.label.toUpperCase(),c:'var(--muted)',t:'You cannot get a real fill now. Quotes outside 9:30–4:00 ET are indicative only, and spreads widen sharply.'};
- if(dte<=1&&m.left<90)return{v:'TOO LATE',c:'var(--down)',t:'Under '+m.left+' minutes left and the contract expires within a day. Theta dominates everything else in the final hour — this is the worst point on the clock to open.'};
- const p=mark/o.entry_ask, ch=(p-1)*100;
- if(p>1.30)return{v:'TOO LATE',c:'var(--down)',t:'Premium is '+ch.toFixed(0)+'% above the flagged entry of '+fmt$(o.entry_ask)+'. You would be paying '+fmt$(mark)+' for the same contract — the move you were trying to catch has largely happened, and the distance left to target shrank with it.'};
- if(p>1.10)return{v:'LATE',c:'var(--warn)',t:'Premium is '+ch.toFixed(0)+'% above the flagged '+fmt$(o.entry_ask)+'. Still live, but you are buying after part of the move. Your effective risk/reward is worse than the one on the card.'};
- if(p>=0.85)return{v:'OPTIMAL',c:'var(--up)',t:'Premium is within '+Math.abs(ch).toFixed(0)+'% of the flagged entry ('+fmt$(o.entry_ask)+' → '+fmt$(mark)+'). Effectively the same trade the scanner flagged.'};
- return{v:'CHEAPER — CHECK THESIS',c:'#4ea8de',t:'Premium is '+Math.abs(ch).toFixed(0)+'% BELOW the flagged entry. Cheaper is not automatically better: the underlying has moved against the direction call, so the discount is the market disagreeing with the thesis, not a gift.'};
-}
-function timingStrip(o){
- const t=timing(o);
- const src=o.live_est!=null?`live estimate · ${liveStamp||''}`:`scan-time CBOE bid · ${D.stamp||''} — press the timing button for a live re-price`;
- return`<div class="tstrip" style="border-color:${t.c}"><span class="tbadge" style="background:${t.c}">${t.v}</span><span class="ttext">${t.t}<br><span class="nm" style="font-size:10.5px">priced from: ${src}</span></span></div>`;
-}
-function timingBtn(id){
- return`<button class="toggle tbtn" id="${id}" onclick="checkTiming('${id}')" style="border-color:var(--s1);color:var(--s1)">⟳ Check entry timing now</button>`;
-}
-async function checkTiming(id){
- const b=document.getElementById(id);
- if(!FKEY||FKEY.startsWith('__')){b.textContent='no live key';return;}
- b.textContent='⟳ checking…';b.disabled=true;
- await liveTick();
- render();
- const nb=document.getElementById(id);
- if(nb){nb.textContent='✓ updated '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'America/New_York'})+' ET';setTimeout(()=>{const z=document.getElementById(id);if(z)z.textContent='⟳ Check entry timing now'},4000);}
+async function tick(){
+  if(!API_BASE){ $("cfgWarn").style.display="block"; setStatus("err","not configured"); return; }
+  try{
+    const res = await fetch(`${API_BASE}/api/spy`, {cache:"no-store"});
+    if(res.status===404){ setStatus("stale","waiting for first payload…"); return; }
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    render(await res.json());
+  }catch(e){ setStatus("err","offline · "+e.message); }
 }
 
-
-// ---- fresh SPY 1DTE entry check ------------------------------------------
-// Different question from timing(): there is no flagged entry to compare
-// against, so this asks "would a NEW contract clear the gates and the clock
-// right now?" Gates are evaluated on the scan-time chain (real bid/ask/OI);
-// the premium is then re-estimated from the live SPY quote, and the estimate
-// is labelled as such. It is a check, not a fill.
-function freshEntry(){
- const C=D.spy_cand;
- if(!C)return{v:'NO SCAN',c:'var(--muted)',t:'No live candidate has been scanned yet.',cand:null,est:null};
- const m=mktState(), s=D.spy||{};
- const b=C.best;
- if(C.bias==='NEUTRAL')return{v:'NO TRADE',c:'var(--muted)',t:'The composite is NEUTRAL. The rules trade nothing on neutral days — that is the rule doing its job, not a missed opportunity.',cand:b,est:null};
- if(!b)return{v:'NO ENTRY',c:'var(--down)',t:'No strike cleared all gates on the last chain scan. Near-misses and the gate each one failed are listed below.',cand:null,est:null};
- // re-estimate the premium from the live SPY price
- let est=null;
- if(liveStamp&&s.price&&b.iv){
-  const ncdf=x=>{const t=1/(1+0.2316419*Math.abs(x));const d=0.3989423*Math.exp(-x*x/2);let pr=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return x>0?1-pr:pr;};
-  const S1=s.price,K=b.strike,T=Math.max((new Date(C.expiry+'T20:00:00Z')-new Date())/(365.25*864e5),1e-4);
-  const v=Math.max(b.iv,0.05),r=0.04;
-  const d1=(Math.log(S1/K)+(r+v*v/2)*T)/(v*Math.sqrt(T)),d2=d1-v*Math.sqrt(T);
-  est=Math.max(S1*ncdf(d1)-K*Math.exp(-r*T)*ncdf(d2),0);
-  est=+est.toFixed(2);
- }
- if(!m.open)return{v:'MARKET '+m.label.toUpperCase(),c:'var(--muted)',t:'No real fill is available outside 9:30–4:00 ET. Short-dated spreads widen hard after the bell — the $'+b.ask+' ask on the card is a regular-session number.',cand:b,est:est};
- if(m.left<90)return{v:'TOO LATE',c:'var(--down)',t:'Only '+(m.left>=60?Math.floor(m.left/60)+'h '+(m.left%60)+'m':m.left+' minutes')+' to the close on a contract expiring tomorrow. Theta is the dominant term in the last hour and it runs against a long buyer every minute — this is the worst point on the clock to open a 1DTE.',cand:b,est:est};
- const moved=s.day_pct;
- if(C.bias==='BULLISH'&&moved!=null&&moved>0.6)return{v:'LATE',c:'var(--warn)',t:'SPY is already +'+moved.toFixed(2)+'% today. A 1DTE bullish contract is a bet on the NEXT day\'s move, but most of the daily range is spent — you would be paying for a move that largely happened.',cand:b,est:est};
- if(C.bias==='BEARISH'&&moved!=null&&moved<-0.6)return{v:'LATE',c:'var(--warn)',t:'SPY is already '+moved.toFixed(2)+'% today. Most of the daily range is spent and you would be paying for a move that largely happened.',cand:b,est:est};
- if(est==null)return{v:'RE-SCAN NEEDED',c:'var(--warn)',t:'No live SPY quote has landed this session, so the strike cannot be re-priced against right now. The gates below passed at the '+C.scanned_at+' chain scan with SPY at '+fmt$(C.spot_at_scan)+' — press the button above to pull a live quote before trusting any of it.',cand:b,est:null};
- if(est!=null&&est>b.ask*1.25)return{v:'LATE',c:'var(--warn)',t:'The strike has richened since the chain scan — estimated '+fmt$(est)+' vs the scanned ask of '+fmt$(b.ask)+'. Re-scan before acting; the qty and cost on the card assume the scanned price.',cand:b,est:est};
- if(est!=null&&est<b.ask*0.6)return{v:'CHECK DIRECTION',c:'#4ea8de',t:'The strike is much cheaper than at scan ('+fmt$(est)+' est vs '+fmt$(b.ask)+' scanned) because SPY moved away from it. Cheaper, but the '+C.bias.toLowerCase()+' thesis is losing in real time.',cand:b,est:est};
- return{v:'ENTRY AVAILABLE',c:'var(--up)',t:'This strike clears every gate — '+b.otm+'% OTM, '+b.spread_pct+'% spread, OI '+b.oi.toLocaleString()+', '+b.contracts_n+' contracts for '+fmt$(b.cost)+' — with '+Math.floor(m.left/60)+'h '+(m.left%60)+'m left in the session. Clearing the gates is not a prediction: the prior study still says the median outcome for this trade is −100%.',cand:b,est:est};
-}
-function freshPanel(){
- const C=D.spy_cand; const f=freshEntry(); const b=f.cand;
- const box=(l,v,c)=>`<div class="dbox"><span>${l}</span><b class="${c||''}">${v}</b></div>`;
- const near=(C&&C.near_misses&&C.near_misses.length)?`<details class="odet" style="margin-top:9px"><summary>Strikes that did NOT qualify, and the gate each one failed</summary><table style="margin-top:7px"><thead><tr><th style="text-align:left">Strike</th><th>OTM</th><th>Ask</th><th>Spread</th><th>OI</th><th style="text-align:right">Failed gate</th></tr></thead><tbody>${C.near_misses.map(n=>`<tr><td style="text-align:left">$${n.strike}</td><td>${n.otm}%</td><td>${fmt$(n.ask)}</td><td>${n.spread_pct}%</td><td>${n.oi.toLocaleString()}</td><td style="text-align:right;color:var(--muted)">${n.fail}</td></tr>`).join('')}</tbody></table></details>`:'';
- const alt=(C&&C.passing&&C.passing.length>1)?`<div class="nm" style="margin-top:7px">Also cleared the gates: ${C.passing.filter(p=>!b||p.strike!==b.strike).map(p=>`$${p.strike} at ${fmt$(p.ask)} (conf ${p.conf} ${p.conf_band})`).join(' · ')} — the rules take the single highest-scoring survivor.</div>`:'';
- return`<div class="fresh" style="border-color:${f.c}">
-  <div class="tstrip" style="border:0;padding:0;margin:0 0 10px;background:none"><span class="tbadge" style="background:${f.c}">${f.v}</span><span class="ttext">${f.t}</span></div>
-  ${b?`<div class="dteStrike" style="font-size:30px">SPY $${b.strike} CALL <span style="font-size:14px;color:var(--muted);font-weight:500">exp ${C.expiry}</span></div>
-  <div class="dteGrid" style="margin-top:9px">
-   ${box('Ask at scan',fmt$(b.ask))}
-   ${box('Est. now',f.est!=null?fmt$(f.est):'stale')}
-   ${box('SPY scan → now',fmt$(C.spot_at_scan)+(liveStamp&&D.spy&&D.spy.price?' → '+fmt$(D.spy.price):' → —'),(liveStamp&&D.spy&&D.spy.price)?cls(D.spy.price-C.spot_at_scan):'')}
-   ${box('Target',fmt$(b.target_premium),'pos')}
-   ${box('Stop',fmt$(b.stop_premium),'neg')}
-   ${box('Contracts',b.contracts_n+' × '+fmt$(b.cost))}
-   ${box('OTM',b.otm+'%')}
-   ${box('Spread / OI',b.spread_pct+'% · '+b.oi.toLocaleString())}
-   <div class="dbox"><span>Confidence</span><b style="color:${b.conf_band==='A'?css('--up'):b.conf_band==='B'?'#4ea8de':b.conf_band==='C'?css('--warn'):css('--down')}">${b.conf} · ${b.conf_band}</b></div>
-  </div>${alt}`:''}
-  ${near}
-  <div class="sig flow" style="margin-top:10px;border-color:var(--warn)"><span><b>Read this before acting.</b> ${C?C.rule_note:''} Bid/ask/OI above are from the chain scan at <b>${C?C.scanned_at:'—'}</b> with SPY at ${C?fmt$(C.spot_at_scan):'—'}; "Est. now" is a Black-Scholes estimate off the live SPY quote and the scanned IV, <b>not a real quote</b>. Browser-side live option quotes are not available on the free data tiers.</span></div>
- </div>`;
-}
-
-function render(){
- document.getElementById('tabs').innerHTML=BOOKS.map(([id,n])=>{
-  const c=id==='overview'?'':id==='spy'?'':id==='whale'?(D.whale&&D.whale.in_13f_window?'!':''):id==='closed'?D.closed.length:id==='options'?D.options.length:id==='journal'?(D.closed.length+D.closed_options.length):by(id).length;
-  return`<button class="tab ${tab===id?'on':''}" data-t="${id}">${n}${c!==''?`<span class="n">${c}</span>`:''}</button>`;
- }).join('');
- document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{tab=b.dataset.t;render();});
- const v=document.getElementById('views');
- if(tab==='overview')v.innerHTML=overview();
- else if(tab==='spy')v.innerHTML=spyView();
- else if(tab==='whale')v.innerHTML=whaleView();
- else if(tab==='options')v.innerHTML=optionsView();
- else if(tab==='journal')v.innerHTML=journalView();
- else if(tab==='closed')v.innerHTML=closedView();
- else v.innerHTML='<div class="panel">'+posTable(by(tab),{dir:tab==='vol24',tgt:tab!=='vol24'})+'</div>';
- document.querySelectorAll('.sortable th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(!k)return;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=-1;}render();});
- document.getElementById('foot').innerHTML='Paper portfolio — $1,000 total across the stock books, weighted by conviction score within each book; exits return cash to the book. Options are a separate pool, max $250 per trade. No fees/slippage. Scores and 12m bull/base/bear targets are fixed at flag time and never revised; 3m/6m targets are √-time interpolations of the 12m range. Alpha = return minus same-day SPY. 24h-volatility direction calls are graded automatically after 5 trading days; the hit rate is shown un-cherry-picked and the feature dies if it can’t beat a coin flip over 30 calls. Penny book is listed-exchange only, $0.50–$5.00. Long-term book uses written criteria (founder-led, category creator, large TAM) — with the stated caveat that "find the next Tesla" carries survivorship bias. Prices via Yahoo Finance. Research tool, not investment advice.';
-}
-setStamp();render();
-liveTick();setInterval(liveTick,60000);
-window.addEventListener('resize',render);
-</script></body></html>
+tick();
+setInterval(tick, POLL_MS);
+</script>
+</body>
+</html>

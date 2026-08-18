@@ -1,0 +1,59 @@
+# Render Blueprint - deploys BOTH the API and the worker.
+# In Render: New > Blueprint > point at this repo. Set the secret env vars
+# (marked sync:false) in the dashboard after the first deploy.
+services:
+  - type: web
+    name: spy-terminal-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: DB_NAME
+        value: spy_terminal_db
+      - key: COLLECTION_NAME
+        value: spy_payloads
+      - key: DOC_ID
+        value: spy_live_data
+      - key: ALLOWED_ORIGINS
+        value: https://amercado19.github.io
+
+  - type: worker
+    name: spy-terminal-worker
+    runtime: python
+    plan: starter        # NOTE: free plan has no always-on worker; starter is a paid tier
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: FLASHALPHA_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ALPACA_KEY_ID
+        sync: false
+      - key: ALPACA_SECRET_KEY
+        sync: false
+      - key: DB_NAME
+        value: spy_terminal_db
+      - key: COLLECTION_NAME
+        value: spy_payloads
+      - key: DOC_ID
+        value: spy_live_data
+      - key: DATA_SOURCE
+        value: alpaca
+      - key: ALPACA_FEED
+        value: iex
+      - key: SYMBOL
+        value: SPY
+      - key: LOOP_SECONDS
+        value: "120"
+      - key: GEX_REFRESH_SECONDS
+        value: "14400"
+      - key: CLAUDE_MODEL
+        value: claude-3-5-sonnet-20241022
+      - key: ENABLE_LLM_NARRATIVE
+        value: "true"
