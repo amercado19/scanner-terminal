@@ -60,6 +60,8 @@ def option_card(o):
         "exp": o.get("expiry"), "entry": o.get("entry_ask"), "target": o.get("target_premium"),
         "stop": o.get("stop_premium"), "contracts": o.get("contracts_n", 1), "cost": o.get("cost"),
         "conf": o.get("conf", 0), "spot": spot, "iv": num(o.get("iv")), "otm": otm,
+        "ivRank": (o.get("iv_rank_proxy") / 100.0) if isinstance(o.get("iv_rank_proxy"), (int, float)) else None,
+        "delta": num(o.get("delta")),
         "oi": num(o.get("oi")), "em": num(cd.get("expected_move_pct")),
         "reqMove": num(cd.get("required_move_pct")), "spreadPct": num(cd.get("spread_pct")),
         "exitBy": o.get("exit_by"),

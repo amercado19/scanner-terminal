@@ -70,6 +70,14 @@ def pick_for(t, catalyst_date):
         return None
     spot = data['current_price']
     cat = dt.date.fromisoformat(catalyst_date)
+    # HV30-rank proxy for display/scoring. NOT a hard gate here: catalyst plays are
+    # high-vol by design, and HV rank != IV rank, so gating them on it would suppress
+    # the very setups this scanner exists to find. Shown so you can judge crush risk.
+    try:
+        import option_scan as _OS_SCAN
+        hv_rank = _OS_SCAN._hv_rank_cached(t)
+    except Exception:
+        hv_rank = None
     best = None
     for o in data['options']:
         yymmdd, cp, k = _parse(o['option'])
@@ -93,6 +101,8 @@ def pick_for(t, catalyst_date):
                 'type': 'call' if cp == 'C' else 'put', 'strike': k, 'exp': str(exp), 'dte': dte,
                 'otm': round(otm, 1), 'ask': a, 'oi': oi, 'iv': o.get('iv'), 'contracts': n, 'cost': cost,
                 'delta': o.get('delta'), 'theta': o.get('theta'), 'gamma': o.get('gamma'),
+                'iv_rank_proxy': hv_rank, 'vol': (o.get('volume') or 0),
+                'vol_oi_ratio': round((o.get('volume') or 0) / oi, 2) if oi else 0.0,
                 'target': round(a * TARGET_MULT, 2), 'stop': round(a * STOP_MULT, 3),
                 'catalyst_date': catalyst_date,
                 'enter_from': str(cat - dt.timedelta(days=5)), 'enter_to': str(cat - dt.timedelta(days=1)),

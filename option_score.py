@@ -23,6 +23,7 @@ import math
 from datetime import date
 
 BANDS = [(75, 'A'), (60, 'B'), (45, 'C'), (0, 'D')]
+MAX_HV_RANK = 75.0  # HV30-rank above this is flagged as IV-crush risk in the edge score
 
 SIGNAL_TIERS = {
     # tier -> (points, what qualifies)
@@ -51,8 +52,13 @@ def _dcount(a, b):
 
 def score_contract(*, spot, strike, opt_type, ask, bid, oi, iv,
                    entry_date, exit_by, expiry, signal_tier,
-                   realized_vol=None):
-    """Return {'total', 'band', 'parts', 'detail'}. All inputs are entry-time values."""
+                   realized_vol=None, hv_rank=None, delta=None, vol_oi_ratio=None):
+    """Return {'total', 'band', 'parts', 'detail', 'edge', 'edge_flags'}.
+
+    'total'/'band'/'parts' are the FROZEN, pre-registered 0-100 score — never re-tune.
+    'edge' is a SEPARATE, non-frozen signal (low HV-rank / in-band delta / volume surge)
+    that is intentionally NOT summed into 'total' so the falsifiability guarantee holds.
+    """
     parts, detail = {}, {}
 
     # --- execution /25 -----------------------------------------------------
@@ -127,8 +133,24 @@ def score_contract(*, spot, strike, opt_type, ask, bid, oi, iv,
         detail['iv_vs_realized'] = None
     parts['iv_cost'] = v
 
+    # --- edge signals (SEPARATE from the frozen total; never summed into it) -------
+    edge, eflags = 0, []
+    if hv_rank is not None:
+        if hv_rank <= 35:
+            edge += 10; eflags.append(f'low HV-rank {hv_rank}')
+        elif hv_rank >= MAX_HV_RANK:
+            edge -= 10; eflags.append(f'high HV-rank {hv_rank} (crush risk)')
+    if delta is not None and 0.30 <= abs(delta) <= 0.55:
+        edge += 10; eflags.append(f'delta {abs(delta):.2f} in band')
+    if vol_oi_ratio is not None and vol_oi_ratio >= 2.0:
+        edge += 10; eflags.append(f'vol surge {vol_oi_ratio}x OI')
+    detail['iv_rank_proxy'] = hv_rank
+    detail['delta'] = round(delta, 3) if delta is not None else None
+    detail['vol_oi_ratio'] = vol_oi_ratio
+
     total = sum(parts.values())
-    return {'total': total, 'band': _band(total), 'parts': parts, 'detail': detail}
+    return {'total': total, 'band': _band(total), 'parts': parts, 'detail': detail,
+            'edge': edge, 'edge_flags': eflags}
 
 
 def realized_vol_from_closes(closes, window=20):
