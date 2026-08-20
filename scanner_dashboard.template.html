@@ -68,6 +68,9 @@ main{padding:22px 26px 60px;max-width:1500px;width:100%}
 .cards2{grid-template-columns:repeat(auto-fill,minmax(430px,1fr))}
 .card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)}
 .card h3{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:700;margin-bottom:12px}
+.grouphdr{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:2px 2px 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.grouphdr .gt{font-size:15px;font-weight:800;letter-spacing:-.01em}
+.grouphdr .gs{font-size:12px;color:var(--muted)}
 .kpi .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
 .kpi .val{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-top:6px}
 .kpi .sub{font-size:12px;color:var(--ink2);margin-top:3px}
@@ -281,6 +284,8 @@ const fmt0 = v => (v<0?'-$':'$')+Math.abs(+v||0).toLocaleString(undefined,{maxim
 const pct = v => ((v>0?'+':'')+(+v||0).toFixed(2)+'%');
 const cls = v => v>0.001?'pos':(v<-0.001?'neg':'');
 const pxDate = d => { try{const [y,m,da]=d.split('-');return {d:da,m:['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][+m-1]};}catch(e){return {d:'--',m:''};} };
+const dteOf = exp => { if(!exp) return null; return Math.ceil((new Date(exp+'T20:00:00Z')-Date.now())/86400000); };
+const dtePill = exp => { const d=dteOf(exp); if(d==null) return ''; const short=d<=7; const c=short?'var(--warn)':'var(--info)', bg=short?'var(--warn-bg)':'var(--info-bg)'; return `<span class="badge" style="color:${c};background:${bg};border-color:${c}">${d} DTE</span>`; };
 const scoreColor = s => s>=70?'var(--up)':s>=50?'var(--warn)':'var(--down)';
 const impactBadge = i => i==='high'?'<span class="badge put">HIGH IMPACT</span>':i==='med'?'<span class="badge wait">MEDIUM</span>':'<span class="badge mut">LOW</span>';
 
@@ -299,13 +304,14 @@ function renderPortfolio(){
   const posRows=(p.positions||[]).map(x=>`<tr>
     <td><span class="tk">${x.ticker}</span> <span class="badge ${x.kind==='put'?'put':'call'}">${(x.kind||'call').toUpperCase()}</span> <span class="badge mut">UNCAPPED ▲</span><br><span class="sub2">${x.strategy||''}</span></td>
     <td>${x.entryDate||''}</td>
+    <td>${x.exp?`<span class="mono">${x.exp}</span><br>${dtePill(x.exp)}`:''}</td>
     <td class="mono">${fmt$(x.cost)}</td>
     <td class="mono">${fmt$(x.value)}</td>
-    <td class="mono ${cls(x.peakPct)}"><b>${x.peakPct!=null?pct(x.peakPct):'—'}</b></td>
-    <td class="mono">${x.trailStop!=null?fmt$(x.trailStop):'—'}<br><span class="sub2">${x.trailActive?'trailing 20% ↩':'hard −50%'}</span></td>
+    <td class="mono ${cls(x.peakPct)}"><b>${x.peakPct!=null?pct(x.peakPct):''}</b></td>
+    <td class="mono">${x.trailStop!=null?fmt$(x.trailStop):''}<br><span class="sub2">${x.trailActive?'trailing 20% ↩':'hard −50%'}</span></td>
     <td class="mono ${cls(x.plPct)}"><b>${pct(x.plPct)}</b></td>
     <td><button class="btn">Details</button> <button class="btn sell">Close</button></td>
-  </tr>`).join('') || `<tr><td colspan="8" class="empty">No open positions.</td></tr>`;
+  </tr>`).join('') || `<tr><td colspan="9" class="empty">No open positions.</td></tr>`;
 
   const cl=(p.closed||[]);
   const wins=cl.filter(t=>t.result==='win').length;
@@ -320,7 +326,7 @@ function renderPortfolio(){
   return `<div class="grid kpis" style="margin-bottom:16px">${kpis}</div>
   <div class="card" style="margin-bottom:16px">
     <h3>Open Positions <span class="sub2" style="text-transform:none;letter-spacing:0">· uncapped upside — winners run; 20% trailing stop arms at +30%, hard −50% until then</span></h3>
-    <div class="tscroll"><table><thead><tr><th>Ticker / Strategy</th><th>Entry</th><th>Cost Basis</th><th>Current</th><th>Peak Gain</th><th>Trailing Stop</th><th>P&L %</th><th>Actions</th></tr></thead><tbody>${posRows}</tbody></table></div>
+    <div class="tscroll"><table><thead><tr><th>Ticker / Strategy</th><th>Entry</th><th>Expiration</th><th>Cost Basis</th><th>Current</th><th>Peak Gain</th><th>Trailing Stop</th><th>P&L %</th><th>Actions</th></tr></thead><tbody>${posRows}</tbody></table></div>
   </div>
   <div class="card">
     <h3>Closed Trades Ledger · ${wins}/${cl.length} wins (${cl.length?Math.round(100*wins/cl.length):0}%)</h3>
@@ -346,18 +352,18 @@ function optionCard(o){
   const emCover=(o.em?o.reqMove/o.em:0);
   return `<div class="card ocard ${call?'call':'put'}"><div class="rail"></div>
     <div class="ohead">
-      <div><div class="tkr">${o.ticker} <span class="badge ${call?'call':'put'}">${call?'CALL':'PUT'}</span></div>
+      <div><div class="tkr">${o.ticker} <span class="badge ${call?'call':'put'}">${call?'CALL':'PUT'}</span> ${o.exp?dtePill(o.exp):''}</div>
         <div class="strike mono">$${o.strike} strike · exp ${o.exp} · ${o.contracts}×</div></div>
       <div class="score" style="border-color:${scoreColor(o.conf)}"><div class="n" style="color:${scoreColor(o.conf)}">${o.conf}</div><div class="l">Confluence</div></div>
     </div>
-    <div class="okv">
-      <div class="b"><span>Entry</span><b class="mono">${fmt$(o.entry)}</b></div>
-      <div class="b"><span>Peak Gain</span><b class="mono ${cls(o.peakPct)}">${o.peakPct!=null?pct(o.peakPct):'—'}</b></div>
-      <div class="b"><span>Trail Stop</span><b class="mono">${o.trailStop!=null?fmt$(o.trailStop):(o.stop!=null?fmt$(o.stop):'—')}</b></div>
-      <div class="b"><span>Total Cost</span><b class="mono">${fmt0(o.cost)}</b></div>
-      <div class="b"><span>Spot</span><b class="mono" data-spot="${o.ticker}">${fmt$(o.spot)}</b></div>
-      <div class="b"><span>Upside</span><b class="mono pos">Uncapped ▲</b></div>
-    </div>
+    <div class="okv">${[
+      ['Entry', o.entry!=null?fmt$(o.entry):null],
+      ['Peak Gain', o.peakPct!=null?`<span class="${cls(o.peakPct)}">${pct(o.peakPct)}</span>`:null],
+      ['Trail Stop', o.trailStop!=null?fmt$(o.trailStop):(o.stop!=null?fmt$(o.stop):null)],
+      ['Total Cost', o.cost!=null?fmt0(o.cost):null],
+      ['Spot', o.spot!=null?`<span data-spot="${o.ticker}">${fmt$(o.spot)}</span>`:null],
+      ['Upside', '<span class="pos">Uncapped ▲</span>']
+    ].filter(x=>x[1]!=null).map(([l,v])=>`<div class="b"><span>${l}</span><b class="mono">${v}</b></div>`).join('')}</div>
     <div class="metrics">
       ${o.iv!=null?`<span class="m">IV <b>${Math.round(o.iv*100)}%</b></span>`:''}
       ${o.ivRank!=null?`<span class="m">IV Rank <b style="color:${o.ivRank>=0.7?'var(--down)':o.ivRank>=0.4?'var(--warn)':'var(--up)'}">${Math.round(o.ivRank*100)}</b></span>`:''}
@@ -406,13 +412,30 @@ function renderOptions(){
     ${sp.warnings&&sp.warnings.length?`<div class="sub2" style="margin-top:6px">⚠ ${sp.warnings.join(' · ')}</div>`:''}
   </div>` : '';
 
-  const cards=(DATA.options||[]).map(optionCard).join('') || `<div class="empty">No flagged setups today.</div>`;
+  // group open contracts by expiry horizon; sort in-profit by highest %, others closest to breakeven
+  const withDte=(DATA.options||[]).map(o=>({o,dte:dteOf(o.exp)})).filter(x=>x.dte==null||x.dte>=0);
+  const sortGroup=arr=>{
+    const prof=arr.filter(x=>(x.o.plPct||0)>0).sort((a,b)=>(b.o.plPct||0)-(a.o.plPct||0));
+    const rest=arr.filter(x=>(x.o.plPct||0)<=0).sort((a,b)=>(b.o.plPct||0)-(a.o.plPct||0));
+    return prof.concat(rest);
+  };
+  const groups=[
+    ['This Week','≤ 7 DTE', x=>x.dte!=null&&x.dte<=7],
+    ["Next Week",'8–14 DTE', x=>x.dte!=null&&x.dte>7&&x.dte<=14],
+    ['Later','> 14 DTE', x=>x.dte==null||x.dte>14]
+  ];
+  const sections=groups.map(([title,sub,fn])=>{
+    const g=sortGroup(withDte.filter(fn));
+    const alloc=g.reduce((a,x)=>a+(x.o.cost||0),0);
+    const body=g.length?`<div class="grid cards2">${g.map(x=>optionCard(x.o)).join('')}</div>`:`<div class="empty">No contracts in this bracket.</div>`;
+    return `<div style="margin-bottom:16px"><div class="grouphdr"><span class="gt">${title}</span><span class="gs">${sub} · ${g.length} open contract${g.length===1?'':'s'} (${fmt0(alloc)} allocated)</span></div>${body}</div>`;
+  }).join('');
   return `${spyStrip}<div class="grid kpis" style="margin-bottom:14px">${tech}</div>
   <div class="card" style="margin-bottom:16px"><h3>Options Chain Context — SPY <span class="sub2" style="text-transform:none;letter-spacing:0">· live via /api/spy</span></h3>
     <div class="okv" style="grid-template-columns:repeat(5,1fr);margin:0">${chainCtx}</div>
     <div class="sub2" style="margin-top:9px">ATM IV, expected move and P/C are live from the 0DTE chain. Gamma walls come from the GEX feed; when it's rate-limited they show its status instead of a number.</div>
   </div>
-  <div class="grid cards2">${cards}</div>`;
+  ${sections}`;
 }
 
 /* ---------- News page ---------- */
