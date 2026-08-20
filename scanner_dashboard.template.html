@@ -14,7 +14,10 @@
   --nav-w:230px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
+html,body{height:100%;max-width:100%}
+body{overflow-x:clip}
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+.tscroll table{min-width:600px}
 body{
   font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   background:radial-gradient(1200px 600px at 80% -10%,rgba(99,102,241,.10),transparent 60%),var(--bg);
@@ -135,16 +138,37 @@ select{background:var(--card2);color:var(--ink);border:1px solid var(--line);bor
 .catrow .impact{text-align:right}
 .empty{color:var(--muted);font-size:13px;padding:22px;text-align:center}
 
+/* ---- mobile: sticky top pill nav ---- */
 @media(max-width:860px){
   .app{grid-template-columns:1fr}
-  nav.side{position:fixed;bottom:0;left:0;right:0;top:auto;height:auto;flex-direction:row;overflow-x:auto;border-right:none;border-top:1px solid var(--line);z-index:20;padding:8px}
-  nav.side .brand,nav.side .spacer,nav.side .livebox{display:none}
-  .navbtn{flex-direction:column;gap:3px;font-size:10.5px;padding:7px 12px;white-space:nowrap}
-  .navbtn .cnt{display:none}
-  main{padding:16px 14px 90px}
+  nav.side{position:sticky;top:0;left:0;right:0;height:auto;flex-direction:row;align-items:center;gap:6px;
+    overflow-x:auto;-webkit-overflow-scrolling:touch;border-right:none;border-bottom:1px solid var(--line);
+    z-index:30;padding:8px 10px;background:var(--bg2)}
+  nav.side .brand{padding:0 6px 0 2px;flex:0 0 auto}
+  nav.side .brand .t small{display:none}
+  nav.side .spacer,nav.side .livebox{display:none}
+  .navbtn{flex:0 0 auto;min-height:44px;flex-direction:row;gap:7px;font-size:13px;padding:10px 15px;
+    white-space:nowrap;border:1px solid var(--line);border-radius:22px;background:var(--card2)}
+  .navbtn.on{background:var(--card);border-color:var(--brand);color:var(--ink)}
+  .navbtn .cnt{display:inline}
+  main{padding:16px 14px 60px}
+  .topbar h1{font-size:18px}
+}
+/* ---- mobile: single-column grids + 44px touch targets ---- */
+@media(max-width:768px){
+  .cards2,.cards3{grid-template-columns:1fr}
+  .kpis{grid-template-columns:1fr 1fr}
   .okv{grid-template-columns:repeat(3,1fr)}
+  .btn{min-height:44px;padding:9px 13px}
+  select{min-height:44px}
   .catrow{grid-template-columns:60px 1fr}
   .catrow .impact{grid-column:1/-1;text-align:left}
+}
+@media(max-width:480px){
+  .kpis{grid-template-columns:1fr}
+  .okv{grid-template-columns:1fr 1fr}
+  .senthero{flex-wrap:wrap}
+  .obig{font-size:16px}
 }
 </style>
 </head>
@@ -273,12 +297,12 @@ function renderPortfolio(){
   ].map(([l,v,s])=>`<div class="card kpi"><div class="lbl">${l}</div><div class="val mono">${v}</div><div class="sub">${s}</div></div>`).join('');
 
   const posRows=(p.positions||[]).map(x=>`<tr>
-    <td><span class="tk">${x.ticker}</span> <span class="badge ${x.kind==='put'?'put':'call'}">${(x.kind||'call').toUpperCase()}</span><br><span class="sub2">${x.strategy||''}</span></td>
+    <td><span class="tk">${x.ticker}</span> <span class="badge ${x.kind==='put'?'put':'call'}">${(x.kind||'call').toUpperCase()}</span> <span class="badge mut">UNCAPPED ▲</span><br><span class="sub2">${x.strategy||''}</span></td>
     <td>${x.entryDate||''}</td>
     <td class="mono">${fmt$(x.cost)}</td>
     <td class="mono">${fmt$(x.value)}</td>
-    <td class="mono pos">${fmt$(x.target)}</td>
-    <td class="mono neg">${fmt$(x.stop)}</td>
+    <td class="mono ${cls(x.peakPct)}"><b>${x.peakPct!=null?pct(x.peakPct):'—'}</b></td>
+    <td class="mono">${x.trailStop!=null?fmt$(x.trailStop):'—'}<br><span class="sub2">${x.trailActive?'trailing 20% ↩':'hard −50%'}</span></td>
     <td class="mono ${cls(x.plPct)}"><b>${pct(x.plPct)}</b></td>
     <td><button class="btn">Details</button> <button class="btn sell">Close</button></td>
   </tr>`).join('') || `<tr><td colspan="8" class="empty">No open positions.</td></tr>`;
@@ -295,20 +319,22 @@ function renderPortfolio(){
 
   return `<div class="grid kpis" style="margin-bottom:16px">${kpis}</div>
   <div class="card" style="margin-bottom:16px">
-    <h3>Open Positions</h3>
-    <div style="overflow-x:auto"><table><thead><tr><th>Ticker / Strategy</th><th>Entry</th><th>Cost Basis</th><th>Current</th><th>Target (+100%)</th><th>Stop (−50%)</th><th>P&L %</th><th>Actions</th></tr></thead><tbody>${posRows}</tbody></table></div>
+    <h3>Open Positions <span class="sub2" style="text-transform:none;letter-spacing:0">· uncapped upside — winners run; 20% trailing stop arms at +30%, hard −50% until then</span></h3>
+    <div class="tscroll"><table><thead><tr><th>Ticker / Strategy</th><th>Entry</th><th>Cost Basis</th><th>Current</th><th>Peak Gain</th><th>Trailing Stop</th><th>P&L %</th><th>Actions</th></tr></thead><tbody>${posRows}</tbody></table></div>
   </div>
   <div class="card">
     <h3>Closed Trades Ledger · ${wins}/${cl.length} wins (${cl.length?Math.round(100*wins/cl.length):0}%)</h3>
-    <div style="overflow-x:auto"><table><thead><tr><th>Ticker</th><th>Entered</th><th>Exited</th><th>P&L %</th><th>Result</th><th>Reason</th></tr></thead><tbody>${closedRows}</tbody></table></div>
+    <div class="tscroll"><table><thead><tr><th>Ticker</th><th>Entered</th><th>Exited</th><th>P&L %</th><th>Result</th><th>Reason</th></tr></thead><tbody>${closedRows}</tbody></table></div>
   </div>`;
 }
 
 /* ---------- Options page ---------- */
 function optionTiming(o){
   if(o.filtered) return ['FILTERED — over $300 cap','var(--down)','var(--down-bg)'];
-  if(!o.enterFrom || !o.enterTo)
-    return ['OPEN CONTRACT — tracked'+(o.exitBy?' · exit by '+o.exitBy:''),'var(--info)','var(--info-bg)'];
+  if(!o.enterFrom || !o.enterTo){
+    if(o.trailActive) return ['TRAILING ARMED — 20% below peak · uncapped ▲','var(--up)','var(--up-bg)'];
+    return ['OPEN — hard −50% until +30% arms the trail'+(o.exitBy?' · time-exit '+o.exitBy:''),'var(--info)','var(--info-bg)'];
+  }
   const now=new Date(), from=new Date(o.enterFrom+'T00:00:00'), to=new Date(o.enterTo+'T23:59:59');
   if(now<from) return ['WAIT — entry window opens '+o.enterFrom,'var(--warn)','var(--warn-bg)'];
   if(now>to) return ['WINDOW PASSED — inside the crush zone','var(--down)','var(--down-bg)'];
@@ -326,11 +352,11 @@ function optionCard(o){
     </div>
     <div class="okv">
       <div class="b"><span>Entry</span><b class="mono">${fmt$(o.entry)}</b></div>
-      <div class="b"><span>Target</span><b class="mono pos">${fmt$(o.target)}</b></div>
-      <div class="b"><span>Stop</span><b class="mono neg">${fmt$(o.stop)}</b></div>
+      <div class="b"><span>Peak Gain</span><b class="mono ${cls(o.peakPct)}">${o.peakPct!=null?pct(o.peakPct):'—'}</b></div>
+      <div class="b"><span>Trail Stop</span><b class="mono">${o.trailStop!=null?fmt$(o.trailStop):(o.stop!=null?fmt$(o.stop):'—')}</b></div>
       <div class="b"><span>Total Cost</span><b class="mono">${fmt0(o.cost)}</b></div>
       <div class="b"><span>Spot</span><b class="mono" data-spot="${o.ticker}">${fmt$(o.spot)}</b></div>
-      <div class="b"><span>OTM</span><b class="mono">${o.otm!=null?o.otm+'%':'—'}</b></div>
+      <div class="b"><span>Upside</span><b class="mono pos">Uncapped ▲</b></div>
     </div>
     <div class="metrics">
       ${o.iv!=null?`<span class="m">IV <b>${Math.round(o.iv*100)}%</b></span>`:''}

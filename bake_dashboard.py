@@ -14,6 +14,36 @@ def num(x):
     return x if isinstance(x, (int, float)) else None
 
 
+TRAIL_ACTIVATE = 0.30  # arm the trailing stop at +30%
+TRAIL_PCT = 0.20       # trail 20% below peak contract value
+
+
+def trailing(o):
+    """Trailing-stop display fields. Uses engine-stored peak/trail when present
+    (build_dashboard.update_options), else estimates from the current mark so the
+    snapshot still shows real numbers."""
+    entry = o.get("entry_ask") or 0.0
+    c = o.get("contracts_n", 1) or 1
+    plpct = o.get("pl_pct", 0) or 0
+    peak_prem = o.get("peak_premium")
+    if peak_prem is None:
+        peak_prem = entry * (1 + max(plpct, 0) / 100.0)
+    peak_pct = o.get("peak_pl_pct")
+    if peak_pct is None:
+        peak_pct = round(100 * (peak_prem / entry - 1), 1) if entry else 0.0
+    armed = o.get("trail_active")
+    if armed is None:
+        armed = peak_pct >= TRAIL_ACTIVATE * 100
+    tstop = o.get("trail_stop_premium")
+    if armed and not tstop:
+        tstop = round(peak_prem * (1 - TRAIL_PCT), 3)
+    hard = o.get("stop_premium") or round(entry * 0.5, 3)
+    eff = max(hard, tstop) if (armed and tstop) else hard
+    return {"peakPct": peak_pct, "trailActive": bool(armed),
+            "trailStopPrem": round(eff, 3), "trailStopValue": round(eff * 100 * c, 2),
+            "hardStopValue": round(hard * 100 * c, 2)}
+
+
 def option_card(o):
     spot = o.get("entry_spot")
     strike = o.get("strike")
@@ -29,8 +59,11 @@ def option_card(o):
         "oi": num(o.get("oi")), "em": num(cd.get("expected_move_pct")),
         "reqMove": num(cd.get("required_move_pct")), "spreadPct": num(cd.get("spread_pct")),
         "exitBy": o.get("exit_by"),
-        "thesis": o.get("note") or o.get("source_call") or "Open contract tracked to target/stop.",
+        "thesis": o.get("note") or o.get("source_call") or "Open contract — trails 20% below peak, uncapped upside.",
     }
+    tr = trailing(o)
+    card.update({"peakPct": tr["peakPct"], "trailActive": tr["trailActive"],
+                 "trailStop": tr["trailStopPrem"], "uncapped": True})
     return {k: v for k, v in card.items() if v is not None}
 
 
@@ -52,15 +85,18 @@ def build_dash(ledger, catalysts):
     meta = ledger.get("meta", {})
     wins = sum(1 for o in closed if o.get("outcome") == "win")
 
-    positions = [{
-        "ticker": o.get("underlying"),
-        "strategy": (o.get("source_call", "") or o.get("type", "call").upper())[:42],
-        "entryDate": o.get("entry_date"), "cost": o.get("cost"),
-        "value": o.get("value", o.get("cost")),
-        "target": round((o.get("target_premium") or 0) * 100 * o.get("contracts_n", 1), 2) or None,
-        "stop": round((o.get("stop_premium") or 0) * 100 * o.get("contracts_n", 1), 2) or None,
-        "plPct": o.get("pl_pct", 0), "kind": o.get("type", "call"),
-    } for o in ops]
+    def pos_row(o):
+        tr = trailing(o)
+        return {
+            "ticker": o.get("underlying"),
+            "strategy": (o.get("source_call", "") or o.get("type", "call").upper())[:42],
+            "entryDate": o.get("entry_date"), "cost": o.get("cost"),
+            "value": o.get("value", o.get("cost")),
+            "peakPct": tr["peakPct"], "trailActive": tr["trailActive"],
+            "trailStop": tr["trailStopValue"], "hardStop": tr["hardStopValue"],
+            "plPct": o.get("pl_pct", 0), "kind": o.get("type", "call"),
+        }
+    positions = [pos_row(o) for o in ops]
 
     closed_rows = [{
         "ticker": o.get("underlying"), "strategy": o.get("type", "call").upper(),

@@ -43,7 +43,15 @@ def cboe_chain(t):
     raise last
 
 def update_options(ledger, today):
-    """Mark open option positions to bid via CBOE; enforce 2-day/expiry exits."""
+    """Mark open option positions to bid via CBOE; enforce trailing-stop / expiry exits.
+
+    Profit maximization (replaces the old fixed 6x target cap):
+      - hard stop at -50% of entry protects capital until the trade works;
+      - once the contract is +30%, a trailing stop arms and ratchets 20% below the
+        peak contract value, locking gains while letting winners run uncapped;
+      - losers are cut on the exit_by time-stop; a trade with the trail armed is NOT
+        force-closed on time — it runs until the trailing stop or expiry.
+    """
     ledger.setdefault('options_positions', []); ledger.setdefault('closed_options', [])
     still = []
     chains = {}
@@ -61,25 +69,43 @@ def update_options(ledger, today):
                 o['current_ask'] = q.get('ask') or 0.0
         except Exception as e:
             print(f"WARN option {o['contract']}: {e}", file=sys.stderr)
-        o.setdefault('target_premium', round(o['entry_ask'] * 6, 2))  # 10:1 TP:SL per Andres 2026-08-12
-        o.setdefault('stop_premium', round(o['entry_ask'] * 0.5, 3))
+        o.setdefault('target_premium', round(o['entry_ask'] * 6, 2))  # legacy upside REFERENCE only — no longer a hard cap
+        o.setdefault('stop_premium', round(o['entry_ask'] * 0.5, 3))  # hard -50% capital-protection stop
+        TRAIL_ACTIVATE = 0.30   # arm the trailing stop once the contract is +30%
+        TRAIL_PCT = 0.20        # then trail 20% below the peak contract value
         bid = o.get('current_bid', 0.0)
+        entry = o['entry_ask']
+        # peak contract value seen so far (ratchets up only)
+        o['peak_premium'] = round(max(o.get('peak_premium', entry), bid), 3)
+        o['peak_pl_pct'] = round(100 * (o['peak_premium'] / entry - 1), 1) if entry else 0.0
+        hard_stop = o['stop_premium']
+        armed = bool(o.get('trail_active', False) or (bid >= entry * (1 + TRAIL_ACTIVATE)))
+        o['trail_active'] = armed
+        if armed:
+            new_trail = round(o['peak_premium'] * (1 - TRAIL_PCT), 3)
+            o['trail_stop_premium'] = round(max(o.get('trail_stop_premium') or 0.0, new_trail), 3)
+            eff_stop = max(hard_stop, o['trail_stop_premium'])
+        else:
+            o['trail_stop_premium'] = None
+            eff_stop = hard_stop
+        o['effective_stop_premium'] = round(eff_stop, 3)
         o['value'] = round(bid * 100 * o['contracts_n'], 2)
         o['pl'] = round(o['value'] - o['cost'], 2)
         o['pl_pct'] = round(100 * o['pl'] / o['cost'], 1) if o['cost'] else 0.0
         expired = today > o['expiry']
-        tgt = o.get('target_premium'); stp = o.get('stop_premium')
-        hit_target = tgt is not None and bid >= tgt
-        hit_stop = stp is not None and 0 < bid < stp
-        if hit_target or hit_stop or today >= o.get('exit_by', '9999') or expired:
+        hit_stop = bid > 0 and bid <= eff_stop
+        # losers are cut on the time-stop; a winner with the trail armed runs until the trail or expiry
+        time_exit = (today >= o.get('exit_by', '9999')) and not armed
+        if hit_stop or expired or time_exit:
             o['status'] = 'closed'
             o['exit_date'] = today
             o['exit_bid'] = 0.0 if expired else bid
             if expired:
                 o['value'] = 0.0; o['pl'] = -o['cost']; o['pl_pct'] = -100.0
-            o['exit_reason'] = ('target hit' if hit_target else
-                                'stopped' if hit_stop else
-                                'expired worthless' if expired else '2-day exit')
+            o['exit_reason'] = ('trailing stop' if (hit_stop and armed) else
+                                'hard stop -50%' if hit_stop else
+                                'expired worthless' if expired else
+                                'time exit (no profit)')
             o['outcome'] = 'win' if o['pl'] > 0 else 'loss'
             ledger['closed_options'].append(o)
         else:
