@@ -14,6 +14,10 @@ import json, math, sys, time, urllib.request
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
+# ---- Trailing-stop tuning (edit these to change exit behavior) --------------
+TRAILING_STOP_ARM_PCT = 0.30     # +30% profit required to arm trailing stop
+TRAILING_STOP_TRAIL_PCT = 0.20   # 20% trail behind peak contract price
+
 def yahoo(t, rng='3mo'):
     url = f'https://query1.finance.yahoo.com/v8/finance/chart/{t}?range={rng}&interval=1d'
     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
@@ -71,18 +75,16 @@ def update_options(ledger, today):
             print(f"WARN option {o['contract']}: {e}", file=sys.stderr)
         o.setdefault('target_premium', round(o['entry_ask'] * 6, 2))  # legacy upside REFERENCE only — no longer a hard cap
         o.setdefault('stop_premium', round(o['entry_ask'] * 0.5, 3))  # hard -50% capital-protection stop
-        TRAIL_ACTIVATE = 0.30   # arm the trailing stop once the contract is +30%
-        TRAIL_PCT = 0.20        # then trail 20% below the peak contract value
         bid = o.get('current_bid', 0.0)
         entry = o['entry_ask']
         # peak contract value seen so far (ratchets up only)
         o['peak_premium'] = round(max(o.get('peak_premium', entry), bid), 3)
         o['peak_pl_pct'] = round(100 * (o['peak_premium'] / entry - 1), 1) if entry else 0.0
         hard_stop = o['stop_premium']
-        armed = bool(o.get('trail_active', False) or (bid >= entry * (1 + TRAIL_ACTIVATE)))
+        armed = bool(o.get('trail_active', False) or (bid >= entry * (1 + TRAILING_STOP_ARM_PCT)))
         o['trail_active'] = armed
         if armed:
-            new_trail = round(o['peak_premium'] * (1 - TRAIL_PCT), 3)
+            new_trail = round(o['peak_premium'] * (1 - TRAILING_STOP_TRAIL_PCT), 3)
             o['trail_stop_premium'] = round(max(o.get('trail_stop_premium') or 0.0, new_trail), 3)
             eff_stop = max(hard_stop, o['trail_stop_premium'])
         else:
