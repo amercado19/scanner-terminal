@@ -5,7 +5,7 @@ only bakes the structural tabs (portfolio, option contracts, news, catalysts).
 
 Usage: python3 bake_dashboard.py <template.html> <ledger.json> <catalysts.json> <out.html>
 """
-import json, re, sys
+import json, re, sys, datetime as dt
 
 API_BASE = "https://scanner-terminal-1.onrender.com"
 
@@ -83,18 +83,77 @@ def max_drawdown(history):
     return round(dd * 100, 1)
 
 
+SAMPLE_NEWS = [
+    {"breaking": True, "sentiment": "bullish", "ticker": "QQQ",
+     "headline": "Fed minutes hint at a September rate cut", "source": "Macro wire", "time": "2h",
+     "body": "Officials signaled openness to easing as inflation cools.", "url": "",
+     "impact": [
+         {"ticker": "QQQ", "sector": "Tech/Growth", "bias": "bullish", "reason": "Lower rates lift long-duration growth valuations."},
+         {"ticker": "NVDA", "sector": "Semis/AI", "bias": "bullish", "reason": "High-multiple AI leaders benefit most from cuts."},
+         {"ticker": "KRE", "sector": "Regional Banks", "bias": "bearish", "reason": "Cuts compress bank net interest margins."}]},
+    {"breaking": True, "sentiment": "bullish", "ticker": "XBI",
+     "headline": "FDA approves a closely-watched oncology therapy", "source": "FDA Press", "time": "4h",
+     "body": "Regulatory clearance de-risks the sponsor and peers.", "url": "",
+     "impact": [{"ticker": "XBI", "sector": "Biotech", "bias": "bullish", "reason": "Approvals de-risk the biotech complex."}]},
+    {"breaking": False, "sentiment": "bearish", "ticker": "XLE",
+     "headline": "Crude slips as OPEC+ signals higher output", "source": "PR Newswire", "time": "6h",
+     "body": "Additional barrels pressure energy producer margins.", "url": "",
+     "impact": [{"ticker": "XLE", "sector": "Energy", "bias": "bearish", "reason": "More supply pressures producer margins."}]},
+    {"breaking": False, "sentiment": "neutral", "ticker": "",
+     "headline": "SEC 8-K: mid-cap announces board change", "source": "SEC 8-K", "time": "1h",
+     "body": "Governance update with limited immediate price impact.", "url": "",
+     "impact": [{"ticker": "(named co.)", "sector": "", "bias": "neutral", "reason": "Governance 8-Ks rarely move price on their own."}]},
+]
+
+
+def _news_from_signals(signals):
+    try:
+        import news_engine as NE
+    except Exception:
+        NE = None
+    out = []
+    for s in signals:
+        title = s.get("title") or s.get("headline") or ""
+        if not title:
+            continue
+        c = NE.classify(title, s.get("body", "")) if NE else {"sentiment": s.get("sentiment", "neutral"), "breaking": False, "impact": []}
+        out.append({"breaking": bool(s.get("breaking")) or c.get("breaking", False),
+                    "sentiment": c.get("sentiment", s.get("sentiment", "neutral")),
+                    "ticker": (c["impact"][0]["ticker"] if c.get("impact") else ""),
+                    "headline": title, "source": s.get("sector", "world signal"), "time": "today",
+                    "body": s.get("body", ""), "url": "", "impact": c.get("impact", [])})
+    return out
+
+
+def _news_sentiment(items):
+    if not items:
+        return 0.5
+    pos = sum(1 for n in items if n.get("sentiment") == "bullish")
+    neg = sum(1 for n in items if n.get("sentiment") == "bearish")
+    return round(0.5 + 0.5 * ((pos - neg) / len(items)), 3)
+
+
+def _news_label(s):
+    return "Bullish" if s >= 0.6 else "Bearish" if s <= 0.4 else "Neutral"
+
+
 def build_dash(ledger, catalysts):
-    ops = ledger.get("options_positions", [])
+    all_ops = ledger.get("options_positions", [])
     closed = ledger.get("closed_options", [])
     meta = ledger.get("meta", {})
-    wins = sum(1 for o in closed if o.get("outcome") == "win")
+
+    # Archive expired contracts: anything past its expiry leaves the active tables
+    # and moves to the closed/historical ledger.
+    today = dt.date.today().isoformat()
+    ops = [o for o in all_ops if not o.get("expiry") or o.get("expiry") >= today]
+    expired = [o for o in all_ops if o.get("expiry") and o.get("expiry") < today]
 
     def pos_row(o):
         tr = trailing(o)
         return {
             "ticker": o.get("underlying"),
             "strategy": (o.get("source_call", "") or o.get("type", "call").upper())[:42],
-            "entryDate": o.get("entry_date"), "cost": o.get("cost"),
+            "entryDate": o.get("entry_date"), "exp": o.get("expiry"), "cost": o.get("cost"),
             "value": o.get("value", o.get("cost")),
             "peakPct": tr["peakPct"], "trailActive": tr["trailActive"],
             "trailStop": tr["trailStopValue"], "hardStop": tr["hardStopValue"],
@@ -108,22 +167,33 @@ def build_dash(ledger, catalysts):
         "plPct": o.get("pl_pct", 0), "result": o.get("outcome", "loss"),
         "reason": o.get("exit_reason", ""),
     } for o in closed]
+    # append auto-archived expired positions
+    for o in expired:
+        pl = o.get("pl", 0) or 0
+        closed_rows.append({
+            "ticker": o.get("underlying"), "strategy": o.get("type", "call").upper(),
+            "entryDate": o.get("entry_date"), "exitDate": o.get("expiry"),
+            "plPct": o.get("pl_pct", -100.0), "result": "win" if pl > 0 else "loss",
+            "reason": "expired (auto-archived)",
+        })
 
+    wins = sum(1 for r in closed_rows if r.get("result") == "win")
     realized = round(sum(o.get("pl", 0) or 0 for o in closed), 2)
     unreal = round(sum(o.get("pl", 0) or 0 for o in ops), 2)
     cash = round(sum((meta.get("book_cash", {}) or {}).values()), 2)
 
-    signals = meta.get("signals", []) or []
-    news_items = []
-    for s in signals:
-        title = s.get("title") or s.get("headline") or ""
-        news_items.append({
-            "breaking": bool(s.get("breaking")) or (s.get("sector") == "CATALYST"),
-            "sentiment": s.get("sentiment", "neutral"),
-            "ticker": (title.split(" ")[0] if title and title.split(" ")[0].isupper() else ""),
-            "headline": title, "source": s.get("sector", "world signal"),
-            "time": "today", "body": s.get("body", ""),
-        })
+    # ---- news: ledger-provided (from build_dashboard) first, else live fetch, else sample ----
+    news_items = meta.get("news_items") or []
+    if not news_items:
+        try:
+            import news_engine
+            news_items = news_engine.build_news(meta.get("finnhub_key", ""))
+            if news_items:
+                news_engine.dispatch_breaking(news_items)  # gated: no-op without DISCORD_WEBHOOK_URL
+        except Exception as e:
+            print(f"WARN news_engine unavailable ({e}); using ledger signals / sample", file=sys.stderr)
+    if not news_items:
+        news_items = _news_from_signals(meta.get("signals", []) or []) or SAMPLE_NEWS
 
     imp = {"high": "high", "medium": "med", "med": "med", "low": "low"}
     cats = []
@@ -145,7 +215,7 @@ def build_dash(ledger, catalysts):
         "portfolio": {
             "capital": (meta.get("portfolio", {}) or {}).get("capital", 1000), "cash": cash,
             "realized": realized, "unrealized": unreal,
-            "winRate": (wins / len(closed)) if closed else 0.0, "winRateN": len(closed),
+            "winRate": (wins / len(closed_rows)) if closed_rows else 0.0, "winRateN": len(closed_rows),
             "drawdown": max_drawdown(ledger.get("history", [])),
             "positions": positions, "closed": closed_rows,
         },
@@ -153,8 +223,10 @@ def build_dash(ledger, catalysts):
         "technicals": {"spySpot": None, "spyDayPct": None, "vwapDelta": None, "bollingerPctB": None, "em0dte": {}},
         "chain": {"atmIV": None, "pcRatio": None, "callWall": None, "putWall": None, "gammaFlip": None},
         "options": [option_card(o) for o in ops],
-        "news": {"sentiment": meta.get("news_sentiment", 0.5),
-                 "sentimentLabel": meta.get("news_sentiment_label", "Neutral"), "items": news_items},
+        "news": {"sentiment": _news_sentiment(news_items),
+                 "sentimentLabel": _news_label(_news_sentiment(news_items)),
+                 "breakingCount": sum(1 for n in news_items if n.get("breaking")),
+                 "items": news_items},
         "catalysts": cats, "watchlist": wl,
     }
 

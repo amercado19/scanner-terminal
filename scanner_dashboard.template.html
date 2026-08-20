@@ -124,6 +124,25 @@ tbody tr:hover td{background:rgba(99,102,241,.06)}
 .newscard .meta{font-size:11.5px;color:var(--muted);margin-top:3px}
 .newscard .body{font-size:12.5px;color:var(--ink2);margin-top:6px;line-height:1.5}
 .breaking{border-left:3px solid var(--warn)}
+.impact-dd{margin-top:9px;border-top:1px solid var(--line);padding-top:8px}
+.impact-dd summary{cursor:pointer;font-size:11.5px;font-weight:700;color:var(--info);list-style:none;user-select:none}
+.impact-dd summary::-webkit-details-marker{display:none}
+.impact-dd summary::before{content:'▸ ';color:var(--muted)}
+.impact-dd[open] summary::before{content:'▾ '}
+.imwrap{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.imrow{display:grid;grid-template-columns:120px 92px 1fr;gap:10px;align-items:baseline;font-size:12px;padding:6px 0;border-bottom:1px dotted var(--line)}
+.imtk{font-weight:700}
+.imbias{font-size:10.5px;font-weight:800;letter-spacing:.03em;border-radius:5px;padding:2px 7px;text-align:center}
+.imbias.bullish{color:var(--up);background:var(--up-bg)}
+.imbias.bearish{color:var(--down);background:var(--down-bg)}
+.imbias.neutral{color:var(--warn);background:var(--warn-bg)}
+.imreason{color:var(--ink2);line-height:1.45}
+@media(max-width:620px){.imrow{grid-template-columns:1fr;gap:3px}}
+.bbanner{display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,rgba(239,68,68,.20),transparent 70%);border-bottom:1px solid var(--down);padding:10px 16px;font-size:13px;font-weight:650;position:sticky;top:0;z-index:50}
+.bbanner .tag{flex:0 0 auto;background:var(--down);color:#fff;font-size:10px;font-weight:800;letter-spacing:.06em;padding:3px 9px;border-radius:20px;animation:pulse 2s infinite}
+.bbanner .htxt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bbanner .x{flex:0 0 auto;margin-left:auto;cursor:pointer;color:var(--ink2);border:1px solid var(--line);border-radius:7px;padding:4px 10px;min-height:32px}
+.bbanner[hidden]{display:none}
 .senthero{display:flex;align-items:center;gap:16px}
 .senthero .big{font-size:30px;font-weight:800}
 .gauge{flex:1;height:10px;border-radius:20px;background:linear-gradient(90deg,var(--down),var(--warn),var(--up));position:relative}
@@ -176,6 +195,7 @@ select{background:var(--card2);color:var(--ink);border:1px solid var(--line);bor
 </style>
 </head>
 <body>
+<div id="breakingBanner" class="bbanner" hidden></div>
 <div class="app">
   <nav class="side">
     <div class="brand"><div class="logo">S</div><div class="t">SCANNER<small>Terminal</small></div></div>
@@ -286,6 +306,10 @@ const cls = v => v>0.001?'pos':(v<-0.001?'neg':'');
 const pxDate = d => { try{const [y,m,da]=d.split('-');return {d:da,m:['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][+m-1]};}catch(e){return {d:'--',m:''};} };
 const dteOf = exp => { if(!exp) return null; return Math.ceil((new Date(exp+'T20:00:00Z')-Date.now())/86400000); };
 const dtePill = exp => { const d=dteOf(exp); if(d==null) return ''; const short=d<=7; const c=short?'var(--warn)':'var(--info)', bg=short?'var(--warn-bg)':'var(--info-bg)'; return `<span class="badge" style="color:${c};background:${bg};border-color:${c}">${d} DTE</span>`; };
+// work-week boundaries (Mon–Fri) from the client's current date; weeks end Sunday night
+function weekBounds(){ const n=new Date(); n.setHours(0,0,0,0); const thisSun=new Date(n); thisSun.setDate(n.getDate()+((7-n.getDay())%7)); thisSun.setHours(23,59,59,999); const nextSun=new Date(thisSun); nextSun.setDate(thisSun.getDate()+7); return {thisSun,nextSun}; }
+function weekBucket(exp){ if(!exp) return 2; const {thisSun,nextSun}=weekBounds(); const e=new Date(exp+'T16:00:00'); if(e<=thisSun) return 0; if(e<=nextSun) return 1; return 2; }
+const fmtMD = d => d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
 const scoreColor = s => s>=70?'var(--up)':s>=50?'var(--warn)':'var(--down)';
 const impactBadge = i => i==='high'?'<span class="badge put">HIGH IMPACT</span>':i==='med'?'<span class="badge wait">MEDIUM</span>':'<span class="badge mut">LOW</span>';
 
@@ -413,16 +437,20 @@ function renderOptions(){
   </div>` : '';
 
   // group open contracts by expiry horizon; sort in-profit by highest %, others closest to breakeven
-  const withDte=(DATA.options||[]).map(o=>({o,dte:dteOf(o.exp)})).filter(x=>x.dte==null||x.dte>=0);
+  const withDte=(DATA.options||[]).map(o=>({o,dte:dteOf(o.exp),bucket:weekBucket(o.exp)})).filter(x=>x.dte==null||x.dte>=0);
   const sortGroup=arr=>{
     const prof=arr.filter(x=>(x.o.plPct||0)>0).sort((a,b)=>(b.o.plPct||0)-(a.o.plPct||0));
     const rest=arr.filter(x=>(x.o.plPct||0)<=0).sort((a,b)=>(b.o.plPct||0)-(a.o.plPct||0));
     return prof.concat(rest);
   };
+  const {thisSun,nextSun}=weekBounds();
+  const thisFri=new Date(thisSun); thisFri.setDate(thisSun.getDate()-2);
+  const nextMon=new Date(thisSun); nextMon.setDate(thisSun.getDate()+1);
+  const nextFri=new Date(nextSun); nextFri.setDate(nextSun.getDate()-2);
   const groups=[
-    ['This Week','≤ 7 DTE', x=>x.dte!=null&&x.dte<=7],
-    ["Next Week",'8–14 DTE', x=>x.dte!=null&&x.dte>7&&x.dte<=14],
-    ['Later','> 14 DTE', x=>x.dte==null||x.dte>14]
+    ['This Week', `through Fri ${fmtMD(thisFri)}`, x=>x.bucket===0],
+    ['Next Week', `${fmtMD(nextMon)} – ${fmtMD(nextFri)}`, x=>x.bucket===1],
+    ['Later', 'beyond next week', x=>x.bucket===2]
   ];
   const sections=groups.map(([title,sub,fn])=>{
     const g=sortGroup(withDte.filter(fn));
@@ -445,16 +473,25 @@ function renderNews(){
   const feed=(n.items||[]);
   const senthue = s>=0.6?'var(--up)':s<=0.4?'var(--down)':'var(--warn)';
   const dot=x=>x==='bullish'?'var(--up)':x==='bearish'?'var(--down)':'var(--warn)';
-  const bcards=breaking.map(i=>`<div class="card newscard breaking">
+  const biasLabel=b=>b==='bullish'?'Bullish +':b==='bearish'?'Bearish −':'Neutral •';
+  const impactDD=i=>{
+    if(!i.impact||!i.impact.length) return '';
+    const rows=i.impact.map(x=>`<div class="imrow">
+      <span class="imtk">${x.ticker}${x.sector?`<br><span class="sub2">${x.sector}</span>`:''}</span>
+      <span class="imbias ${x.bias}">${biasLabel(x.bias)}</span>
+      <span class="imreason">${x.reason||''}</span></div>`).join('');
+    return `<details class="impact-dd"><summary>Impact Analysis · ${i.impact.length} ticker${i.impact.length===1?'':'s'} affected</summary><div class="imwrap">${rows}</div></details>`;
+  };
+  const newsCard=(i,brk)=>`<div class="card newscard${brk?' breaking':''}">
     <span class="dot" style="background:${dot(i.sentiment)}"></span>
-    <div><div class="h">${i.headline}</div>
+    <div style="flex:1;min-width:0"><div class="h">${i.headline}</div>
       <div class="meta">${i.ticker?`<b>${i.ticker}</b> · `:''}${i.source||''} · ${i.time||''} · <span class="badge ${i.sentiment==='bullish'?'call':i.sentiment==='bearish'?'put':'wait'}">${(i.sentiment||'neutral').toUpperCase()}</span></div>
-      <div class="body">${i.body||''}</div></div></div>`).join('') || `<div class="empty">No breaking alerts.</div>`;
-  const feedRows=feed.map(i=>`<div class="card newscard">
-    <span class="dot" style="background:${dot(i.sentiment)}"></span>
-    <div><div class="h">${i.headline}</div>
-      <div class="meta">${i.ticker?`<b>${i.ticker}</b> · `:''}${i.source||''} · ${i.time||''}</div>
-      <div class="body">${i.body||''}</div></div></div>`).join('') || `<div class="empty">No headlines.</div>`;
+      ${i.body?`<div class="body">${i.body}</div>`:''}
+      ${impactDD(i)}
+      ${i.url?`<a href="${i.url}" target="_blank" rel="noopener" class="sub2" style="display:inline-block;margin-top:7px">read source ↗</a>`:''}
+    </div></div>`;
+  const bcards=breaking.map(i=>newsCard(i,true)).join('') || `<div class="empty">No breaking alerts.</div>`;
+  const feedRows=feed.map(i=>newsCard(i,false)).join('') || `<div class="empty">No headlines.</div>`;
   return `<div class="card" style="margin-bottom:16px"><h3>Overall Market News Sentiment</h3>
     <div class="senthero"><div class="big" style="color:${senthue}">${n.sentimentLabel||(s>=0.6?'Bullish':s<=0.4?'Bearish':'Neutral')}</div>
       <div class="gauge"><div class="pin" style="left:calc(${Math.max(2,Math.min(98,s*100))}% - 2px)"></div></div>
@@ -503,6 +540,18 @@ function route(to){
   const el=$('#page-'+to); el.innerHTML=fn(); el.classList.add('on');
   if(to==='calendar'){ const s=$('#catFilter'); if(s){s.value=window.__catFilter||'ALL'; s.onchange=()=>{window.__catFilter=s.value; route('calendar');};} }
   location.hash=to;
+  renderBanner();
+}
+let bannerDismissed=new Set();
+function renderBanner(){
+  const el=$('#breakingBanner'); if(!el) return;
+  const brk=((DATA.news&&DATA.news.items)||[]).filter(i=>i.breaking && !bannerDismissed.has(i.headline));
+  if(!brk.length){ el.hidden=true; el.innerHTML=''; return; }
+  const i=brk[0];
+  const tks=(i.impact||[]).slice(0,3).map(x=>`${x.ticker} ${x.bias==='bullish'?'+':x.bias==='bearish'?'−':'•'}`).join('  ·  ');
+  el.hidden=false;
+  el.innerHTML=`<span class="tag">BREAKING</span><span class="htxt">${i.headline}${tks?` — ${tks}`:''}</span><span class="x">Dismiss ✕</span>`;
+  el.querySelector('.x').onclick=()=>{ bannerDismissed.add(i.headline); renderBanner(); };
 }
 document.querySelectorAll('.navbtn').forEach(b=>b.onclick=()=>route(b.dataset.nav));
 

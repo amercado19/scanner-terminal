@@ -134,6 +134,17 @@ def interp_targets(p):
 def main(ledger_path, out_path):
     ledger = json.load(open(ledger_path))
     ledger.setdefault('history', []); ledger.setdefault('closed', [])
+    # Free-feed news (Finnhub + RSS via feedparser), classified for market impact.
+    # Best-effort: any failure leaves prior news_items untouched. bake_dashboard reads
+    # meta['news_items'] first, so this keeps the ledger + server path in sync.
+    try:
+        import news_engine
+        _news = news_engine.build_news(ledger['meta'].get('finnhub_key', ''))
+        if _news:
+            ledger['meta']['news_items'] = _news
+            news_engine.dispatch_breaking(_news)  # gated: no-op without DISCORD_WEBHOOK_URL
+    except Exception as _ne:
+        print(f"WARN news_engine: {_ne}", file=sys.stderr)
     port = ledger['meta'].get('portfolio', {})
     bands = port.get('band_stakes', {})
     cash = ledger['meta'].setdefault('book_cash', {})
