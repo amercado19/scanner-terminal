@@ -48,6 +48,29 @@ def trailing(o):
             "hardStopValue": round(hard * 100 * c, 2)}
 
 
+def _edge_from(o):
+    """Edge score for the card: use a stored score.edge if present, else derive from the
+    HV-rank / delta / volume signals on the position. Returns None when no signal exists
+    (so the card renders no badge rather than a misleading 0)."""
+    e = o.get("edge")
+    if isinstance(e, (int, float)):
+        return int(e)
+    sc = o.get("score")
+    if isinstance(sc, dict) and isinstance(sc.get("edge"), (int, float)):
+        return int(sc["edge"])
+    hv, dl, vo = o.get("iv_rank_proxy"), o.get("delta"), o.get("vol_oi_ratio")
+    if hv is None and dl is None and vo is None:
+        return None
+    edge = 0
+    if isinstance(hv, (int, float)):
+        edge += 10 if hv <= 35 else (-10 if hv >= 75 else 0)
+    if isinstance(dl, (int, float)) and 0.30 <= abs(dl) <= 0.55:
+        edge += 10
+    if isinstance(vo, (int, float)) and vo >= 2.0:
+        edge += 10
+    return edge
+
+
 def option_card(o):
     spot = o.get("entry_spot")
     strike = o.get("strike")
@@ -69,7 +92,7 @@ def option_card(o):
     }
     tr = trailing(o)
     card.update({"peakPct": tr["peakPct"], "trailActive": tr["trailActive"],
-                 "trailStop": tr["trailStopPrem"], "uncapped": True})
+                 "trailStop": tr["trailStopPrem"], "uncapped": True, "edge": _edge_from(o)})
     return {k: v for k, v in card.items() if v is not None}
 
 

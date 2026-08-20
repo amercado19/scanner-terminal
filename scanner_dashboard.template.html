@@ -306,6 +306,7 @@ const cls = v => v>0.001?'pos':(v<-0.001?'neg':'');
 const pxDate = d => { try{const [y,m,da]=d.split('-');return {d:da,m:['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][+m-1]};}catch(e){return {d:'--',m:''};} };
 const dteOf = exp => { if(!exp) return null; return Math.ceil((new Date(exp+'T20:00:00Z')-Date.now())/86400000); };
 const dtePill = exp => { const d=dteOf(exp); if(d==null) return ''; const short=d<=7; const c=short?'var(--warn)':'var(--info)', bg=short?'var(--warn-bg)':'var(--info-bg)'; return `<span class="badge" style="color:${c};background:${bg};border-color:${c}">${d} DTE</span>`; };
+const edgeBadge = e => { if(e==null) return ''; const c=e>0?'var(--up)':e<0?'var(--down)':'var(--muted)', bg=e>0?'var(--up-bg)':e<0?'var(--down-bg)':'var(--card2)'; return `<span class="badge" style="color:${c};background:${bg};border-color:${c}" title="Edge: low HV-rank +10, in-band delta +10, volume surge +10, crush risk -10 (separate from Confluence)">EDGE ${e>0?'+':''}${e}</span>`; };
 // work-week boundaries (Mon–Fri) from the client's current date; weeks end Sunday night
 function weekBounds(){ const n=new Date(); n.setHours(0,0,0,0); const thisSun=new Date(n); thisSun.setDate(n.getDate()+((7-n.getDay())%7)); thisSun.setHours(23,59,59,999); const nextSun=new Date(thisSun); nextSun.setDate(thisSun.getDate()+7); return {thisSun,nextSun}; }
 function weekBucket(exp){ if(!exp) return 2; const {thisSun,nextSun}=weekBounds(); const e=new Date(exp+'T16:00:00'); if(e<=thisSun) return 0; if(e<=nextSun) return 1; return 2; }
@@ -376,7 +377,7 @@ function optionCard(o){
   const emCover=(o.em?o.reqMove/o.em:0);
   return `<div class="card ocard ${call?'call':'put'}"><div class="rail"></div>
     <div class="ohead">
-      <div><div class="tkr">${o.ticker} <span class="badge ${call?'call':'put'}">${call?'CALL':'PUT'}</span> ${o.exp?dtePill(o.exp):''}</div>
+      <div><div class="tkr">${o.ticker} <span class="badge ${call?'call':'put'}">${call?'CALL':'PUT'}</span> ${o.exp?dtePill(o.exp):''} ${o.edge!=null?edgeBadge(o.edge):''}</div>
         <div class="strike mono">$${o.strike} strike · exp ${o.exp} · ${o.contracts}×</div></div>
       <div class="score" style="border-color:${scoreColor(o.conf)}"><div class="n" style="color:${scoreColor(o.conf)}">${o.conf}</div><div class="l">Confluence</div></div>
     </div>
