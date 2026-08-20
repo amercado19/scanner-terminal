@@ -91,7 +91,7 @@ for t in SC.ETF_UNIVERSE:
         continue
     rv = OS.realized_vol_from_closes(SC.closes(t))
     for c in SC.candidates(t, direction, tier_model, WEEKLY[0], TODAY, EXIT_2D, WEEKLY[1],
-                           rv=rv, top=2, near_out=near):
+                           rv=rv, top=2, near_out=near, dte_min=7, dte_max=14):
         c['feeder'] = 'etf'
         c['why'] = f"etf: SPY composite {m['bias']} {m['score']} — index-level expression of the model call"
         pool.append(c)
@@ -101,7 +101,7 @@ for t in SC.ETF_UNIVERSE:
 for t in SC.BLUECHIP:
     rv = OS.realized_vol_from_closes(SC.closes(t))
     for c in SC.candidates(t, direction, 'catalyst_soft', WEEKLY[0], TODAY, EXIT_2D, WEEKLY[1],
-                           rv=rv, top=2, near_out=near):
+                           rv=rv, top=2, near_out=near, dte_min=7, dte_max=14):
         c['feeder'] = 'bluechip'
         c['why'] = 'bluechip: thematic alignment with an active world signal, no company-specific event'
         pool.append(c)
@@ -111,7 +111,7 @@ for t in SC.BLUECHIP:
 for t, tier, why in MOVERS:
     rv = OS.realized_vol_from_closes(SC.closes(t))
     for c in SC.candidates(t, 'bull', tier, WEEKLY[0], TODAY, EXIT_2D, WEEKLY[1],
-                           rv=rv, top=2, near_out=near):
+                           rv=rv, top=2, near_out=near, dte_min=7, dte_max=14):
         c['feeder'] = 'mover'
         c['why'] = f'mover: {why}'
         pool.append(c)

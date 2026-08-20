@@ -14,8 +14,12 @@ def num(x):
     return x if isinstance(x, (int, float)) else None
 
 
-TRAIL_ACTIVATE = 0.30  # arm the trailing stop at +30%
-TRAIL_PCT = 0.20       # trail 20% below peak contract value
+# Single source of truth: import the trailing-stop thresholds from build_dashboard.py.
+try:
+    from build_dashboard import TRAILING_STOP_ARM_PCT as TRAIL_ACTIVATE, \
+        TRAILING_STOP_TRAIL_PCT as TRAIL_PCT
+except Exception:  # standalone use / build_dashboard not importable
+    TRAIL_ACTIVATE, TRAIL_PCT = 0.30, 0.20
 
 
 def trailing(o):

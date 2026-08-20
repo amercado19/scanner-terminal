@@ -4,7 +4,12 @@ Gates are UNCHANGED from day one. This file only widens the funnel and ranks
 what clears the gates by confidence.
 """
 import json, time, urllib.request
+import datetime as _dt
 import option_score as OS
+
+# ---- Options scanner criteria (tune here) ----------------------------------
+BUDGET_CAP = 300     # max total $ per contract line (was 250)
+DTE_MIN, DTE_MAX = 7, 14   # 1-2 weeks out: more runway, less immediate theta decay
 
 HDR = {'User-Agent': ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
                       '(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'),
@@ -53,10 +58,23 @@ def parse(sym):
 
 def candidates(t, direction, tier, exp_yymmdd, entry, exit_by, expiry_iso,
                otm_lo=2.0, otm_hi=10.0, prem_lo=0.05, prem_hi=None, rv=None, top=3,
-               near_out=None):
+               near_out=None, budget=None, dte_min=None, dte_max=None):
     d = chain(t)
     if not d:
         return []
+    budget = budget if budget is not None else BUDGET_CAP
+    # DTE-window gate (all contracts here share expiry_iso, so check once)
+    if dte_min is not None or dte_max is not None:
+        try:
+            dte = (_dt.date.fromisoformat(expiry_iso) - _dt.date.fromisoformat(entry)).days
+        except Exception:
+            dte = None
+        lo = dte_min if dte_min is not None else 0
+        hi = dte_max if dte_max is not None else 3650
+        if dte is None or not (lo <= dte <= hi):
+            if near_out is not None:
+                near_out.append({'underlying': t, 'fail': f'DTE {dte} outside {lo}-{hi}'})
+            return []
     spot = d['current_price']
     want = 'C' if direction == 'bull' else 'P'
     out = []
@@ -69,7 +87,7 @@ def candidates(t, direction, tier, exp_yymmdd, entry, exit_by, expiry_iso,
         if not (otm_lo <= otm <= otm_hi):
             continue
         spr = (a - b) / a * 100 if a > 0 else 100
-        n = int(250 // (a * 100)) if a > 0 else 0
+        n = int(budget // (a * 100)) if a > 0 else 0
         fail = None
         if a <= 0 or a < prem_lo or (prem_hi and a > prem_hi):
             fail = f'premium ${a:.2f} outside ${prem_lo:.2f}-${prem_hi:.2f}' if prem_hi else f'premium ${a:.2f} unusable'
@@ -77,7 +95,7 @@ def candidates(t, direction, tier, exp_yymmdd, entry, exit_by, expiry_iso,
             fail = f'OI {oi} < 500'
         elif spr > 20:
             fail = f'spread {spr:.1f}% > 20%'
-        elif n < 1 or n * a * 100 > 250:
+        elif n < 1 or n * a * 100 > budget:
             fail = f'cost gate: ask ${a:.2f} -> {n} contracts'
         if fail:
             if near_out is not None:
