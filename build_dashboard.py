@@ -11,12 +11,17 @@ penny ($0.50-$5 listed), longterm (written criteria, 1-3y).
 - Appends daily history snapshot; renders self-contained terminal dashboard.
 """
 import json, math, sys, time, urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 from zoneinfo import ZoneInfo
 
 # ---- Trailing-stop tuning (edit these to change exit behavior) --------------
 TRAILING_STOP_ARM_PCT = 0.30     # +30% profit required to arm trailing stop
 TRAILING_STOP_TRAIL_PCT = 0.20   # 20% trail behind peak contract price
+OVERNIGHT_PROFIT_LOCK_PCT = 0.50 # 1DTE: lock a winner >= +50% before close (overnight gap risk)
+# NOTE: these exits fire whenever update_options() RUNS. In the once-daily POST-CLOSE
+# batch that is after 4pm ET, so the 3:30pm lock / 3:00pm 0DTE close only truly happen
+# if you schedule an INTRADAY run at those clock times. In the post-close batch they act
+# as next-run cleanup, not real-time protection.
 
 def yahoo(t, rng='3mo'):
     url = f'https://query1.finance.yahoo.com/v8/finance/chart/{t}?range={rng}&interval=1d'
@@ -95,16 +100,29 @@ def update_options(ledger, today):
         o['pl'] = round(o['value'] - o['cost'], 2)
         o['pl_pct'] = round(100 * o['pl'] / o['cost'], 1) if o['cost'] else 0.0
         expired = today > o['expiry']
+        # days-to-expiry from the run date
+        try:
+            _dte = (date.fromisoformat(o['expiry']) - date.fromisoformat(today)).days
+        except Exception:
+            _dte = None
+        # 1DTE profit lock: a contract expiring tomorrow that is already >= +50% is sold
+        # into the close to remove overnight gap risk rather than carried to expiry.
+        profit_lock = (_dte == 1 and bid > 0 and o['pl_pct'] >= OVERNIGHT_PROFIT_LOCK_PCT * 100)
+        # 0DTE force close: a contract expiring today is sold at its bid (capturing residual
+        # value) before it can expire worthless / be auto-liquidated by the broker.
+        zero_dte_close = (_dte == 0 and bid > 0)
         hit_stop = bid > 0 and bid <= eff_stop
         # losers are cut on the time-stop; a winner with the trail armed runs until the trail or expiry
         time_exit = (today >= o.get('exit_by', '9999')) and not armed
-        if hit_stop or expired or time_exit:
+        if profit_lock or zero_dte_close or hit_stop or expired or time_exit:
             o['status'] = 'closed'
             o['exit_date'] = today
             o['exit_bid'] = 0.0 if expired else bid
             if expired:
                 o['value'] = 0.0; o['pl'] = -o['cost']; o['pl_pct'] = -100.0
-            o['exit_reason'] = ('trailing stop' if (hit_stop and armed) else
+            o['exit_reason'] = ('1DTE Profit Lock (Overnight Protection)' if profit_lock else
+                                '0DTE Force Close (pre-liquidation)' if zero_dte_close else
+                                'trailing stop' if (hit_stop and armed) else
                                 'hard stop -50%' if hit_stop else
                                 'expired worthless' if expired else
                                 'time exit (no profit)')
