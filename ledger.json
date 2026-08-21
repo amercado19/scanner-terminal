@@ -5,7 +5,7 @@
   "stake_per_position_usd": null,
   "mode": "paper",
   "notes": "Flag price = market price at scan time on flag date. Shares are fractional. P/L is hypothetical; no fees/slippage modeled. Measurement instrument, not a live strategy.",
-  "last_scan": "Aug 21, 2026 \u00b7 3:18 PM ET",
+  "last_scan": "Aug 21, 2026 \u00b7 3:49 PM ET",
   "benchmark": "SPY",
   "score_rubric": "catalyst/30 momentum/25 liquidity/15 risk/15(higher=safer) valuation/15; set at flag time",
   "exit_rules": "auto-close if price <= flag*(1+stop_pct/100); review_date forces thesis re-check",
@@ -162,6 +162,24 @@
   "news_items": [
    {
     "breaking": true,
+    "sentiment": "bearish",
+    "ticker": "OPFI",
+    "headline": "OppFi (OPFI) Cuts Guidance but Holds the Line on 2028 Targets",
+    "source": "Yahoo Finance",
+    "time": "1d",
+    "body": "",
+    "url": "https://finance.yahoo.com/markets/stocks/articles/oppfi-opfi-cuts-guidance-holds-100836967.html",
+    "impact": [
+     {
+      "ticker": "OPFI",
+      "sector": "",
+      "bias": "bearish",
+      "reason": "A miss / cut guidance typically pressures the reporting name."
+     }
+    ]
+   },
+   {
+    "breaking": true,
     "sentiment": "bullish",
     "ticker": "XBI",
     "headline": "FDA Approves First Therapy for Patients aged 8 years and older with Glycogen Storage Disease Type Ia",
@@ -202,7 +220,7 @@
     "ticker": "XBI",
     "headline": "FDA Approves First Drug to Treat the Full Range of Narcolepsy Type 1 Symptoms",
     "source": "FDA Press",
-    "time": "15d",
+    "time": "16d",
     "body": "The FDA approved Orzeyful (oveporexton) tablets for the treatment of narcolepsy type 1 in adults.",
     "url": "http://www.fda.gov/news-events/press-announcements/fda-approves-first-drug-treat-full-range-narcolepsy-type-1-symptoms",
     "impact": [
@@ -215,20 +233,146 @@
     ]
    },
    {
-    "breaking": false,
+    "breaking": true,
     "sentiment": "bullish",
-    "ticker": "XLE",
-    "headline": "Has Iranian Crude Become Irrelevant to Global Oil Supply?",
-    "source": "Yahoo Finance",
-    "time": "1d",
-    "body": "",
-    "url": "https://finance.yahoo.com/energy/articles/iranian-crude-become-irrelevant-global-093000290.html",
+    "ticker": "(named co.)",
+    "headline": "8-K - TRICO BANCSHARES / (0000356171) (Filer)",
+    "source": "SEC 8-K",
+    "time": "recent",
+    "body": "<b>Filed:</b> 2026-08-21 <b>AccNo:</b> 0000356171-26-000111 <b>Size:</b> 236 KB\n<br />Item 8.01: Other Events\n<br />Item 9.01: Financial Statements and Exhibits",
+    "url": "https://www.sec.gov/Archives/edgar/data/356171/000035617126000111/0000356171-26-000111-index.htm",
     "impact": [
      {
-      "ticker": "XLE",
-      "sector": "Energy",
+      "ticker": "(named co.)",
+      "sector": "",
       "bias": "bullish",
-      "reason": "Tighter supply / higher crude lifts energy producer margins."
+      "reason": "M&A / material 8-K events are typically catalysts for the named company."
+     }
+    ]
+   },
+   {
+    "breaking": true,
+    "sentiment": "bullish",
+    "ticker": "(named co.)",
+    "headline": "8-K - BUCKLE INC (0000885245) (Filer)",
+    "source": "SEC 8-K",
+    "time": "recent",
+    "body": "<b>Filed:</b> 2026-08-21 <b>AccNo:</b> 0000885245-26-000033 <b>Size:</b> 311 KB\n<br />Item 2.02: Results of Operations and Financial Condition\n<br />Item 9.01: Financial Statements and Exhibits",
+    "url": "https://www.sec.gov/Archives/edgar/data/885245/000088524526000033/0000885245-26-000033-index.htm",
+    "impact": [
+     {
+      "ticker": "(named co.)",
+      "sector": "",
+      "bias": "bullish",
+      "reason": "M&A / material 8-K events are typically catalysts for the named company."
+     }
+    ]
+   },
+   {
+    "breaking": true,
+    "sentiment": "bullish",
+    "ticker": "(named co.)",
+    "headline": "8-K - CONSUMER PORTFOLIO SERVICES, INC. (0000889609) (Filer)",
+    "source": "SEC 8-K",
+    "time": "recent",
+    "body": "<b>Filed:</b> 2026-08-21 <b>AccNo:</b> 0001683168-26-006650 <b>Size:</b> 213 KB\n<br />Item 8.01: Other Events\n<br />Item 9.01: Financial Statements and Exhibits",
+    "url": "https://www.sec.gov/Archives/edgar/data/889609/000168316826006650/0001683168-26-006650-index.htm",
+    "impact": [
+     {
+      "ticker": "(named co.)",
+      "sector": "",
+      "bias": "bullish",
+      "reason": "M&A / material 8-K events are typically catalysts for the named company."
+     }
+    ]
+   },
+   {
+    "breaking": true,
+    "sentiment": "bullish",
+    "ticker": "(named co.)",
+    "headline": "8-K - Gaucho Group Holdings, Inc. (0001559998) (Filer)",
+    "source": "SEC 8-K",
+    "time": "recent",
+    "body": "<b>Filed:</b> 2026-08-21 <b>AccNo:</b> 0001493152-26-039645 <b>Size:</b> 210 KB\n<br />Item 4.01: Changes in Registrant's Certifying Accountant\n<br />Item 9.01: Financial Statements and Exhibits",
+    "url": "https://www.sec.gov/Archives/edgar/data/1559998/000149315226039645/0001493152-26-039645-index.htm",
+    "impact": [
+     {
+      "ticker": "(named co.)",
+      "sector": "",
+      "bias": "bullish",
+      "reason": "M&A / material 8-K events are typically catalysts for the named company."
+     }
+    ]
+   },
+   {
+    "breaking": true,
+    "sentiment": "bullish",
+    "ticker": "(named co.)",
+    "headline": "8-K/A - NEONC TECHNOLOGIES HOLDINGS, INC. (0001979414) (Filer)",
+    "source": "SEC 8-K",
+    "time": "recent",
+    "body": "<b>Filed:</b> 2026-08-21 <b>AccNo:</b> 0001829126-26-009220 <b>Size:</b> 196 KB\n<br />Item 5.02: Departure of Directors or Certain Officers; Election of Directors; Appointment of Certain Officers: Compensatory Arrangements of Certain Officers",
+    "url": "https://www.sec.gov/Archives/edgar/data/1979414/000182912626009220/0001829126-26-009220-index.htm",
+    "impact": [
+     {
+      "ticker": "(named co.)",
+      "sector": "",
+      "bias": "bullish",
+      "reason": "M&A / material 8-K events are typically catalysts for the named company."
+     }
+    ]
+   },
+   {
+    "breaking": true,
+    "sentiment": "bullish",
+    "ticker": "(named co.)",
+    "headline": "8-K - Woodward, Inc. (0000108312) (Filer)",
+    "source": "SEC 8-K",
+    "time": "recent",
+    "body": "<b>Filed:</b> 2026-08-21 <b>AccNo:</b> 0001193125-26-360911 <b>Size:</b> 2 MB\n<br />Item 1.01: Entry into a Material Definitive Agreement\n<br />Item 2.03: Creation of a Direct Financial Obligation or an Obligation under an Off-Balance Sheet Arrangement of a Registrant\n<br />Item ",
+    "url": "https://www.sec.gov/Archives/edgar/data/108312/000119312526360911/0001193125-26-360911-index.htm",
+    "impact": [
+     {
+      "ticker": "(named co.)",
+      "sector": "",
+      "bias": "bullish",
+      "reason": "M&A / material 8-K events are typically catalysts for the named company."
+     }
+    ]
+   },
+   {
+    "breaking": true,
+    "sentiment": "bullish",
+    "ticker": "(named co.)",
+    "headline": "8-K - SAN JUAN BASIN ROYALTY TRUST (0000319655) (Filer)",
+    "source": "SEC 8-K",
+    "time": "recent",
+    "body": "<b>Filed:</b> 2026-08-21 <b>AccNo:</b> 0001193125-26-360880 <b>Size:</b> 66 KB\n<br />Item 2.02: Results of Operations and Financial Condition\n<br />Item 9.01: Financial Statements and Exhibits",
+    "url": "https://www.sec.gov/Archives/edgar/data/319655/000119312526360880/0001193125-26-360880-index.htm",
+    "impact": [
+     {
+      "ticker": "(named co.)",
+      "sector": "",
+      "bias": "bullish",
+      "reason": "M&A / material 8-K events are typically catalysts for the named company."
+     }
+    ]
+   },
+   {
+    "breaking": true,
+    "sentiment": "bullish",
+    "ticker": "(named co.)",
+    "headline": "8-K - PermRock Royalty Trust (0001724009) (Filer)",
+    "source": "SEC 8-K",
+    "time": "recent",
+    "body": "<b>Filed:</b> 2026-08-21 <b>AccNo:</b> 0001193125-26-360874 <b>Size:</b> 71 KB\n<br />Item 2.02: Results of Operations and Financial Condition\n<br />Item 9.01: Financial Statements and Exhibits",
+    "url": "https://www.sec.gov/Archives/edgar/data/1724009/000119312526360874/0001193125-26-360874-index.htm",
+    "impact": [
+     {
+      "ticker": "(named co.)",
+      "sector": "",
+      "bias": "bullish",
+      "reason": "M&A / material 8-K events are typically catalysts for the named company."
      }
     ]
    },
@@ -236,110 +380,22 @@
     "breaking": false,
     "sentiment": "neutral",
     "ticker": "",
-    "headline": "SMAR Investors Have Opportunity to Lead Smartsheet Inc. Securities Fraud Lawsuit",
+    "headline": "UWM Holdings Corporation (UWMC) Shareholders Who Lost Money Have Opportunity to Lead Securities Fraud Lawsuit",
     "source": "PR Newswire",
-    "time": "2m",
-    "body": "<p>NEW YORK, Aug. 21, 2026 /PRNewswire/ -- Rosen Law Firm, a global investor rights law firm, reminds sellers of common stock of Smartsheet Inc. (NYSE: SMAR) between June 1, 2024 and September 23, 2024, both dates inclusive (the \"Class Period\"), of the important October 5, 2026 l",
-    "url": "https://www.prnewswire.com/news-releases/smar-investors-have-opportunity-to-lead-smartsheet-inc-securities-fraud-lawsuit-302857446.html",
+    "time": "4m",
+    "body": "<p>LOS ANGELES, Aug. 21, 2026 /PRNewswire/ -- Glancy Prongay Wolke & Rotter LLP announces that investors with losses have opportunity to lead the securities fraud class action lawsuit against UWM Holdings Corporation. IF YOU SUFFERED A LOSS ON YOUR UWM HOLDINGS CORPORATION INVEST",
+    "url": "https://www.prnewswire.com/news-releases/uwm-holdings-corporation-uwmc-shareholders-who-lost-money-have-opportunity-to-lead-securities-fraud-lawsuit-302857015.html",
     "impact": []
    },
    {
     "breaking": false,
     "sentiment": "neutral",
     "ticker": "",
-    "headline": "Pentair plc (NYSE: PNR) Investors with Substantial Losses Have Opportunity to Lead Class Action Lawsuit - Contact Kessler Topaz Meltzer &amp; Check, LLP",
-    "source": "PR Newswire",
-    "time": "3m",
-    "body": "<p>Did you buy PNR securities between March 11, 2025 and July 14, 2026? Affected PNR Investor Summary Who: Pentair plc (NYSE: PNR) What: Securities fraud class action lawsuits filed Class Period: March 11, 2025 through July 14, 2026 Deadline to Seek Lead Plaintiff Status: October",
-    "url": "https://www.prnewswire.com/news-releases/pentair-plc-nyse-pnr-investors-with-substantial-losses-have-opportunity-to-lead-class-action-lawsuit--contact-kessler-topaz-meltzer--check-llp-302856987.html",
-    "impact": []
-   },
-   {
-    "breaking": false,
-    "sentiment": "neutral",
-    "ticker": "",
-    "headline": "Storelocal Storage Expands Footprint With Four New Self-Storage Locations",
+    "headline": "Holladay Distillery Helps Bring Made for KC Barbecue Championship to Weston",
     "source": "PR Newswire",
     "time": "6m",
-    "body": "<p>IRVINE, Calif., Aug. 21, 2026 /PRNewswire/ -- Storelocal Storage recently announced the opening of four new self-storage locations, expanding its portfolio of secure, well-maintained facilities across California and Tennessee. The new sites in Prunedale, Cameron Park, and Oakd",
-    "url": "https://www.prnewswire.com/news-releases/storelocal-storage-expands-footprint-with-four-new-self-storage-locations-302857516.html",
-    "impact": []
-   },
-   {
-    "breaking": false,
-    "sentiment": "neutral",
-    "ticker": "",
-    "headline": "Martinson &amp; Beason Partner Morris Lilienthal Named to The Best Lawyers in America\u00ae for Personal Injury Litigation",
-    "source": "PR Newswire",
-    "time": "15m",
-    "body": "<p>Recognized for excellence in personal injury and product liability litigation while representing injured clients across Alabama. HUNTSVILLE, Ala., Aug. 21, 2026 /PRNewswire/ -- Martinson & Beason partner Morris Lilienthal has been named to the 33rd edition of The Best Lawyers ",
-    "url": "https://www.prnewswire.com/news-releases/martinson--beason-partner-morris-lilienthal-named-to-the-best-lawyers-in-america-for-personal-injury-litigation-302857512.html",
-    "impact": []
-   },
-   {
-    "breaking": false,
-    "sentiment": "neutral",
-    "ticker": "",
-    "headline": "Tickets Now on Sale for The Moonwalkers: A Journey with Tom Hanks at South Florida PBS",
-    "source": "PR Newswire",
-    "time": "18m",
-    "body": "<p>South Florida, prepare for liftoff. The Moonwalkers: A Journey with Tom Hanks has landed, inviting audiences to experience the Moon like never before. MIAMI, Aug. 21, 2026 /PRNewswire/ -- South Florida PBS announces that tickets will go on sale Thursday, August 20th, for THE M",
-    "url": "https://www.prnewswire.com/news-releases/tickets-now-on-sale-for-the-moonwalkers-a-journey-with-tom-hanks-at-south-florida-pbs-302857510.html",
-    "impact": []
-   },
-   {
-    "breaking": false,
-    "sentiment": "neutral",
-    "ticker": "",
-    "headline": "Stateside Associates Names Johnathan Lozier President as Mark Anderson Transitions to Chairman",
-    "source": "PR Newswire",
-    "time": "19m",
-    "body": "<p>Firm positions for its next era of growth, tech-enabled consulting, and nationwide expansion. WASHINGTON, Aug. 21, 2026 /PRNewswire/ -- Stateside Associates, the nation's premier state and local government relations firm, today announced a planned leadership transition to driv",
-    "url": "https://www.prnewswire.com/news-releases/stateside-associates-names-johnathan-lozier-president-as-mark-anderson-transitions-to-chairman-302857508.html",
-    "impact": []
-   },
-   {
-    "breaking": false,
-    "sentiment": "neutral",
-    "ticker": "",
-    "headline": "An overlooked AI winner names a new CFO \u2014 plus, Nvidia's key earnings loom",
-    "source": "CNBC",
-    "time": "23m",
-    "body": "Every weekday, the Investing Club releases the Homestretch; an actionable afternoon update just in time for the last hour of trading.",
-    "url": "https://www.cnbc.com/2026/08/21/an-overlooked-ai-winner-taps-new-cfo-as-street-awaits-nvidia.html",
-    "impact": []
-   },
-   {
-    "breaking": false,
-    "sentiment": "neutral",
-    "ticker": "",
-    "headline": "PRIM Deadline: PRIM Investors with Losses in Excess of $100K Have Opportunity to Lead Primoris Services Corporation Securities Fraud Lawsuit",
-    "source": "PR Newswire",
-    "time": "23m",
-    "body": "<p>NEW YORK, Aug. 21, 2026 /PRNewswire/ -- Rosen Law Firm, a global investor rights law firm, reminds purchasers of common stock of Primoris Services Corporation (NYSE: PRIM) between August 5, 2025 and June 22 2026, inclusive (the \"Class Period\"), of the important September 21, 2",
-    "url": "https://www.prnewswire.com/news-releases/prim-deadline-prim-investors-with-losses-in-excess-of-100k-have-opportunity-to-lead-primoris-services-corporation-securities-fraud-lawsuit-302857436.html",
-    "impact": []
-   },
-   {
-    "breaking": false,
-    "sentiment": "neutral",
-    "ticker": "",
-    "headline": "PRCT Deadline: PRCT Investors with Losses in Excess of $100K Have Opportunity to Lead PROCEPT BioRobotics Corporation Securities Fraud Lawsuit",
-    "source": "PR Newswire",
-    "time": "34m",
-    "body": "<p>NEW YORK, Aug. 21, 2026 /PRNewswire/ -- Rosen Law Firm, a global investor rights law firm, reminds purchasers of common stock of PROCEPT BioRobotics Corporation (NASDAQ: PRCT) between February 28, 2024 and February 25, 2026, inclusive (the \"Class Period\"), of the important Sep",
-    "url": "https://www.prnewswire.com/news-releases/prct-deadline-prct-investors-with-losses-in-excess-of-100k-have-opportunity-to-lead-procept-biorobotics-corporation-securities-fraud-lawsuit-302857430.html",
-    "impact": []
-   },
-   {
-    "breaking": false,
-    "sentiment": "neutral",
-    "ticker": "",
-    "headline": "Jim Cramer looks at why our AI data center stocks are among the worst of the week",
-    "source": "CNBC",
-    "time": "1h",
-    "body": "The Investing Club holds its \"Morning Meeting\" every weekday at 10:20 a.m. ET.",
-    "url": "https://www.cnbc.com/2026/08/21/cramer-on-why-our-ai-data-center-stocks-are-among-the-worst-of-the-week.html",
+    "body": "<p>The high-stakes barbecue championship brings the region's top competition teams to historic Weston, Missouri. WESTON, Mo., Aug. 21, 2026 /PRNewswire/ -- One of Kansas City's most unique barbecue competitions is underway in Weston, Missouri, as the 4th Annual Made for KC BBQ Ch",
+    "url": "https://www.prnewswire.com/news-releases/holladay-distillery-helps-bring-made-for-kc-barbecue-championship-to-weston-302857528.html",
     "impact": []
    }
   ]
@@ -374,7 +430,7 @@
     "base": 160,
     "bear": 100
    },
-   "current_price": 135.975,
+   "current_price": 136.878,
    "spark": [
     185.0,
     154.6,
@@ -420,7 +476,7 @@
     143.34,
     139.65,
     134.0,
-    135.975
+    136.878
    ],
    "targets": {
     "t3": {
@@ -440,14 +496,14 @@
     }
    },
    "shares": 0.35479,
-   "value": 48.24,
-   "pl": 0.95,
-   "pl_pct": 2.01,
-   "spy_ret_pct": -0.59,
-   "alpha_pct": 2.6,
+   "value": 48.56,
+   "pl": 1.27,
+   "pl_pct": 2.69,
+   "spy_ret_pct": -0.49,
+   "alpha_pct": 3.18,
    "stop_price": 99.97,
-   "day_pct": 1.47,
-   "vs_ref_pct": 0.7,
+   "day_pct": 2.15,
+   "vs_ref_pct": 1.4,
    "review_due": false
   },
   {
@@ -479,7 +535,7 @@
     "base": 170,
     "bear": 105
    },
-   "current_price": 163.665,
+   "current_price": 163.11,
    "spark": [
     168.01,
     152.35,
@@ -511,7 +567,7 @@
     155.62,
     156.16,
     163.08,
-    163.665
+    163.11
    ],
    "targets": {
     "t3": {
@@ -531,14 +587,14 @@
     }
    },
    "shares": 0.349029,
-   "value": 57.12,
-   "pl": 7.68,
-   "pl_pct": 15.54,
-   "spy_ret_pct": -0.59,
-   "alpha_pct": 16.13,
+   "value": 56.93,
+   "pl": 7.49,
+   "pl_pct": 15.15,
+   "spy_ret_pct": -0.49,
+   "alpha_pct": 15.64,
    "stop_price": 106.24,
-   "day_pct": 0.36,
-   "vs_ref_pct": 9.8,
+   "day_pct": 0.02,
+   "vs_ref_pct": 9.5,
    "review_due": false
   },
   {
@@ -570,7 +626,7 @@
     "base": 30,
     "bear": 14
    },
-   "current_price": 27.75,
+   "current_price": 28.32,
    "spark": [
     25.0,
     25.0,
@@ -587,7 +643,7 @@
     31.81,
     32.03,
     28.55,
-    27.75
+    28.32
    ],
    "targets": {
     "t3": {
@@ -607,14 +663,14 @@
     }
    },
    "shares": 1.930438,
-   "value": 53.57,
-   "pl": 5.56,
-   "pl_pct": 11.58,
-   "spy_ret_pct": -0.59,
-   "alpha_pct": 12.17,
+   "value": 54.67,
+   "pl": 6.66,
+   "pl_pct": 13.87,
+   "spy_ret_pct": -0.49,
+   "alpha_pct": 14.36,
    "stop_price": 16.17,
-   "day_pct": -2.8,
-   "vs_ref_pct": 73.4,
+   "day_pct": -0.81,
+   "vs_ref_pct": 77.0,
    "review_due": false
   },
   {
@@ -646,7 +702,7 @@
     "base": 28,
     "bear": 12
    },
-   "current_price": 34.57,
+   "current_price": 34.38,
    "spark": [
     18.97,
     18.06,
@@ -667,7 +723,7 @@
     27.11,
     31.05,
     32.83,
-    34.57
+    34.38
    ],
    "targets": {
     "t3": {
@@ -687,14 +743,14 @@
     }
    },
    "shares": 1.834044,
-   "value": 63.4,
-   "pl": 20.41,
-   "pl_pct": 47.48,
-   "spy_ret_pct": -0.59,
-   "alpha_pct": 48.07,
+   "value": 63.05,
+   "pl": 20.06,
+   "pl_pct": 46.67,
+   "spy_ret_pct": -0.49,
+   "alpha_pct": 47.16,
    "stop_price": 15.24,
-   "day_pct": 5.3,
-   "vs_ref_pct": 130.5,
+   "day_pct": 4.72,
+   "vs_ref_pct": 129.2,
    "review_due": false
   },
   {
@@ -726,7 +782,7 @@
     "base": 65,
     "bear": 38
    },
-   "current_price": 68.94,
+   "current_price": 68.59,
    "spark": [
     62.9,
     68.0,
@@ -746,7 +802,7 @@
     65.5,
     67.3,
     68.77,
-    68.9402
+    68.59
    ],
    "targets": {
     "t3": {
@@ -766,14 +822,14 @@
     }
    },
    "shares": 0.606261,
-   "value": 41.8,
-   "pl": 5.97,
-   "pl_pct": 16.65,
-   "spy_ret_pct": -0.59,
-   "alpha_pct": 17.24,
+   "value": 41.58,
+   "pl": 5.75,
+   "pl_pct": 16.06,
+   "spy_ret_pct": -0.49,
+   "alpha_pct": 16.55,
    "stop_price": 44.33,
-   "day_pct": 0.25,
-   "vs_ref_pct": 30.1,
+   "day_pct": -0.26,
+   "vs_ref_pct": 29.4,
    "review_due": false
   },
   {
@@ -805,7 +861,7 @@
     "base": 15,
     "bear": 6
    },
-   "current_price": 13.09,
+   "current_price": 12.898,
    "spark": [
     12.3,
     10.4,
@@ -833,7 +889,7 @@
     12.2,
     11.97,
     12.97,
-    13.09
+    12.8984
    ],
    "targets": {
     "t3": {
@@ -853,14 +909,14 @@
     }
    },
    "shares": 2.906457,
-   "value": 38.05,
-   "pl": 2.94,
-   "pl_pct": 8.36,
-   "spy_ret_pct": -0.59,
-   "alpha_pct": 8.95,
+   "value": 37.49,
+   "pl": 2.38,
+   "pl_pct": 6.77,
+   "spy_ret_pct": -0.49,
+   "alpha_pct": 7.26,
    "stop_price": 7.85,
-   "day_pct": 0.93,
-   "vs_ref_pct": -12.7,
+   "day_pct": -0.56,
+   "vs_ref_pct": -14.0,
    "review_due": false
   },
   {
@@ -892,7 +948,7 @@
     "base": 110,
     "bear": 60
    },
-   "current_price": 88.2,
+   "current_price": 88.435,
    "spark": [
     117.95,
     111.29,
@@ -938,7 +994,7 @@
     93.17,
     90.87,
     89.76,
-    88.2
+    88.435
    ],
    "targets": {
     "t3": {
@@ -958,14 +1014,14 @@
     }
    },
    "shares": 0.523583,
-   "value": 46.18,
-   "pl": -1.11,
-   "pl_pct": -2.35,
-   "spy_ret_pct": -0.59,
-   "alpha_pct": -1.76,
+   "value": 46.3,
+   "pl": -0.99,
+   "pl_pct": -2.09,
+   "spy_ret_pct": -0.49,
+   "alpha_pct": -1.6,
    "stop_price": 67.74,
-   "day_pct": -1.74,
-   "vs_ref_pct": 120.5,
+   "day_pct": -1.48,
+   "vs_ref_pct": 121.1,
    "review_due": false
   },
   {
@@ -997,7 +1053,7 @@
     "base": 85,
     "bear": 50
    },
-   "current_price": 87.615,
+   "current_price": 87.87,
    "spark": [
     80.23,
     79.95,
@@ -1043,7 +1099,7 @@
     71.73,
     78.59,
     83.66,
-    87.615
+    87.87
    ],
    "targets": {
     "t3": {
@@ -1063,14 +1119,14 @@
     }
    },
    "shares": 0.664559,
-   "value": 58.23,
-   "pl": 10.94,
-   "pl_pct": 23.12,
-   "spy_ret_pct": -0.59,
-   "alpha_pct": 23.71,
+   "value": 58.39,
+   "pl": 11.1,
+   "pl_pct": 23.48,
+   "spy_ret_pct": -0.49,
+   "alpha_pct": 23.97,
    "stop_price": 53.37,
-   "day_pct": 4.73,
-   "vs_ref_pct": 182.6,
+   "day_pct": 5.03,
+   "vs_ref_pct": 183.5,
    "review_due": false
   },
   {
@@ -1102,7 +1158,7 @@
     "base": 3.2,
     "bear": 1.8
    },
-   "current_price": 2.945,
+   "current_price": 2.966,
    "spark": [
     2.45,
     2.46,
@@ -1148,7 +1204,7 @@
     2.74,
     2.82,
     3.02,
-    2.945
+    2.9657
    ],
    "targets": {
     "t3": {
@@ -1168,13 +1224,13 @@
     }
    },
    "shares": 17.914062,
-   "value": 52.76,
-   "pl": 6.9,
-   "pl_pct": 15.04,
-   "spy_ret_pct": -0.59,
-   "alpha_pct": 15.63,
+   "value": 53.13,
+   "pl": 7.27,
+   "pl_pct": 15.86,
+   "spy_ret_pct": -0.49,
+   "alpha_pct": 16.35,
    "stop_price": 1.92,
-   "day_pct": -2.48,
+   "day_pct": -1.79,
    "vs_ref_pct": null,
    "review_due": false
   },
@@ -1207,7 +1263,7 @@
     "base": 480,
     "bear": 340
    },
-   "current_price": 419.515,
+   "current_price": 419.175,
    "spark": [
     462.12,
     467.67,
@@ -1253,7 +1309,7 @@
     413.41,
     412.09,
     416.0,
-    419.515
+    419.175
    ],
    "targets": {
     "t3": {
@@ -1273,13 +1329,13 @@
     }
    },
    "shares": 0.120552,
-   "value": 50.57,
-   "pl": -0.31,
-   "pl_pct": -0.6,
-   "spy_ret_pct": -0.59,
-   "alpha_pct": -0.01,
+   "value": 50.53,
+   "pl": -0.35,
+   "pl_pct": -0.68,
+   "spy_ret_pct": -0.49,
+   "alpha_pct": -0.19,
    "stop_price": 358.75,
-   "day_pct": 0.84,
+   "day_pct": 0.76,
    "vs_ref_pct": null,
    "review_due": false
   },
@@ -1312,7 +1368,7 @@
     "base": 3.2,
     "bear": 1.4
    },
-   "current_price": 2.23,
+   "current_price": 2.231,
    "spark": [
     5.05,
     5.14,
@@ -1358,7 +1414,7 @@
     2.08,
     2.16,
     2.09,
-    2.23
+    2.2308
    ],
    "targets": {
     "t3": {
@@ -1378,13 +1434,13 @@
     }
    },
    "shares": 15.465306,
-   "value": 34.49,
-   "pl": -3.4,
-   "pl_pct": -8.98,
-   "spy_ret_pct": -0.59,
-   "alpha_pct": -8.39,
+   "value": 34.5,
+   "pl": -3.39,
+   "pl_pct": -8.94,
+   "spy_ret_pct": -0.49,
+   "alpha_pct": -8.45,
    "stop_price": 1.59,
-   "day_pct": 6.7,
+   "day_pct": 6.75,
    "vs_ref_pct": null,
    "review_due": false
   },
@@ -1417,7 +1473,7 @@
     "base": 2.6,
     "bear": 1.2
    },
-   "current_price": 2.305,
+   "current_price": 2.295,
    "spark": [
     2.85,
     2.79,
@@ -1463,7 +1519,7 @@
     2.16,
     2.25,
     2.2,
-    2.305
+    2.295
    ],
    "targets": {
     "t3": {
@@ -1483,13 +1539,13 @@
     }
    },
    "shares": 13.707207,
-   "value": 31.6,
-   "pl": 1.17,
-   "pl_pct": 3.83,
-   "spy_ret_pct": -0.59,
-   "alpha_pct": 4.42,
+   "value": 31.46,
+   "pl": 1.03,
+   "pl_pct": 3.38,
+   "spy_ret_pct": -0.49,
+   "alpha_pct": 3.87,
    "stop_price": 1.44,
-   "day_pct": 4.77,
+   "day_pct": 4.32,
    "vs_ref_pct": null,
    "review_due": false
   },
@@ -1522,7 +1578,7 @@
     "base": 2.1,
     "bear": 0.9
    },
-   "current_price": 1.52,
+   "current_price": 1.515,
    "spark": [
     1.26,
     1.34,
@@ -1568,7 +1624,7 @@
     1.53,
     1.59,
     1.55,
-    1.52
+    1.515
    ],
    "targets": {
     "t3": {
@@ -1588,13 +1644,13 @@
     }
    },
    "shares": 19.435583,
-   "value": 29.54,
-   "pl": -2.14,
-   "pl_pct": -6.75,
-   "spy_ret_pct": -0.59,
-   "alpha_pct": -6.16,
+   "value": 29.44,
+   "pl": -2.24,
+   "pl_pct": -7.06,
+   "spy_ret_pct": -0.49,
+   "alpha_pct": -6.57,
    "stop_price": 1.06,
-   "day_pct": -1.94,
+   "day_pct": -2.26,
    "vs_ref_pct": null,
    "review_due": false
   },
@@ -1627,7 +1683,7 @@
     "base": 95,
     "bear": 45
    },
-   "current_price": 73.115,
+   "current_price": 72.9,
    "spark": [
     107.24,
     100.29,
@@ -1673,7 +1729,7 @@
     79.16,
     75.84,
     72.95,
-    73.115
+    72.9
    ],
    "targets": {
     "t3": {
@@ -1693,13 +1749,13 @@
     }
    },
    "shares": 1.011249,
-   "value": 73.94,
-   "pl": -6.97,
-   "pl_pct": -8.62,
-   "spy_ret_pct": -0.59,
-   "alpha_pct": -8.03,
+   "value": 73.72,
+   "pl": -7.19,
+   "pl_pct": -8.89,
+   "spy_ret_pct": -0.49,
+   "alpha_pct": -8.4,
    "stop_price": 48.01,
-   "day_pct": 0.23,
+   "day_pct": -0.07,
    "vs_ref_pct": null,
    "review_due": false
   },
@@ -1732,7 +1788,7 @@
     "base": 90,
     "bear": 30
    },
-   "current_price": 67.555,
+   "current_price": 68.425,
    "spark": [
     80.66,
     73.19,
@@ -1778,7 +1834,7 @@
     67.07,
     66.43,
     65.06,
-    67.555
+    68.425
    ],
    "targets": {
     "t3": {
@@ -1798,13 +1854,13 @@
     }
    },
    "shares": 1.060031,
-   "value": 71.61,
-   "pl": -4.32,
-   "pl_pct": -5.69,
-   "spy_ret_pct": -0.59,
-   "alpha_pct": -5.1,
+   "value": 72.53,
+   "pl": -3.4,
+   "pl_pct": -4.47,
+   "spy_ret_pct": -0.49,
+   "alpha_pct": -3.98,
    "stop_price": 42.98,
-   "day_pct": 3.83,
+   "day_pct": 5.17,
    "vs_ref_pct": null,
    "review_due": false
   },
@@ -1837,7 +1893,7 @@
     "base": 60,
     "bear": 18
    },
-   "current_price": 42.28,
+   "current_price": 42.215,
    "spark": [
     61.17,
     58.4,
@@ -1883,7 +1939,7 @@
     41.36,
     42.94,
     41.66,
-    42.28
+    42.215
    ],
    "targets": {
     "t3": {
@@ -1903,13 +1959,13 @@
     }
    },
    "shares": 1.456286,
-   "value": 61.57,
-   "pl": -6.89,
-   "pl_pct": -10.06,
-   "spy_ret_pct": -0.59,
-   "alpha_pct": -9.47,
+   "value": 61.48,
+   "pl": -6.98,
+   "pl_pct": -10.2,
+   "spy_ret_pct": -0.49,
+   "alpha_pct": -9.71,
    "stop_price": 28.21,
-   "day_pct": 1.49,
+   "day_pct": 1.33,
    "vs_ref_pct": null,
    "review_due": false
   },
@@ -1942,7 +1998,7 @@
     "base": 80,
     "bear": 35
    },
-   "current_price": 71.6,
+   "current_price": 72.685,
    "spark": [
     50.84,
     47.85,
@@ -1988,7 +2044,7 @@
     49.36,
     61.25,
     66.65,
-    71.6001
+    72.685
    ],
    "targets": {
     "t3": {
@@ -2008,13 +2064,13 @@
     }
    },
    "shares": 1.341174,
-   "value": 96.03,
-   "pl": 21.34,
-   "pl_pct": 28.57,
-   "spy_ret_pct": -0.59,
-   "alpha_pct": 29.16,
+   "value": 97.48,
+   "pl": 22.79,
+   "pl_pct": 30.52,
+   "spy_ret_pct": -0.49,
+   "alpha_pct": 31.01,
    "stop_price": 33.41,
-   "day_pct": 7.43,
+   "day_pct": 9.05,
    "vs_ref_pct": null,
    "review_due": false
   }
@@ -2084,8 +2140,8 @@
   },
   {
    "date": "2026-08-21",
-   "value": 1054.64,
-   "spy_value": 990.93,
+   "value": 1057.18,
+   "spy_value": 991.73,
    "invested": 849.98,
    "n_open": 17,
    "n_closed": 3
@@ -2403,16 +2459,16 @@
     "delta": 0.391,
     "vol_oi_ratio": 0.38
    },
-   "current_bid": 1.02,
-   "current_ask": 1.06,
+   "current_bid": 0.97,
+   "current_ask": 1.01,
    "peak_premium": 1.41,
    "peak_pl_pct": 0.0,
    "trail_active": false,
    "trail_stop_premium": null,
    "effective_stop_premium": 0.705,
-   "value": 204.0,
-   "pl": -78.0,
-   "pl_pct": -27.7
+   "value": 194.0,
+   "pl": -88.0,
+   "pl_pct": -31.2
   },
   {
    "contract": "NU260828C00015000",
@@ -2456,16 +2512,16 @@
     "delta": 0.196,
     "vol_oi_ratio": 0.73
    },
-   "current_bid": 0.17,
-   "current_ask": 0.18,
+   "current_bid": 0.14,
+   "current_ask": 0.15,
    "peak_premium": 0.17,
    "peak_pl_pct": 88.9,
    "trail_active": true,
    "trail_stop_premium": 0.136,
    "effective_stop_premium": 0.136,
-   "value": 561.0,
-   "pl": 264.0,
-   "pl_pct": 88.9
+   "value": 462.0,
+   "pl": 165.0,
+   "pl_pct": 55.6
   },
   {
    "contract": "NVDA260904C00235000",
@@ -2509,16 +2565,16 @@
     "delta": 0.216,
     "vol_oi_ratio": 0.15
    },
-   "current_bid": 1.9,
-   "current_ask": 1.93,
+   "current_bid": 1.82,
+   "current_ask": 1.85,
    "peak_premium": 2.42,
    "peak_pl_pct": 0.0,
    "trail_active": false,
    "trail_stop_premium": null,
    "effective_stop_premium": 1.21,
-   "value": 190.0,
-   "pl": -52.0,
-   "pl_pct": -21.5
+   "value": 182.0,
+   "pl": -60.0,
+   "pl_pct": -24.8
   }
  ],
  "closed_options": [
