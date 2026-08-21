@@ -10,6 +10,10 @@ import option_score as OS
 # ---- Options scanner criteria (tune here) ----------------------------------
 BUDGET_CAP = 300     # max total $ per contract line (was 250)
 DTE_MIN, DTE_MAX = 7, 14   # 1-2 weeks out: more runway, less immediate theta decay
+MIN_DTE = 2   # STRUCTURAL FLOOR: never scan 0-1 DTE in the default funnel. 0/1DTE gaps
+              # past a mark-to-market stop overnight and theta-decays 80%+ intraday, so a
+              # periodic exit engine cannot enforce the -50% stop on it. 0DTE execution is
+              # reserved for the dedicated live SPY 0DTE terminal, not this paper board.
 MAX_IV_RANK_GATE = 75.0    # reject long buys when HV30 rank > 75% (IV-crush guard)
 DELTA_LO, DELTA_HI = 0.30, 0.50   # dynamic delta targeting (ATM / near-OTM)
 
@@ -130,18 +134,18 @@ def candidates(t, direction, tier, exp_yymmdd, entry, exit_by, expiry_iso,
     if not d:
         return []
     budget = budget if budget is not None else BUDGET_CAP
-    # DTE-window gate (all contracts here share expiry_iso, so check once)
-    if dte_min is not None or dte_max is not None:
-        try:
-            dte = (_dt.date.fromisoformat(expiry_iso) - _dt.date.fromisoformat(entry)).days
-        except Exception:
-            dte = None
-        lo = dte_min if dte_min is not None else 0
-        hi = dte_max if dte_max is not None else 3650
-        if dte is None or not (lo <= dte <= hi):
-            if near_out is not None:
-                near_out.append({'underlying': t, 'fail': f'DTE {dte} outside {lo}-{hi}'})
-            return []
+    # DTE gate (all contracts here share expiry_iso, so check once). The MIN_DTE floor
+    # is ALWAYS enforced regardless of caller — 0-1 DTE is a hard structural exclusion.
+    try:
+        dte = (_dt.date.fromisoformat(expiry_iso) - _dt.date.fromisoformat(entry)).days
+    except Exception:
+        dte = None
+    lo = max(dte_min if dte_min is not None else 0, MIN_DTE)
+    hi = dte_max if dte_max is not None else 3650
+    if dte is None or not (lo <= dte <= hi):
+        if near_out is not None:
+            near_out.append({'underlying': t, 'fail': f'DTE {dte} outside {lo}-{hi} (min floor {MIN_DTE})'})
+        return []
     # HV30-rank IV-crush guard: compute once per underlying (cached across feeders)
     hv_rank = _hv_rank_cached(t)
     if apply_iv_gate and hv_rank is not None and hv_rank > MAX_IV_RANK_GATE:

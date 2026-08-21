@@ -162,6 +162,96 @@ def _news_label(s):
     return "Bullish" if s >= 0.6 else "Bearish" if s <= 0.4 else "Neutral"
 
 
+def _exit_bucket(reason):
+    """Map a free-text exit_reason to one of the tracked structural exit categories."""
+    r = (reason or "").lower()
+    if "profit lock" in r:
+        return "profitLock"
+    if "trailing" in r or "trail stop" in r:
+        return "trailing"
+    if "0dte" in r or "pre-liquidation" in r or "force close" in r:
+        return "zeroDte"
+    if "stop" in r:                       # hard stop -50% (rule-enforced), "stopped", etc.
+        return "hardStop"
+    if "expire" in r or "time" in r or "-day exit" in r or "eval" in r:
+        return "timeExit"
+    return "other"
+
+
+def _mon_label(monday):
+    fri = monday + dt.timedelta(days=4)
+    if monday.month == fri.month:
+        return "%s %d–%d" % (monday.strftime("%b"), monday.day, fri.day)
+    return "%s %d – %s %d" % (monday.strftime("%b"), monday.day, fri.strftime("%b"), fri.day)
+
+
+def weekly_performance(ledger):
+    """Objective week-over-week execution stats from CLOSED OPTION trades.
+
+    A 'closed trade' is any contract in closed_options plus any options_position past
+    its expiry (auto-archived). Grouped by the Monday of the exit week. Everything is
+    JSON-safe (no inf/nan). Equity positions are intentionally excluded: the structural
+    exit-reason breakdown (profit-lock / trailing / hard-stop / 0DTE) is option-specific.
+    """
+    today = dt.date.today().isoformat()
+    trades = []
+    for o in ledger.get("closed_options", []):
+        exitd = o.get("exit_date") or o.get("expiry")
+        trades.append((exitd, o))
+    for o in ledger.get("options_positions", []):
+        if o.get("expiry") and o.get("expiry") < today and o.get("status") != "closed":
+            trades.append((o.get("expiry"), o))
+
+    def _pl(o):
+        p = o.get("pl")
+        if isinstance(p, (int, float)):
+            return float(p)
+        cost = o.get("cost") or 0
+        return round(cost * (o.get("pl_pct", 0) or 0) / 100.0, 2)
+
+    weeks = {}
+    for exitd, o in trades:
+        try:
+            d = dt.date.fromisoformat(exitd)
+        except Exception:
+            continue
+        monday = d - dt.timedelta(days=d.weekday())
+        w = weeks.setdefault(monday, [])
+        w.append(o)
+
+    def _agg(items):
+        pls = [_pl(o) for o in items]
+        cost = sum(o.get("cost", 0) or 0 for o in items)
+        gains = sum(p for p in pls if p > 0)
+        losses = sum(-p for p in pls if p < 0)
+        wins = [p for p in pls if p > 0]
+        loss = [p for p in pls if p < 0]
+        exits = {"profitLock": 0, "trailing": 0, "hardStop": 0, "zeroDte": 0, "timeExit": 0, "other": 0}
+        for o in items:
+            exits[_exit_bucket(o.get("exit_reason"))] += 1
+        n = len(items)
+        return {
+            "trades": n, "wins": len(wins), "losses": len(loss),
+            "winRate": round(len(wins) / n, 4) if n else 0.0,
+            "grossPL": round(sum(pls), 2), "cost": round(cost, 2),
+            "roiPct": round(sum(pls) / cost * 100, 1) if cost else 0.0,
+            "profitFactor": round(gains / losses, 2) if losses > 0 else None,  # None => ∞ (no losing $)
+            "avgWin": round(sum(wins) / len(wins), 2) if wins else 0.0,
+            "avgLoss": round(sum(loss) / len(loss), 2) if loss else 0.0,
+            "exits": exits,
+        }
+
+    week_rows = []
+    for monday in sorted(weeks):
+        row = _agg(weeks[monday])
+        row["weekStart"] = monday.isoformat()
+        row["weekLabel"] = _mon_label(monday)
+        week_rows.append(row)
+
+    lifetime = _agg([o for _, o in trades])
+    return {"lifetime": lifetime, "weeks": week_rows}
+
+
 def build_dash(ledger, catalysts):
     all_ops = ledger.get("options_positions", [])
     closed = ledger.get("closed_options", [])
@@ -253,6 +343,7 @@ def build_dash(ledger, catalysts):
                  "breakingCount": sum(1 for n in news_items if n.get("breaking")),
                  "items": news_items},
         "catalysts": cats, "watchlist": wl,
+        "performance": weekly_performance(ledger),
     }
 
 

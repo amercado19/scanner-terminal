@@ -27,14 +27,23 @@ def _exp(d):
     return (d.strftime('%y%m%d'), d.isoformat())
 
 
-THIS_WEEK_FRIDAY = _next_friday(TODAY_D)                            # 0-7 DTE
-NEXT_WEEK_FRIDAY = THIS_WEEK_FRIDAY + datetime.timedelta(days=7)    # 7-14 DTE
-TWO_WEEKS_FRIDAY = THIS_WEEK_FRIDAY + datetime.timedelta(days=14)   # 14-21 DTE
-WEEKLIES = [_exp(THIS_WEEK_FRIDAY), _exp(NEXT_WEEK_FRIDAY), _exp(TWO_WEEKS_FRIDAY)]
+MIN_DTE = 2   # STRUCTURAL FLOOR (matches option_scan.MIN_DTE): skip 0-1 DTE entirely.
+# Build the three weekly expiries as the next three Fridays that are ALREADY >= MIN_DTE
+# away. On a Thursday/Friday the imminent Friday (0-1 DTE) is skipped and the window
+# rolls forward, so the board never carries a same-week gamma trap. On Mon-Wed the
+# current-week Friday still qualifies (2-4 DTE) and leads the window as before.
+_fri = _next_friday(TODAY_D)
+if (_fri - TODAY_D).days < MIN_DTE:
+    _fri = _fri + datetime.timedelta(days=7)
+WEEKLIES = [_exp(_fri + datetime.timedelta(days=7 * i)) for i in range(3)]
 
 NEXT_SESSION = _add_bdays(TODAY_D, 1).isoformat()
 EXIT_2D = _add_bdays(TODAY_D, 2).isoformat()      # two trading days from today
-DTE1 = _exp(_add_bdays(TODAY_D, 1))               # SPY 1DTE = next trading day
+# SPY 1DTE paper feeder is retired from the default funnel: 0-1 DTE is a structural
+# exclusion (see MIN_DTE). Intraday 0DTE execution lives in the dedicated live SPY
+# terminal, not this once/twice-a-day paper board. Flip to True only to re-enable it.
+SCAN_1DTE_SPY = False
+DTE1 = _exp(_add_bdays(TODAY_D, 1))               # kept for the optional feeder below
 DELTA_LO, DELTA_HI = 0.30, 0.50                   # delta targeting band
 # Hard delta-gating empties Next/Two-Weeks at the $300 cap: their 0.30-0.50 strikes
 # cost >$300, and the affordable strikes are <0.30 delta. So by default delta is a
@@ -105,18 +114,23 @@ MOVERS = [  # verified catalysts checked against Finnhub company-news this morni
 near = []
 pool = []
 
-# 1) SPY 1DTE — exactly one strike, its own band
-rv_spy = OS.realized_vol_from_closes(SC.closes('SPY'))
-dte = SC.candidates('SPY', direction, tier_model, DTE1[0], TODAY, DTE1[1], DTE1[1],
-                    otm_lo=0.2, otm_hi=1.5, prem_lo=0.30, prem_hi=0.60, rv=rv_spy,
-                    top=99, near_out=near)
-print(f'1DTE SPY candidates passing gates: {len(dte)}')
-dte_pick = dte[0] if dte else None
-if dte_pick:
-    dte_pick['feeder'] = '1dte'
-    dte_pick['why'] = (f"1dte: SPY composite {m['bias']} {m['score']}/100 — trend {m['parts']['trend']}/30, "
-                       f"VIX {m['vix']}, breadth {m['breadth_pct']}%")
-    pool.append(dte_pick)
+# 1) SPY 1DTE — retired from the default funnel (0-1 DTE structural exclusion).
+dte = []
+dte_pick = None
+if SCAN_1DTE_SPY:
+    rv_spy = OS.realized_vol_from_closes(SC.closes('SPY'))
+    dte = SC.candidates('SPY', direction, tier_model, DTE1[0], TODAY, DTE1[1], DTE1[1],
+                        otm_lo=0.2, otm_hi=1.5, prem_lo=0.30, prem_hi=0.60, rv=rv_spy,
+                        top=99, near_out=near)
+    print(f'1DTE SPY candidates passing gates: {len(dte)}')
+    dte_pick = dte[0] if dte else None
+    if dte_pick:
+        dte_pick['feeder'] = '1dte'
+        dte_pick['why'] = (f"1dte: SPY composite {m['bias']} {m['score']}/100 — trend {m['parts']['trend']}/30, "
+                           f"VIX {m['vix']}, breadth {m['breadth_pct']}%")
+        pool.append(dte_pick)
+else:
+    print('1DTE SPY feeder: disabled (0-1 DTE structural exclusion)')
 
 # 2) ETF universe — scanned across all three weekly expiries
 for t in SC.ETF_UNIVERSE:

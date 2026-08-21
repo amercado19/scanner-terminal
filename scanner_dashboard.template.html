@@ -203,6 +203,7 @@ select{background:var(--card2);color:var(--ink);border:1px solid var(--line);bor
     <div class="navbtn" data-nav="options"><span class="ic">◎</span> Options Scanner <span class="cnt" id="nav-opt">0</span></div>
     <div class="navbtn" data-nav="news"><span class="ic">✦</span> Today's News <span class="cnt" id="nav-news">0</span></div>
     <div class="navbtn" data-nav="calendar"><span class="ic">▤</span> Catalyst Calendar <span class="cnt" id="nav-cat">0</span></div>
+    <div class="navbtn" data-nav="performance"><span class="ic">◈</span> Performance <span class="cnt" id="nav-perf">0</span></div>
     <div class="spacer"></div>
     <div class="livebox"><span class="livedot" id="livedot"></span><span id="livetxt">Connecting…</span><div class="sub2" id="livesrc" style="margin-top:5px"></div></div>
   </nav>
@@ -223,6 +224,7 @@ select{background:var(--card2);color:var(--ink);border:1px solid var(--line);bor
     <section class="page" id="page-options"></section>
     <section class="page" id="page-news"></section>
     <section class="page" id="page-calendar"></section>
+    <section class="page" id="page-performance"></section>
   </main>
 </div>
 
@@ -526,11 +528,62 @@ function renderCalendar(){
     </div>${rows}`;
 }
 
+/* ---------- Performance page (week-over-week execution) ---------- */
+function pf(v){ return v==null?'∞':(+v).toFixed(2); }
+function renderPerformance(){
+  const P = DATA.performance||{lifetime:{},weeks:[]};
+  const lt = P.lifetime||{}, weeks = P.weeks||[];
+  const wr = Math.round((lt.winRate||0)*100);
+  // lifetime summary KPI cards
+  const kpis=[
+    ['Lifetime Win Rate', `${wr}%`, `${lt.wins||0}W / ${lt.losses||0}L · ${lt.trades||0} closed`],
+    ['Total Realized P&L', `<span class="${cls(lt.grossPL)}">${fmt$(lt.grossPL)}</span>`, `${(lt.roiPct||0).toFixed(1)}% on ${fmt0(lt.cost)} deployed`],
+    ['Profit Factor', `<span class="${(lt.profitFactor==null||lt.profitFactor>=1)?'pos':'neg'}">${pf(lt.profitFactor)}</span>`, 'gross gains ÷ gross losses'],
+    ['Avg Win / Avg Loss', `<span class="pos">${fmt$(lt.avgWin)}</span> <span class="sub2">/</span> <span class="neg">${fmt$(lt.avgLoss)}</span>`, 'per closed contract line'],
+  ].map(([l,v,s])=>`<div class="card kpi"><div class="lbl">${l}</div><div class="val mono">${v}</div><div class="sub">${s}</div></div>`).join('');
+
+  // week-over-week trajectory pills (chronological L→R), green/red by weekly ROI%
+  const pills = weeks.map(w=>{
+    const up=(w.roiPct||0)>=0;
+    const c=up?'var(--up)':'var(--down)', bg=up?'var(--up-bg)':'var(--down-bg)';
+    return `<span class="badge" style="color:${c};background:${bg};border-color:${c};margin:2px 4px 2px 0" title="${w.weekLabel}: ${(w.roiPct||0).toFixed(1)}% ROI, ${w.trades} trades">${w.weekLabel} · ${(w.roiPct||0)>=0?'+':''}${(w.roiPct||0).toFixed(1)}%</span>`;
+  }).join('') || '<span class="sub2">No closed weeks yet.</span>';
+
+  // week-over-week table (newest week first)
+  const rows = weeks.slice().reverse().map(w=>{
+    const ex=w.exits||{};
+    const chip=(n,lbl,color)=> n>0?`<span class="badge" style="color:${color};background:transparent;border-color:${color};margin-right:4px" title="${lbl}">${lbl} ${n}</span>`:'';
+    const exits=[chip(ex.profitLock,'Lock','var(--up)'),chip(ex.trailing,'Trail','var(--info)'),chip(ex.hardStop,'Hard','var(--down)'),chip(ex.zeroDte,'0DTE','var(--warn)'),chip(ex.timeExit,'Time','var(--muted)'),chip(ex.other,'Other','var(--muted)')].join('')||'<span class="sub2">—</span>';
+    return `<tr>
+      <td><b>${w.weekLabel}</b><br><span class="sub2 mono">${w.weekStart}</span></td>
+      <td class="mono">${w.trades}</td>
+      <td class="mono ${w.winRate>=0.5?'pos':''}"><b>${Math.round((w.winRate||0)*100)}%</b><br><span class="sub2">${w.wins}W/${w.losses}L</span></td>
+      <td class="mono ${cls(w.grossPL)}"><b>${fmt$(w.grossPL)}</b></td>
+      <td class="mono ${cls(w.roiPct)}"><b>${(w.roiPct||0)>=0?'+':''}${(w.roiPct||0).toFixed(1)}%</b></td>
+      <td class="mono ${(w.profitFactor==null||w.profitFactor>=1)?'pos':'neg'}">${pf(w.profitFactor)}</td>
+      <td class="mono"><span class="pos">${fmt$(w.avgWin)}</span> / <span class="neg">${fmt$(w.avgLoss)}</span></td>
+      <td>${exits}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="8" class="empty">No closed trades yet — stats populate as positions exit.</td></tr>`;
+
+  return `<div class="grid kpis" style="margin-bottom:16px">${kpis}</div>
+  <div class="card" style="margin-bottom:16px">
+    <h3>Week-over-Week Trajectory <span class="sub2" style="text-transform:none;letter-spacing:0">· weekly realized ROI — is the structural edge compounding?</span></h3>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;padding:4px 2px">${pills}</div>
+  </div>
+  <div class="card">
+    <h3>Weekly Summary · closed option trades by work-week (Mon–Fri)</h3>
+    <div class="tscroll"><table><thead><tr><th>Work-Week</th><th>Trades</th><th>Win Rate</th><th>Gross P&L</th><th>ROI %</th><th>Profit Factor</th><th>Avg Win / Loss</th><th>Exit Reasons</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="sub2" style="margin-top:8px">Exit tags: <b>Lock</b> 1DTE profit lock · <b>Trail</b> trailing stop · <b>Hard</b> −50% hard stop · <b>0DTE</b> pre-liquidation · <b>Time</b> time/expiry exit. Equity positions excluded — these are option-execution stats.</div>
+  </div>`;
+}
+
 /* ---------- router + polling ---------- */
 const PAGES={portfolio:['Portfolio & Performance','Account summary, open positions and closed-trade ledger',renderPortfolio],
   options:['Options Scanner','Actionable defined-risk setups with live technical context',renderOptions],
   news:["Today's Major News",'Aggregated market drivers, sentiment and breaking alerts',renderNews],
-  calendar:['Upcoming Catalyst Calendar','Scheduled earnings, FDA/PDUFA and macro events',renderCalendar]};
+  calendar:['Upcoming Catalyst Calendar','Scheduled earnings, FDA/PDUFA and macro events',renderCalendar],
+  performance:['Week-over-Week Performance','Objective closed-trade execution stats — does the structural edge compound?',renderPerformance]};
 let current='portfolio';
 function route(to){
   if(!PAGES[to])to='portfolio'; current=to;
@@ -561,6 +614,7 @@ function updateCounts(){
   $('#nav-opt').textContent=(DATA.options||[]).filter(o=>!o.filtered).length;
   $('#nav-news').textContent=(DATA.news?.items||[]).length;
   $('#nav-cat').textContent=(DATA.catalysts||[]).length;
+  $('#nav-perf').textContent=((DATA.performance&&DATA.performance.weeks)||[]).length;
 }
 function setLive(ok,src){
   const fresh=(Date.now()-lastFresh)<STALE_MS && ok!==false;
