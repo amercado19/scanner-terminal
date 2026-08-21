@@ -6,11 +6,44 @@ import option_score as OS
 import option_scan as SC
 import spy_model as SM
 
-TODAY = '2026-08-14'
-NEXT_SESSION = '2026-08-17'      # Monday
-EXIT_2D = '2026-08-18'           # two trading days from today
-WEEKLY = ('260821', '2026-08-21')
-DTE1 = ('260817', '2026-08-17')
+# ---- dynamic rolling expiries: this-week / next-week / two-weeks Fridays ----
+TODAY_D = datetime.date.today()
+TODAY = TODAY_D.isoformat()
+
+
+def _add_bdays(d, n):
+    while n > 0:
+        d += datetime.timedelta(days=1)
+        if d.weekday() < 5:
+            n -= 1
+    return d
+
+
+def _next_friday(d):
+    return d + datetime.timedelta(days=(4 - d.weekday()) % 7)  # Fri=4; today if today is Fri
+
+
+def _exp(d):
+    return (d.strftime('%y%m%d'), d.isoformat())
+
+
+THIS_WEEK_FRIDAY = _next_friday(TODAY_D)                            # 0-7 DTE
+NEXT_WEEK_FRIDAY = THIS_WEEK_FRIDAY + datetime.timedelta(days=7)    # 7-14 DTE
+TWO_WEEKS_FRIDAY = THIS_WEEK_FRIDAY + datetime.timedelta(days=14)   # 14-21 DTE
+WEEKLIES = [_exp(THIS_WEEK_FRIDAY), _exp(NEXT_WEEK_FRIDAY), _exp(TWO_WEEKS_FRIDAY)]
+
+NEXT_SESSION = _add_bdays(TODAY_D, 1).isoformat()
+EXIT_2D = _add_bdays(TODAY_D, 2).isoformat()      # two trading days from today
+DTE1 = _exp(_add_bdays(TODAY_D, 1))               # SPY 1DTE = next trading day
+DELTA_LO, DELTA_HI = 0.30, 0.50                   # delta targeting band
+# Hard delta-gating empties Next/Two-Weeks at the $300 cap: their 0.30-0.50 strikes
+# cost >$300, and the affordable strikes are <0.30 delta. So by default delta is a
+# SCORING signal (attached to each candidate + edge score), and the OTM band selects,
+# which keeps all three weeks populated. Set USE_DELTA_GATE=True to hard-filter to
+# 0.30-0.50 delta instead (accepts sparser Next/Two-Weeks buckets).
+USE_DELTA_GATE = False
+DGATE = (DELTA_LO, DELTA_HI) if USE_DELTA_GATE else (None, None)
+print(f"expiry window: this={WEEKLIES[0][1]} next={WEEKLIES[1][1]} two={WEEKLIES[2][1]} | delta_gate={USE_DELTA_GATE}")
 
 L = json.load(open('ledger.json'))
 META = L['meta']
@@ -52,7 +85,7 @@ if not any(c['date'] == TODAY for c in L.get('spy_calls', [])):
         'spy_close': round(m['price'], 2), 'next_ret': None, 'outcome': None})
 L['spy_state'] = {k: m[k] for k in ('price', 'sma20', 'sma50', 'ret5', 'vix', 'vix_chg5',
                                     'breadth_pct', 'parts', 'day_pct', 'score', 'bias')}
-META['whale'] = SM.whale_windows(datetime.date(2026, 8, 14))
+META['whale'] = SM.whale_windows(TODAY_D)
 
 # --------------------------------------------------------------- funnel
 tier_model = 'model_strong' if (m['score'] >= 80 or m['score'] <= 20) else (
@@ -85,52 +118,82 @@ if dte_pick:
                        f"VIX {m['vix']}, breadth {m['breadth_pct']}%")
     pool.append(dte_pick)
 
-# 2) ETF universe
+# 2) ETF universe — scanned across all three weekly expiries
 for t in SC.ETF_UNIVERSE:
     if t == 'SPY':
         continue
     rv = OS.realized_vol_from_closes(SC.closes(t))
-    for c in SC.candidates(t, direction, tier_model, WEEKLY[0], TODAY, EXIT_2D, WEEKLY[1],
-                           rv=rv, top=2, near_out=near, dte_min=7, dte_max=14):
-        c['feeder'] = 'etf'
-        c['why'] = f"etf: SPY composite {m['bias']} {m['score']} — index-level expression of the model call"
-        pool.append(c)
+    for yy, iso in WEEKLIES:
+        for c in SC.candidates(t, direction, tier_model, yy, TODAY, EXIT_2D, iso,
+                               rv=rv, top=1, near_out=near,
+                               delta_lo=DGATE[0], delta_hi=DGATE[1]):
+            c['feeder'] = 'etf'
+            c['why'] = f"etf {iso}: SPY composite {m['bias']} {m['score']} — index-level expression of the model call"
+            pool.append(c)
     time.sleep(0.3)
 
-# 3) blue chips — thematic alignment only
+# 3) blue chips — thematic alignment only, across all three weekly expiries
 for t in SC.BLUECHIP:
     rv = OS.realized_vol_from_closes(SC.closes(t))
-    for c in SC.candidates(t, direction, 'catalyst_soft', WEEKLY[0], TODAY, EXIT_2D, WEEKLY[1],
-                           rv=rv, top=2, near_out=near, dte_min=7, dte_max=14):
-        c['feeder'] = 'bluechip'
-        c['why'] = 'bluechip: thematic alignment with an active world signal, no company-specific event'
-        pool.append(c)
+    for yy, iso in WEEKLIES:
+        for c in SC.candidates(t, direction, 'catalyst_soft', yy, TODAY, EXIT_2D, iso,
+                               rv=rv, top=1, near_out=near,
+                               delta_lo=DGATE[0], delta_hi=DGATE[1]):
+            c['feeder'] = 'bluechip'
+            c['why'] = f'bluechip {iso}: thematic alignment with an active world signal, no company-specific event'
+            pool.append(c)
     time.sleep(0.3)
 
-# 4) catalyst movers
+# 4) catalyst movers — across all three weekly expiries
 for t, tier, why in MOVERS:
     rv = OS.realized_vol_from_closes(SC.closes(t))
-    for c in SC.candidates(t, 'bull', tier, WEEKLY[0], TODAY, EXIT_2D, WEEKLY[1],
-                           rv=rv, top=2, near_out=near, dte_min=7, dte_max=14):
-        c['feeder'] = 'mover'
-        c['why'] = f'mover: {why}'
-        pool.append(c)
+    for yy, iso in WEEKLIES:
+        for c in SC.candidates(t, 'bull', tier, yy, TODAY, EXIT_2D, iso,
+                               rv=rv, top=1, near_out=near,
+                               delta_lo=DGATE[0], delta_hi=DGATE[1]):
+            c['feeder'] = 'mover'
+            c['why'] = f'mover {iso}: {why}'
+            pool.append(c)
     time.sleep(0.3)
 
 print(f'total candidates clearing gates: {len(pool)}  |  near-misses logged: {len(near)}')
 
 # --------------------------------------------------------------- selection
+# Balance the picks ACROSS the three weekly expiries so the dashboard's
+# This Week / Next Week / Two Weeks Out tabs all populate. Near-dated
+# contracts almost always out-score far-dated ones (less time value to pay,
+# tighter breakeven), so a plain global top-N by score starves the later two
+# weeks — which is exactly why "Next Week" showed empty. Instead we bucket the
+# pool by expiry and round-robin the buckets, taking the best-scoring unused
+# ticker from each week on every pass until the daily cap is filled.
 CAP = META.get('options_daily_cap', 8)
-pool.sort(key=lambda c: -c['score']['total'])
+WEEK_ISOS = [iso for _, iso in WEEKLIES]
+buckets = {}
+for c in pool:
+    buckets.setdefault(c['expiry'], []).append(c)
+for iso in buckets:
+    buckets[iso].sort(key=lambda c: -c['score']['total'])
+# weekly Fridays first (in chronological order), then any stragglers
+order = [iso for iso in WEEK_ISOS if iso in buckets]
+order += [iso for iso in buckets if iso not in WEEK_ISOS]
+
 picked, seen = [], set()
 if dte_pick:
     picked.append(dte_pick); seen.add('SPY')
-for c in pool:
-    if len(picked) >= CAP:
-        break
-    if c['underlying'] in seen:
-        continue
-    seen.add(c['underlying']); picked.append(c)
+idx = {iso: 0 for iso in order}
+progressed = True
+while len(picked) < CAP and progressed:
+    progressed = False
+    for iso in order:
+        if len(picked) >= CAP:
+            break
+        b = buckets.get(iso, [])
+        while idx[iso] < len(b):
+            c = b[idx[iso]]; idx[iso] += 1
+            if c['underlying'] in seen:
+                continue
+            seen.add(c['underlying']); picked.append(c); progressed = True
+            break
 
 print(f'selected {len(picked)}/{CAP}:')
 for c in picked:
