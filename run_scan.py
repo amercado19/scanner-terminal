@@ -201,11 +201,27 @@ for c in picked:
           f"otm {c['otm']:<6} spr {c['spread_pct']:<6} oi {c['oi']:<8} n {c['contracts_n']} "
           f"cost ${c['cost']:<7} conf {c['score']['total']}{c['score']['band']} [{c['feeder']}]")
 
+# Dedup guard: never create a position that is ALREADY open. The intraday
+# exit engine (build_dashboard.update_options) tracks trailing stops on open
+# contracts and marks exited ones status='closed' — so we key on OPEN positions
+# only. A contract that has exited (1DTE lock / 0DTE force-close / trailing stop)
+# is no longer 'open', which frees that slot for a fresh setup tonight.
+_open = [p for p in L['options_positions'] if p.get('status') == 'open']
+_open_contracts = {p.get('contract') for p in _open}
+_open_keys = {(p.get('underlying'), p.get('strike'), p.get('expiry')) for p in _open}
+added = skipped = 0
 for c in picked:
     exp = c['expiry'].replace('-', '')[2:]
     k = f"{int(round(c['strike'] * 1000)):08d}"
+    contract_sym = f"{c['underlying']}{exp}{'C' if c['type'] == 'call' else 'P'}{k}"
+    key = (c['underlying'], c['strike'], c['expiry'])
+    if contract_sym in _open_contracts or key in _open_keys:
+        skipped += 1
+        continue
+    _open_contracts.add(contract_sym); _open_keys.add(key)
+    added += 1
     L['options_positions'].append({
-        'contract': f"{c['underlying']}{exp}{'C' if c['type'] == 'call' else 'P'}{k}",
+        'contract': contract_sym,
         'underlying': c['underlying'], 'type': c['type'], 'strike': c['strike'],
         'expiry': c['expiry'], 'source_call': c['why'], 'entry_date': TODAY,
         'entry_ask': c['ask'], 'entry_bid': c['bid'], 'contracts_n': c['contracts_n'],
@@ -219,6 +235,9 @@ for c in picked:
         'conf': c['score']['total'], 'conf_band': c['score']['band'],
         'conf_parts': c['score']['parts'], 'conf_detail': c['score']['detail'],
     })
+
+print(f'options_positions: +{added} new, {skipped} already-open skipped '
+      f'({len([p for p in L["options_positions"] if p.get("status") == "open"])} open total)')
 
 # live-entry panel for the SPY 1DTE
 spy_near = [n for n in near if n['underlying'] == 'SPY'][:8]
