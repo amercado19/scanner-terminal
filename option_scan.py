@@ -15,6 +15,12 @@ MIN_DTE = 2   # STRUCTURAL FLOOR: never scan 0-1 DTE in the default funnel. 0/1D
               # periodic exit engine cannot enforce the -50% stop on it. 0DTE execution is
               # reserved for the dedicated live SPY 0DTE terminal, not this paper board.
 MAX_IV_RANK_GATE = 75.0    # reject long buys when HV30 rank > 75% (IV-crush guard)
+MAX_IV_RICHNESS = 2.0      # reject when contract IV > 2.0x the stock's realized vol (HV30).
+                           # POST-MORTEM: winners entered at avg IV 0.25, losers 0.43 — the
+                           # single cleanest separator. iv_richness = IV/HV30 normalizes across
+                           # tickers (a biotech's 0.8 IV isn't "rich" if it really moves that much).
+                           # >2.0x means you're paying for vol the stock doesn't deliver = crush bait.
+                           # Only applies when HV30 is computable; skipped (not failed) otherwise.
 DELTA_LO, DELTA_HI = 0.30, 0.50   # dynamic delta targeting (ATM / near-OTM)
 
 # NOTE: MAX_IV_RANK_GATE uses REALIZED-vol (HV30) rank, a proxy for IV rank. It flags
@@ -180,6 +186,8 @@ def candidates(t, direction, tier, exp_yymmdd, entry, exit_by, expiry_iso,
             fail = f'OI {oi} < 500'
         elif spr > 20:
             fail = f'spread {spr:.1f}% > 20%'
+        elif iv_rich is not None and iv_rich > MAX_IV_RICHNESS:
+            fail = f'IV richness {iv_rich}x > {MAX_IV_RICHNESS}x HV30 (crush guard)'
         elif n < 1 or n * a * 100 > budget:
             fail = f'cost gate: ask ${a:.2f} -> {n} contracts'
         if fail:

@@ -52,7 +52,33 @@ DELTA_LO, DELTA_HI = 0.30, 0.50                   # delta targeting band
 # 0.30-0.50 delta instead (accepts sparser Next/Two-Weeks buckets).
 USE_DELTA_GATE = False
 DGATE = (DELTA_LO, DELTA_HI) if USE_DELTA_GATE else (None, None)
-print(f"expiry window: this={WEEKLIES[0][1]} next={WEEKLIES[1][1]} two={WEEKLIES[2][1]} | delta_gate={USE_DELTA_GATE}")
+
+# ---- correlation cap (post-mortem finding) ---------------------------------
+# In the first 19 closed trades, 12 of 16 losers were the SAME trade: "SPY is
+# BULLISH -> buy QQQ / IWM / NVDA / PLTR / AAPL", i.e. long US-equity beta held
+# eight ways. When SPY didn't rally they all lost together. The board looked
+# diversified (8 tickers) but was one bet. The winners were the UNCORRELATED
+# names (XLE energy on a Venezuela-oil catalyst). So cap how many positions can
+# share the broad-beta driver, forcing the board toward different drivers.
+CORRELATION_CAP = 3                        # max broad-US-beta positions on the board
+BROAD_BETA = {'SPY', 'QQQ', 'IWM', 'DIA'}  # whole-market ETFs = pure beta
+
+
+def _driver(c):
+    """Coarse driver bucket for correlation control. Broad-market ETFs and generic
+    'thematic alignment' blue chips are all long-US-beta and share ONE bucket; sector
+    ETFs and catalyst movers each get their own idiosyncratic bucket."""
+    t = c.get('underlying')
+    if t in BROAD_BETA:
+        return 'US_BETA'
+    if c.get('feeder') == 'bluechip':      # picked on 'SPY bullish' thematic beta, no catalyst
+        return 'US_BETA'
+    if c.get('feeder') == 'etf':           # sector ETF (XLE/XLF/XLK/SMH): own driver
+        return f'SECTOR:{t}'
+    return f'NAME:{t}'                      # mover with a real company catalyst: idiosyncratic
+
+
+print(f"expiry window: this={WEEKLIES[0][1]} next={WEEKLIES[1][1]} two={WEEKLIES[2][1]} | delta_gate={USE_DELTA_GATE} | corr_cap={CORRELATION_CAP}")
 
 L = json.load(open('ledger.json'))
 META = L['meta']
@@ -117,8 +143,8 @@ pool = []
 # 1) SPY 1DTE — retired from the default funnel (0-1 DTE structural exclusion).
 dte = []
 dte_pick = None
+rv_spy = OS.realized_vol_from_closes(SC.closes('SPY'))   # also used by the SPY entry panel below
 if SCAN_1DTE_SPY:
-    rv_spy = OS.realized_vol_from_closes(SC.closes('SPY'))
     dte = SC.candidates('SPY', direction, tier_model, DTE1[0], TODAY, DTE1[1], DTE1[1],
                         otm_lo=0.2, otm_hi=1.5, prem_lo=0.30, prem_hi=0.60, rv=rv_spy,
                         top=99, near_out=near)
@@ -192,9 +218,12 @@ order = [iso for iso in WEEK_ISOS if iso in buckets]
 order += [iso for iso in buckets if iso not in WEEK_ISOS]
 
 picked, seen = [], set()
+drivers = {}                                  # driver bucket -> count on the board
 if dte_pick:
     picked.append(dte_pick); seen.add('SPY')
+    drivers[_driver(dte_pick)] = drivers.get(_driver(dte_pick), 0) + 1
 idx = {iso: 0 for iso in order}
+corr_skipped = 0
 progressed = True
 while len(picked) < CAP and progressed:
     progressed = False
@@ -206,10 +235,22 @@ while len(picked) < CAP and progressed:
             c = b[idx[iso]]; idx[iso] += 1
             if c['underlying'] in seen:
                 continue
-            seen.add(c['underlying']); picked.append(c); progressed = True
+            drv = _driver(c)
+            # correlation cap: broad-beta bucket is limited; sector/catalyst buckets are not
+            if drv == 'US_BETA' and drivers.get(drv, 0) >= CORRELATION_CAP:
+                corr_skipped += 1
+                continue
+            seen.add(c['underlying']); picked.append(c)
+            drivers[drv] = drivers.get(drv, 0) + 1
+            progressed = True
             break
 
-print(f'selected {len(picked)}/{CAP}:')
+_beta_n = drivers.get('US_BETA', 0)
+print(f'selected {len(picked)}/{CAP}: US_BETA={_beta_n}/{CORRELATION_CAP} cap, '
+      f'{len(picked) - _beta_n} uncorrelated | {corr_skipped} beta-proxies skipped by corr-cap')
+if len(picked) < CAP:
+    print(f'  note: {CAP - len(picked)} slot(s) left EMPTY on purpose — not enough '
+          f'uncorrelated setups to fill without over-concentrating in beta.')
 for c in picked:
     print(f"  {c['underlying']:5s} ${c['strike']:<8g} {c['type']:4s} ask {c['ask']:<6} "
           f"otm {c['otm']:<6} spr {c['spread_pct']:<6} oi {c['oi']:<8} n {c['contracts_n']} "
