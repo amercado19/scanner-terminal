@@ -5,7 +5,7 @@
   "stake_per_position_usd": null,
   "mode": "paper",
   "notes": "Flag price = market price at scan time on flag date. Shares are fractional. P/L is hypothetical; no fees/slippage modeled. Measurement instrument, not a live strategy.",
-  "last_scan": "Aug 25, 2026 \u00b7 5:25 PM ET",
+  "last_scan": "Aug 26, 2026 \u00b7 12:07 PM ET",
   "benchmark": "SPY",
   "score_rubric": "catalyst/30 momentum/25 liquidity/15 risk/15(higher=safer) valuation/15; set at flag time",
   "exit_rules": "auto-close if price <= flag*(1+stop_pct/100); review_date forces thesis re-check",
@@ -139,7 +139,7 @@
   },
   "whale": {
    "next_13f_deadline": "2026-11-14",
-   "days_to_13f": 81,
+   "days_to_13f": 80,
    "in_13f_window": false,
    "notes": {
     "13F (institutions >$100M)": "45 days after quarter end \u2014 Feb 14, May 15, Aug 14, Nov 14. Positions are up to 4.5 months stale; treat as sentiment, never as a trade signal.",
@@ -162,19 +162,37 @@
   "news_items": [
    {
     "breaking": true,
-    "sentiment": "bearish",
-    "ticker": "(named co.)",
-    "headline": "Trump says Strait of Hormuz has been demined, warns Iran not to plant more - Reuters",
-    "source": "Reuters",
-    "time": "6h",
-    "body": "Trump says Strait of Hormuz has been demined, warns Iran not to plant more\u00a0\u00a0Reuters",
-    "url": "https://news.google.com/rss/articles/CBMirgFBVV95cUxPT20tcldmTnJoUWpfYlFMcnhIamdoZG5aenFWZDlLaGJFOG9mUVZQOENaU3hTNTlJOGpEUkg1QW9qVi1qUENRRGxLU3V2QW50cEs3YlE2LU1EZHhidlhheXpBeXBiX3FrT1dFeTFmQmo2cGpIdExvUUlET1d1eHJqc09lYVlvNjFPbEtmS0FaQ0xfYWlCdVl6WXQ3UjBMUUxZbWVNS0VXVTRfbzFwekE?oc=5",
+    "sentiment": "bullish",
+    "ticker": "XBI",
+    "headline": "FDA Approves First in Class Targeted Therapy for Metastatic Pancreatic Cancer",
+    "source": "FDA Press",
+    "time": "1h",
+    "body": "The U.S. Food and Drug Administration today approved Rasonque (daraxonrasib), a RAS inhibitor for the most common form of pancreatic cancer\u2014delivering a new treatment option to patients with advanced pancreatic cancer months ahead of schedule.",
+    "url": "http://www.fda.gov/news-events/press-announcements/fda-approves-first-class-targeted-therapy-metastatic-pancreatic-cancer",
     "impact": [
      {
-      "ticker": "(named co.)",
-      "sector": "",
-      "bias": "bearish",
-      "reason": "A miss / cut guidance typically pressures the reporting name."
+      "ticker": "XBI",
+      "sector": "Biotech",
+      "bias": "bullish",
+      "reason": "Approvals/positive readouts de-risk the biotech complex."
+     }
+    ]
+   },
+   {
+    "breaking": true,
+    "sentiment": "bullish",
+    "ticker": "XBI",
+    "headline": "Medical device maker Boston Scientific is being hit by a cyberattack. The shares are falling",
+    "source": "CNBC",
+    "time": "4h",
+    "body": "The attack has disrupted the company's ability to ship products, and it's not clear when services will be restored.",
+    "url": "https://www.cnbc.com/2026/08/26/medical-device-maker-boston-scientific-is-being-hit-by-a-cyber-attack-the-shares-are-falling.html",
+    "impact": [
+     {
+      "ticker": "XBI",
+      "sector": "Biotech",
+      "bias": "bullish",
+      "reason": "Approvals/positive readouts de-risk the biotech complex."
      }
     ]
    },
@@ -184,7 +202,7 @@
     "ticker": "XBI",
     "headline": "FDA Approves First Therapy for Patients aged 8 years and older with Glycogen Storage Disease Type Ia",
     "source": "FDA Press",
-    "time": "5d",
+    "time": "6d",
     "body": "The U.S. Food and Drug Administration today issued an accelerated approval for Genglycos (pariglasgene brecaparvovec-opnr) as the first-ever treatment for adults and children 8 years of age and older with glycogen storage disease type Ia (GSDIa)",
     "url": "http://www.fda.gov/news-events/press-announcements/fda-approves-first-therapy-patients-aged-8-years-and-older-glycogen-storage-disease-type-ia",
     "impact": [
@@ -217,18 +235,144 @@
    {
     "breaking": true,
     "sentiment": "bullish",
-    "ticker": "XBI",
-    "headline": "FDA Approves First Drug to Treat the Full Range of Narcolepsy Type 1 Symptoms",
-    "source": "FDA Press",
-    "time": "20d",
-    "body": "The FDA approved Orzeyful (oveporexton) tablets for the treatment of narcolepsy type 1 in adults.",
-    "url": "http://www.fda.gov/news-events/press-announcements/fda-approves-first-drug-treat-full-range-narcolepsy-type-1-symptoms",
+    "ticker": "(named co.)",
+    "headline": "8-K - American National Group Inc. (0001039828) (Filer)",
+    "source": "SEC 8-K",
+    "time": "recent",
+    "body": "<b>Filed:</b> 2026-08-26 <b>AccNo:</b> 0001039828-26-000018 <b>Size:</b> 3 MB\n<br />Item 2.02: Results of Operations and Financial Condition\n<br />Item 9.01: Financial Statements and Exhibits",
+    "url": "https://www.sec.gov/Archives/edgar/data/1039828/000103982826000018/0001039828-26-000018-index.htm",
     "impact": [
      {
-      "ticker": "XBI",
-      "sector": "Biotech",
+      "ticker": "(named co.)",
+      "sector": "",
       "bias": "bullish",
-      "reason": "Approvals/positive readouts de-risk the biotech complex."
+      "reason": "M&A / material 8-K events are typically catalysts for the named company."
+     }
+    ]
+   },
+   {
+    "breaking": true,
+    "sentiment": "bullish",
+    "ticker": "(named co.)",
+    "headline": "8-K - Columbus Circle Capital Corp II (0002088805) (Filer)",
+    "source": "SEC 8-K",
+    "time": "recent",
+    "body": "<b>Filed:</b> 2026-08-26 <b>AccNo:</b> 0001213900-26-093821 <b>Size:</b> 687 KB\n<br />Item 5.03: Amendments to Articles of Incorporation or Bylaws; Change in Fiscal Year\n<br />Item 5.07: Submission of Matters to a Vote of Security Holders\n<br />Item 8.01: Other Events\n<br />Item ",
+    "url": "https://www.sec.gov/Archives/edgar/data/2088805/000121390026093821/0001213900-26-093821-index.htm",
+    "impact": [
+     {
+      "ticker": "(named co.)",
+      "sector": "",
+      "bias": "bullish",
+      "reason": "M&A / material 8-K events are typically catalysts for the named company."
+     }
+    ]
+   },
+   {
+    "breaking": true,
+    "sentiment": "bullish",
+    "ticker": "(named co.)",
+    "headline": "8-K - SARATOGA INVESTMENT CORP. (0001377936) (Filer)",
+    "source": "SEC 8-K",
+    "time": "recent",
+    "body": "<b>Filed:</b> 2026-08-26 <b>AccNo:</b> 0001213900-26-093812 <b>Size:</b> 412 KB\n<br />Item 1.01: Entry into a Material Definitive Agreement\n<br />Item 2.03: Creation of a Direct Financial Obligation or an Obligation under an Off-Balance Sheet Arrangement of a Registrant\n<br />Ite",
+    "url": "https://www.sec.gov/Archives/edgar/data/1377936/000121390026093812/0001213900-26-093812-index.htm",
+    "impact": [
+     {
+      "ticker": "(named co.)",
+      "sector": "",
+      "bias": "bullish",
+      "reason": "M&A / material 8-K events are typically catalysts for the named company."
+     }
+    ]
+   },
+   {
+    "breaking": true,
+    "sentiment": "bullish",
+    "ticker": "(named co.)",
+    "headline": "8-K - VISTA CREDIT STRATEGIC LENDING CORP. (0001919369) (Filer)",
+    "source": "SEC 8-K",
+    "time": "recent",
+    "body": "<b>Filed:</b> 2026-08-26 <b>AccNo:</b> 0001193125-26-366384 <b>Size:</b> 155 KB\n<br />Item 3.02: Unregistered Sales of Equity Securities\n<br />Item 8.01: Other Events",
+    "url": "https://www.sec.gov/Archives/edgar/data/1919369/000119312526366384/0001193125-26-366384-index.htm",
+    "impact": [
+     {
+      "ticker": "(named co.)",
+      "sector": "",
+      "bias": "bullish",
+      "reason": "M&A / material 8-K events are typically catalysts for the named company."
+     }
+    ]
+   },
+   {
+    "breaking": true,
+    "sentiment": "bullish",
+    "ticker": "(named co.)",
+    "headline": "8-K/A - INTERPACE BIOSCIENCES, INC. (0001054102) (Filer)",
+    "source": "SEC 8-K",
+    "time": "recent",
+    "body": "<b>Filed:</b> 2026-08-26 <b>AccNo:</b> 0001493152-26-040182 <b>Size:</b> 206 KB\n<br />Item 5.02: Departure of Directors or Certain Officers; Election of Directors; Appointment of Certain Officers: Compensatory Arrangements of Certain Officers\n<br />Item 9.01: Financial Statements",
+    "url": "https://www.sec.gov/Archives/edgar/data/1054102/000149315226040182/0001493152-26-040182-index.htm",
+    "impact": [
+     {
+      "ticker": "(named co.)",
+      "sector": "",
+      "bias": "bullish",
+      "reason": "M&A / material 8-K events are typically catalysts for the named company."
+     }
+    ]
+   },
+   {
+    "breaking": true,
+    "sentiment": "bullish",
+    "ticker": "(named co.)",
+    "headline": "8-K - SPRUCE POWER HOLDING CORP (0001772720) (Filer)",
+    "source": "SEC 8-K",
+    "time": "recent",
+    "body": "<b>Filed:</b> 2026-08-26 <b>AccNo:</b> 0001628280-26-059001 <b>Size:</b> 154 KB\n<br />Item 5.07: Submission of Matters to a Vote of Security Holders",
+    "url": "https://www.sec.gov/Archives/edgar/data/1772720/000162828026059001/0001628280-26-059001-index.htm",
+    "impact": [
+     {
+      "ticker": "(named co.)",
+      "sector": "",
+      "bias": "bullish",
+      "reason": "M&A / material 8-K events are typically catalysts for the named company."
+     }
+    ]
+   },
+   {
+    "breaking": true,
+    "sentiment": "bullish",
+    "ticker": "(named co.)",
+    "headline": "8-K - Summit Therapeutics Inc. (0001599298) (Filer)",
+    "source": "SEC 8-K",
+    "time": "recent",
+    "body": "<b>Filed:</b> 2026-08-26 <b>AccNo:</b> 0001599298-26-000074 <b>Size:</b> 1 MB\n<br />Item 8.01: Other Events\n<br />Item 9.01: Financial Statements and Exhibits",
+    "url": "https://www.sec.gov/Archives/edgar/data/1599298/000159929826000074/0001599298-26-000074-index.htm",
+    "impact": [
+     {
+      "ticker": "(named co.)",
+      "sector": "",
+      "bias": "bullish",
+      "reason": "M&A / material 8-K events are typically catalysts for the named company."
+     }
+    ]
+   },
+   {
+    "breaking": true,
+    "sentiment": "bullish",
+    "ticker": "(named co.)",
+    "headline": "8-K - Nomadar Corp. (0001994214) (Filer)",
+    "source": "SEC 8-K",
+    "time": "recent",
+    "body": "<b>Filed:</b> 2026-08-26 <b>AccNo:</b> 0001493152-26-040172 <b>Size:</b> 211 KB\n<br />Item 8.01: Other Events\n<br />Item 9.01: Financial Statements and Exhibits",
+    "url": "https://www.sec.gov/Archives/edgar/data/1994214/000149315226040172/0001493152-26-040172-index.htm",
+    "impact": [
+     {
+      "ticker": "(named co.)",
+      "sector": "",
+      "bias": "bullish",
+      "reason": "M&A / material 8-K events are typically catalysts for the named company."
      }
     ]
    },
@@ -236,110 +380,22 @@
     "breaking": false,
     "sentiment": "neutral",
     "ticker": "",
-    "headline": "Alibaba Group Holding Limited (BABA) Shareholders Who Lost Money Have Opportunity to Lead Securities Fraud Lawsuit",
-    "source": "PR Newswire",
-    "time": "5m",
-    "body": "<p>LOS ANGELES, Aug. 25, 2026 /PRNewswire/ -- The Law Offices of Frank R. Cruz announces that investors with losses related to Alibaba Group Holding Limited (BABA) have opportunity to lead the securities fraud class action lawsuit. IF YOU ARE AN INVESTOR WHO SUFFERED A LOSS IN AL",
-    "url": "https://www.prnewswire.com/news-releases/alibaba-group-holding-limited-baba-shareholders-who-lost-money-have-opportunity-to-lead-securities-fraud-lawsuit-302859162.html",
+    "headline": "Meta Stock Rises As $18 Billion Social Media Trial Settlement Addresses 'Major Overhang'",
+    "source": "Yahoo Finance",
+    "time": "13m",
+    "body": "",
+    "url": "https://www.investors.com/news/technology/meta-stock-federal-social-media-addiction-suit/?src=A00220&yptr=yahoo",
     "impact": []
    },
    {
     "breaking": false,
     "sentiment": "neutral",
     "ticker": "",
-    "headline": "UNIVERSAL HEALTH SERVICES, INC. TO PRESENT AT SEPTEMBER HEALTHCARE CONFERENCES",
-    "source": "PR Newswire",
-    "time": "10m",
-    "body": "<p>KING OF PRUSSIA, Pa., Aug. 25, 2026 /PRNewswire/ -- Universal Health Services, Inc. (NYSE: UHS) is scheduled to present at the following conferences: September 8, 2026, at 8:45am ET at the Wells Fargo Healthcare Conference September 14, 2026, at 8:30am ET at the Morgan Stanley",
-    "url": "https://www.prnewswire.com/news-releases/universal-health-services-inc-to-present-at-september-healthcare-conferences-302858593.html",
-    "impact": []
-   },
-   {
-    "breaking": false,
-    "sentiment": "neutral",
-    "ticker": "",
-    "headline": "Primoris Services Corporation (PRIM) Shareholders Who Lost Money Have Opportunity to Lead Securities Fraud Lawsuit",
-    "source": "PR Newswire",
-    "time": "10m",
-    "body": "<p>LOS ANGELES, Aug. 25, 2026 /PRNewswire/ -- The Law Offices of Frank R. Cruz announces that investors with losses related to Primoris Services Corporation (PRIM) have opportunity to lead the securities fraud class action lawsuit. IF YOU ARE AN INVESTOR WHO SUFFERED A LOSS IN PR",
-    "url": "https://www.prnewswire.com/news-releases/primoris-services-corporation-prim-shareholders-who-lost-money-have-opportunity-to-lead-securities-fraud-lawsuit-302859159.html",
-    "impact": []
-   },
-   {
-    "breaking": false,
-    "sentiment": "neutral",
-    "ticker": "",
-    "headline": "Accrete Climbs Into the Top Tier of the 2026 Inc. 5000 Fastest Growing Private Companies",
-    "source": "PR Newswire",
-    "time": "12m",
-    "body": "<p>Ranked No. 952 with 364% three-year revenue growth, as governments and Fortune 500 enterprises move from AI that retrieves information to teams of expert agents trusted with consequential work. NEW YORK, Aug. 25, 2026 /PRNewswire/ -- Accrete today announced it has been named t",
-    "url": "https://www.prnewswire.com/news-releases/accrete-climbs-into-the-top-tier-of-the-2026-inc-5000-fastest-growing-private-companies-302859847.html",
-    "impact": []
-   },
-   {
-    "breaking": false,
-    "sentiment": "neutral",
-    "ticker": "",
-    "headline": "Simply Good Foods Company (SMPL) Shareholders Who Lost Money Have Opportunity to Lead Securities Fraud Lawsuit",
-    "source": "PR Newswire",
-    "time": "15m",
-    "body": "<p>LOS ANGELES, Aug. 25, 2026 /PRNewswire/ -- Glancy Prongay Wolke & Rotter LLP announces that investors with losses have opportunity to lead the securities fraud class action lawsuit against Simply Good Foods Company. IF YOU SUFFERED A LOSS ON YOUR SIMPLY GOOD FOODS COMPANY INVE",
-    "url": "https://www.prnewswire.com/news-releases/simply-good-foods-company-smpl-shareholders-who-lost-money-have-opportunity-to-lead-securities-fraud-lawsuit-302859156.html",
-    "impact": []
-   },
-   {
-    "breaking": false,
-    "sentiment": "neutral",
-    "ticker": "",
-    "headline": "The Inner Circle acknowledges LaToya C. James, VP as an Inner Circle Lifetime Member.",
-    "source": "PR Newswire",
-    "time": "17m",
-    "body": "<p>BURTONSVILLE, Md., Aug. 25, 2026 /PRNewswire/ -- Prominently featured in The Inner Circle, LaToya C. James, VP is recognized as an Inner Circle Lifetime Member for her contributions to Driving Transformation and Strategic Growth in Global IT. LaToya C. James has built an excep",
-    "url": "https://www.prnewswire.com/news-releases/the-inner-circle-acknowledges-latoya-c-james-vp-as-an-inner-circle-lifetime-member-302859782.html",
-    "impact": []
-   },
-   {
-    "breaking": false,
-    "sentiment": "neutral",
-    "ticker": "",
-    "headline": "The Inner Circle acknowledges Mary Helen Schrag, PT, OSC, Cert. MDT as a Pinnacle Professional of The Year",
-    "source": "PR Newswire",
-    "time": "17m",
-    "body": "<p>SPRINGFIELD, Mo., Aug. 25, 2026 /PRNewswire/ -- Prominently featured in The Inner Circle, Mary Helen Schrag, PT, OSC, Cert. MDT is recognized as a Pinnacle Professional of The Year for her contributions to Physical Therapy and Community Service. Mary Helen Schrag, PT, OSC, Cer",
-    "url": "https://www.prnewswire.com/news-releases/the-inner-circle-acknowledges-mary-helen-schrag-pt-osc-cert-mdt-as-a-pinnacle-professional-of-the-year-302859750.html",
-    "impact": []
-   },
-   {
-    "breaking": false,
-    "sentiment": "neutral",
-    "ticker": "",
-    "headline": "The Inner Circle acknowledges Susan K. Sparkman, MD as a 2026 Legacy Achiever",
-    "source": "PR Newswire",
-    "time": "17m",
-    "body": "<p>BELLAIRE, Texas, Aug. 25, 2026 /PRNewswire/ -- Prominently featured in The Inner Circle, Susan K. Sparkman, MD is acknowledged as a 2026 Legacy Achiever for her contributions to Psychiatry and Integrative Mental Health. Dr. Susan K. Sparkman has established a remarkable legacy",
-    "url": "https://www.prnewswire.com/news-releases/the-inner-circle-acknowledges-susan-k-sparkman-md-as-a-2026-legacy-achiever-302859831.html",
-    "impact": []
-   },
-   {
-    "breaking": false,
-    "sentiment": "neutral",
-    "ticker": "",
-    "headline": "2 of our software stocks face major tests of whether their rallies are for real",
-    "source": "CNBC",
-    "time": "57m",
-    "body": "Here are the questions we are looking to answer when CrowdStrike and Salesforce report earnings Wednesday evening.",
-    "url": "https://www.cnbc.com/2026/08/25/2-of-our-software-stocks-face-major-tests-of-whether-their-rallies-are-for-real.html",
-    "impact": []
-   },
-   {
-    "breaking": false,
-    "sentiment": "neutral",
-    "ticker": "",
-    "headline": "Six months into Iran war, almost half of global oil flows from war zones - Reuters",
-    "source": "Reuters",
-    "time": "57m",
-    "body": "Six months into Iran war, almost half of global oil flows from war zones\u00a0\u00a0Reuters",
-    "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxPV0VHRE5tclJ6Z1NRR0l2S3JOMURfLUFMY2hVMkZOUTNSdWJsS2pXejZFbkFOX3YyVE9GTDdscFlpWUVMY3hBRExLS0dVUk1qWEFuZC0yb09zYW5UYVF2NVc0c2Y0OExPMWdXSHVsMzNLcy1sRmEwTW5ON3gxY0h1MXF2MGRtRExBTllHdnF5NncwTzNGXzh1QUtWMjg2MTBCWWFYZHczYWt1R2pKZzF4NFUzRkN1dw?oc=5",
+    "headline": "Stock Market Today: Dow Eases After Inflation Data; Nvidia Slips Before Earnings, Zoom Tanks (Live Coverage)",
+    "source": "Yahoo Finance",
+    "time": "25m",
+    "body": "",
+    "url": "https://www.investors.com/market-trend/stock-market-today/dow-jones-sp500-nasdaq-inflation-data-nvidia-stock-nvda-earnings/?src=A00220&yptr=yahoo",
     "impact": []
    }
   ]
@@ -374,9 +430,8 @@
     "base": 160,
     "bear": 100
    },
-   "current_price": 137.95,
+   "current_price": 136.58,
    "spark": [
-    156.11,
     154.54,
     153.0,
     153.23,
@@ -420,7 +475,8 @@
     134.0,
     136.97,
     135.0,
-    137.95
+    137.95,
+    136.58
    ],
    "targets": {
     "t3": {
@@ -440,14 +496,14 @@
     }
    },
    "shares": 0.35479,
-   "value": 48.94,
-   "pl": 1.65,
-   "pl_pct": 3.5,
-   "spy_ret_pct": -0.6,
-   "alpha_pct": 4.1,
+   "value": 48.46,
+   "pl": 1.17,
+   "pl_pct": 2.47,
+   "spy_ret_pct": -0.7,
+   "alpha_pct": 3.17,
    "stop_price": 99.97,
-   "day_pct": 2.19,
-   "vs_ref_pct": 2.2,
+   "day_pct": -0.99,
+   "vs_ref_pct": 1.2,
    "review_due": false
   },
   {
@@ -479,7 +535,7 @@
     "base": 170,
     "bear": 105
    },
-   "current_price": 159.53,
+   "current_price": 159.555,
    "spark": [
     168.01,
     152.35,
@@ -513,7 +569,8 @@
     163.08,
     163.41,
     155.37,
-    159.53
+    159.53,
+    159.555
    ],
    "targets": {
     "t3": {
@@ -533,13 +590,13 @@
     }
    },
    "shares": 0.349029,
-   "value": 55.68,
-   "pl": 6.24,
-   "pl_pct": 12.62,
-   "spy_ret_pct": -0.6,
-   "alpha_pct": 13.22,
+   "value": 55.69,
+   "pl": 6.25,
+   "pl_pct": 12.64,
+   "spy_ret_pct": -0.7,
+   "alpha_pct": 13.34,
    "stop_price": 106.24,
-   "day_pct": 2.68,
+   "day_pct": 0.02,
    "vs_ref_pct": 7.1,
    "review_due": false
   },
@@ -572,7 +629,7 @@
     "base": 30,
     "bear": 14
    },
-   "current_price": 27.37,
+   "current_price": 29.1,
    "spark": [
     25.0,
     25.0,
@@ -591,7 +648,8 @@
     28.55,
     28.03,
     25.63,
-    27.37
+    27.37,
+    29.1
    ],
    "targets": {
     "t3": {
@@ -611,14 +669,14 @@
     }
    },
    "shares": 1.930438,
-   "value": 52.84,
-   "pl": 4.83,
-   "pl_pct": 10.05,
-   "spy_ret_pct": -0.6,
-   "alpha_pct": 10.65,
+   "value": 56.18,
+   "pl": 8.17,
+   "pl_pct": 17.01,
+   "spy_ret_pct": -0.7,
+   "alpha_pct": 17.71,
    "stop_price": 16.17,
-   "day_pct": 6.79,
-   "vs_ref_pct": 71.1,
+   "day_pct": 6.32,
+   "vs_ref_pct": 81.9,
    "review_due": false
   },
   {
@@ -650,7 +708,7 @@
     "base": 28,
     "bear": 12
    },
-   "current_price": 31.205,
+   "current_price": 31.755,
    "spark": [
     18.97,
     18.06,
@@ -673,7 +731,8 @@
     32.83,
     34.13,
     37.25,
-    31.205
+    31.21,
+    31.755
    ],
    "targets": {
     "t3": {
@@ -693,14 +752,14 @@
     }
    },
    "shares": 1.834044,
-   "value": 57.23,
-   "pl": 14.24,
-   "pl_pct": 33.13,
-   "spy_ret_pct": -0.6,
-   "alpha_pct": 33.73,
+   "value": 58.24,
+   "pl": 15.25,
+   "pl_pct": 35.47,
+   "spy_ret_pct": -0.7,
+   "alpha_pct": 36.17,
    "stop_price": 15.24,
-   "day_pct": -16.23,
-   "vs_ref_pct": 108.0,
+   "day_pct": 1.75,
+   "vs_ref_pct": 111.7,
    "review_due": false
   },
   {
@@ -732,7 +791,7 @@
     "base": 65,
     "bear": 38
    },
-   "current_price": 70.0,
+   "current_price": 70.04,
    "spark": [
     62.9,
     68.0,
@@ -754,7 +813,8 @@
     68.77,
     68.73,
     69.55,
-    70.0
+    70.0,
+    70.04
    ],
    "targets": {
     "t3": {
@@ -774,14 +834,14 @@
     }
    },
    "shares": 0.606261,
-   "value": 42.44,
-   "pl": 6.61,
-   "pl_pct": 18.44,
-   "spy_ret_pct": -0.6,
-   "alpha_pct": 19.04,
+   "value": 42.46,
+   "pl": 6.63,
+   "pl_pct": 18.51,
+   "spy_ret_pct": -0.7,
+   "alpha_pct": 19.21,
    "stop_price": 44.33,
-   "day_pct": 0.65,
-   "vs_ref_pct": 32.1,
+   "day_pct": 0.06,
+   "vs_ref_pct": 32.2,
    "review_due": false
   },
   {
@@ -813,7 +873,7 @@
     "base": 15,
     "bear": 6
    },
-   "current_price": 13.94,
+   "current_price": 13.501,
    "spark": [
     12.3,
     10.4,
@@ -843,7 +903,8 @@
     12.97,
     12.64,
     11.94,
-    13.94
+    13.94,
+    13.5007
    ],
    "targets": {
     "t3": {
@@ -863,14 +924,14 @@
     }
    },
    "shares": 2.906457,
-   "value": 40.52,
-   "pl": 5.41,
-   "pl_pct": 15.4,
-   "spy_ret_pct": -0.6,
-   "alpha_pct": 16.0,
+   "value": 39.24,
+   "pl": 4.13,
+   "pl_pct": 11.76,
+   "spy_ret_pct": -0.7,
+   "alpha_pct": 12.46,
    "stop_price": 7.85,
-   "day_pct": 16.75,
-   "vs_ref_pct": -7.1,
+   "day_pct": -3.15,
+   "vs_ref_pct": -10.0,
    "review_due": false
   },
   {
@@ -902,9 +963,8 @@
     "base": 110,
     "bear": 60
    },
-   "current_price": 88.04,
+   "current_price": 87.375,
    "spark": [
-    105.72,
     100.88,
     98.76,
     96.58,
@@ -948,7 +1008,8 @@
     89.76,
     87.85,
     86.25,
-    88.04
+    88.04,
+    87.375
    ],
    "targets": {
     "t3": {
@@ -968,14 +1029,14 @@
     }
    },
    "shares": 0.523583,
-   "value": 46.1,
-   "pl": -1.19,
-   "pl_pct": -2.52,
-   "spy_ret_pct": -0.6,
-   "alpha_pct": -1.92,
+   "value": 45.75,
+   "pl": -1.54,
+   "pl_pct": -3.26,
+   "spy_ret_pct": -0.7,
+   "alpha_pct": -2.56,
    "stop_price": 67.74,
-   "day_pct": 2.08,
-   "vs_ref_pct": 120.1,
+   "day_pct": -0.76,
+   "vs_ref_pct": 118.4,
    "review_due": false
   },
   {
@@ -1007,9 +1068,8 @@
     "base": 85,
     "bear": 50
    },
-   "current_price": 92.02,
+   "current_price": 88.735,
    "spark": [
-    75.68,
     70.98,
     68.81,
     73.57,
@@ -1053,7 +1113,8 @@
     83.66,
     87.98,
     87.72,
-    92.02
+    92.02,
+    88.735
    ],
    "targets": {
     "t3": {
@@ -1073,14 +1134,14 @@
     }
    },
    "shares": 0.664559,
-   "value": 61.15,
-   "pl": 13.86,
-   "pl_pct": 29.31,
-   "spy_ret_pct": -0.6,
-   "alpha_pct": 29.91,
+   "value": 58.97,
+   "pl": 11.68,
+   "pl_pct": 24.7,
+   "spy_ret_pct": -0.7,
+   "alpha_pct": 25.4,
    "stop_price": 53.37,
-   "day_pct": 4.9,
-   "vs_ref_pct": 196.8,
+   "day_pct": -3.57,
+   "vs_ref_pct": 186.2,
    "review_due": false
   },
   {
@@ -1112,9 +1173,8 @@
     "base": 3.2,
     "bear": 1.8
    },
-   "current_price": 2.73,
+   "current_price": 2.755,
    "spark": [
-    2.3,
     2.12,
     2.18,
     2.18,
@@ -1158,7 +1218,8 @@
     3.02,
     2.96,
     2.86,
-    2.73
+    2.73,
+    2.755
    ],
    "targets": {
     "t3": {
@@ -1178,13 +1239,13 @@
     }
    },
    "shares": 17.914062,
-   "value": 48.91,
-   "pl": 3.05,
-   "pl_pct": 6.64,
-   "spy_ret_pct": -0.6,
-   "alpha_pct": 7.24,
+   "value": 49.35,
+   "pl": 3.49,
+   "pl_pct": 7.62,
+   "spy_ret_pct": -0.7,
+   "alpha_pct": 8.32,
    "stop_price": 1.92,
-   "day_pct": -4.55,
+   "day_pct": 0.92,
    "vs_ref_pct": null,
    "review_due": false
   },
@@ -1217,9 +1278,8 @@
     "base": 480,
     "bear": 340
    },
-   "current_price": 417.41,
+   "current_price": 415.43,
    "spark": [
-    436.39,
     440.83,
     434.99,
     432.35,
@@ -1263,7 +1323,8 @@
     416.0,
     418.95,
     410.12,
-    417.41
+    417.41,
+    415.43
    ],
    "targets": {
     "t3": {
@@ -1283,13 +1344,13 @@
     }
    },
    "shares": 0.120552,
-   "value": 50.32,
-   "pl": -0.56,
-   "pl_pct": -1.1,
-   "spy_ret_pct": -0.6,
-   "alpha_pct": -0.5,
+   "value": 50.08,
+   "pl": -0.8,
+   "pl_pct": -1.57,
+   "spy_ret_pct": -0.7,
+   "alpha_pct": -0.87,
    "stop_price": 358.75,
-   "day_pct": 1.78,
+   "day_pct": -0.47,
    "vs_ref_pct": null,
    "review_due": false
   },
@@ -1322,9 +1383,8 @@
     "base": 3.2,
     "bear": 1.4
    },
-   "current_price": 2.23,
+   "current_price": 2.13,
    "spark": [
-    5.06,
     3.0,
     2.68,
     2.64,
@@ -1368,7 +1428,8 @@
     2.09,
     2.25,
     2.19,
-    2.23
+    2.23,
+    2.13
    ],
    "targets": {
     "t3": {
@@ -1388,13 +1449,13 @@
     }
    },
    "shares": 15.465306,
-   "value": 34.49,
-   "pl": -3.4,
-   "pl_pct": -8.98,
-   "spy_ret_pct": -0.6,
-   "alpha_pct": -8.38,
+   "value": 32.94,
+   "pl": -4.95,
+   "pl_pct": -13.06,
+   "spy_ret_pct": -0.7,
+   "alpha_pct": -12.36,
    "stop_price": 1.59,
-   "day_pct": 1.83,
+   "day_pct": -4.48,
    "vs_ref_pct": null,
    "review_due": false
   },
@@ -1427,9 +1488,8 @@
     "base": 2.6,
     "bear": 1.2
    },
-   "current_price": 2.27,
+   "current_price": 2.165,
    "spark": [
-    2.71,
     2.61,
     2.57,
     2.54,
@@ -1473,7 +1533,8 @@
     2.2,
     2.27,
     2.17,
-    2.27
+    2.27,
+    2.165
    ],
    "targets": {
     "t3": {
@@ -1493,13 +1554,13 @@
     }
    },
    "shares": 13.707207,
-   "value": 31.12,
-   "pl": 0.69,
-   "pl_pct": 2.25,
-   "spy_ret_pct": -0.6,
-   "alpha_pct": 2.85,
+   "value": 29.68,
+   "pl": -0.75,
+   "pl_pct": -2.48,
+   "spy_ret_pct": -0.7,
+   "alpha_pct": -1.78,
    "stop_price": 1.44,
-   "day_pct": 4.61,
+   "day_pct": -4.63,
    "vs_ref_pct": null,
    "review_due": false
   },
@@ -1532,9 +1593,8 @@
     "base": 2.1,
     "bear": 0.9
    },
-   "current_price": 1.55,
+   "current_price": 1.53,
    "spark": [
-    1.35,
     1.39,
     1.37,
     1.32,
@@ -1578,7 +1638,8 @@
     1.55,
     1.52,
     1.52,
-    1.55
+    1.55,
+    1.53
    ],
    "targets": {
     "t3": {
@@ -1598,13 +1659,13 @@
     }
    },
    "shares": 19.435583,
-   "value": 30.13,
-   "pl": -1.55,
-   "pl_pct": -4.91,
-   "spy_ret_pct": -0.6,
-   "alpha_pct": -4.31,
+   "value": 29.74,
+   "pl": -1.94,
+   "pl_pct": -6.13,
+   "spy_ret_pct": -0.7,
+   "alpha_pct": -5.43,
    "stop_price": 1.06,
-   "day_pct": 1.97,
+   "day_pct": -1.29,
    "vs_ref_pct": null,
    "review_due": false
   },
@@ -1637,9 +1698,8 @@
     "base": 95,
     "bear": 45
    },
-   "current_price": 66.91,
+   "current_price": 66.525,
    "spark": [
-    95.12,
     85.41,
     80.69,
     84.54,
@@ -1683,7 +1743,8 @@
     72.95,
     72.57,
     68.28,
-    66.91
+    66.91,
+    66.525
    ],
    "targets": {
     "t3": {
@@ -1703,13 +1764,13 @@
     }
    },
    "shares": 1.011249,
-   "value": 67.66,
-   "pl": -13.25,
-   "pl_pct": -16.37,
-   "spy_ret_pct": -0.6,
-   "alpha_pct": -15.77,
+   "value": 67.27,
+   "pl": -13.64,
+   "pl_pct": -16.85,
+   "spy_ret_pct": -0.7,
+   "alpha_pct": -16.15,
    "stop_price": 48.01,
-   "day_pct": -2.01,
+   "day_pct": -0.58,
    "vs_ref_pct": null,
    "review_due": false
   },
@@ -1742,9 +1803,8 @@
     "base": 90,
     "bear": 30
    },
-   "current_price": 62.01,
+   "current_price": 60.123,
    "spark": [
-    72.87,
     68.01,
     65.62,
     71.45,
@@ -1788,7 +1848,8 @@
     65.06,
     68.65,
     62.35,
-    62.01
+    62.01,
+    60.1225
    ],
    "targets": {
     "t3": {
@@ -1808,13 +1869,13 @@
     }
    },
    "shares": 1.060031,
-   "value": 65.73,
-   "pl": -10.2,
-   "pl_pct": -13.43,
-   "spy_ret_pct": -0.6,
-   "alpha_pct": -12.83,
+   "value": 63.73,
+   "pl": -12.2,
+   "pl_pct": -16.06,
+   "spy_ret_pct": -0.7,
+   "alpha_pct": -15.36,
    "stop_price": 42.98,
-   "day_pct": -0.55,
+   "day_pct": -3.04,
    "vs_ref_pct": null,
    "review_due": false
   },
@@ -1847,9 +1908,8 @@
     "base": 60,
     "bear": 18
    },
-   "current_price": 44.27,
+   "current_price": 42.07,
    "spark": [
-    57.19,
     54.06,
     51.01,
     50.0,
@@ -1893,7 +1953,8 @@
     41.66,
     42.09,
     39.69,
-    44.27
+    44.27,
+    42.07
    ],
    "targets": {
     "t3": {
@@ -1913,13 +1974,13 @@
     }
    },
    "shares": 1.456286,
-   "value": 64.47,
-   "pl": -3.99,
-   "pl_pct": -5.83,
-   "spy_ret_pct": -0.6,
-   "alpha_pct": -5.23,
+   "value": 61.27,
+   "pl": -7.19,
+   "pl_pct": -10.51,
+   "spy_ret_pct": -0.7,
+   "alpha_pct": -9.81,
    "stop_price": 28.21,
-   "day_pct": 11.54,
+   "day_pct": -4.97,
    "vs_ref_pct": null,
    "review_due": false
   },
@@ -1952,9 +2013,8 @@
     "base": 80,
     "bear": 35
    },
-   "current_price": 68.73,
+   "current_price": 68.315,
    "spark": [
-    48.61,
     51.94,
     54.87,
     56.14,
@@ -1998,7 +2058,8 @@
     66.65,
     72.69,
     66.17,
-    68.73
+    68.73,
+    68.3147
    ],
    "targets": {
     "t3": {
@@ -2018,13 +2079,13 @@
     }
    },
    "shares": 1.341174,
-   "value": 92.18,
-   "pl": 17.49,
-   "pl_pct": 23.42,
-   "spy_ret_pct": -0.6,
-   "alpha_pct": 24.02,
+   "value": 91.62,
+   "pl": 16.93,
+   "pl_pct": 22.67,
+   "spy_ret_pct": -0.7,
+   "alpha_pct": 23.37,
    "stop_price": 33.41,
-   "day_pct": 3.87,
+   "day_pct": -0.6,
    "vs_ref_pct": null,
    "review_due": false
   }
@@ -2112,6 +2173,14 @@
    "date": "2026-08-25",
    "value": 1035.85,
    "spy_value": 990.79,
+   "invested": 849.98,
+   "n_open": 17,
+   "n_closed": 3
+  },
+  {
+   "date": "2026-08-26",
+   "value": 1026.61,
+   "spy_value": 990.0,
    "invested": 849.98,
    "n_open": 17,
    "n_closed": 3
@@ -2388,59 +2457,6 @@
  ],
  "options_positions": [
   {
-   "contract": "AAPL260904C00320000",
-   "underlying": "AAPL",
-   "type": "call",
-   "strike": 320.0,
-   "expiry": "2026-09-04",
-   "source_call": "bluechip 2026-09-04: thematic alignment with an active world signal, no company-specific event",
-   "entry_date": "2026-08-24",
-   "entry_ask": 2.03,
-   "entry_bid": 1.95,
-   "contracts_n": 1,
-   "cost": 203.0,
-   "exit_by": "2026-08-26",
-   "status": "open",
-   "oi": 8235.0,
-   "iv": 0.2455,
-   "entry_spot": 310.75,
-   "note": "2.98% OTM, 3.9% spread, OI 8235.0. Breakeven ratio 2.0 \u2014 needs 3.63% vs 1.82% implied over the hold.",
-   "target_premium": 12.18,
-   "stop_premium": 1.015,
-   "conf": 61,
-   "conf_band": "B",
-   "conf_parts": {
-    "execution": 20,
-    "breakeven": 5,
-    "signal": 13,
-    "clock": 13,
-    "iv_cost": 10
-   },
-   "conf_detail": {
-    "spread_pct": 3.9,
-    "oi": 8235.0,
-    "required_move_pct": 3.63,
-    "expected_move_pct": 1.82,
-    "be_ratio": 2.0,
-    "signal_tier": "catalyst_soft",
-    "days_left_at_exit": 9,
-    "iv_vs_realized": 0.75,
-    "iv_rank_proxy": 50.0,
-    "delta": 0.256,
-    "vol_oi_ratio": 0.23
-   },
-   "current_bid": 1.6,
-   "current_ask": 1.64,
-   "peak_premium": 2.03,
-   "peak_pl_pct": 0.0,
-   "trail_active": false,
-   "trail_stop_premium": null,
-   "effective_stop_premium": 1.015,
-   "value": 160.0,
-   "pl": -43.0,
-   "pl_pct": -21.2
-  },
-  {
    "contract": "NFLX260911C00082000",
    "underlying": "NFLX",
    "type": "call",
@@ -2482,122 +2498,16 @@
     "delta": 0.389,
     "vol_oi_ratio": 0.19
    },
-   "current_bid": 2.41,
-   "current_ask": 2.49,
+   "current_bid": 2.0,
+   "current_ask": 2.06,
    "peak_premium": 2.41,
    "peak_pl_pct": 61.7,
    "trail_active": true,
    "trail_stop_premium": 1.928,
    "effective_stop_premium": 1.928,
-   "value": 482.0,
-   "pl": 184.0,
-   "pl_pct": 61.7
-  },
-  {
-   "contract": "RDDT260828C00157500",
-   "underlying": "RDDT",
-   "type": "call",
-   "strike": 157.5,
-   "expiry": "2026-08-28",
-   "source_call": "mover 2026-08-28: S&P 500 inclusion announced 8/13, effective before Tuesday\u2019s open \u2014 index funds are forced buyers",
-   "entry_date": "2026-08-24",
-   "entry_ask": 2.21,
-   "entry_bid": 2.01,
-   "contracts_n": 1,
-   "cost": 221.0,
-   "exit_by": "2026-08-26",
-   "status": "open",
-   "oi": 984.0,
-   "iv": 0.6171,
-   "entry_spot": 152.7,
-   "note": "3.14% OTM, 9.0% spread, OI 984.0. Breakeven ratio 1.0 \u2014 needs 4.59% vs 4.57% implied over the hold.",
-   "target_premium": 13.26,
-   "stop_premium": 1.105,
-   "conf": 65,
-   "conf_band": "B",
-   "conf_parts": {
-    "execution": 10,
-    "breakeven": 15,
-    "signal": 22,
-    "clock": 8,
-    "iv_cost": 10
-   },
-   "conf_detail": {
-    "spread_pct": 9.0,
-    "oi": 984.0,
-    "required_move_pct": 4.59,
-    "expected_move_pct": 4.57,
-    "be_ratio": 1.0,
-    "signal_tier": "catalyst_hard",
-    "days_left_at_exit": 2,
-    "iv_vs_realized": 0.54,
-    "iv_rank_proxy": 50.0,
-    "delta": 0.337,
-    "vol_oi_ratio": 0.88
-   },
-   "current_bid": 6.35,
-   "current_ask": 6.8,
-   "peak_premium": 6.35,
-   "peak_pl_pct": 187.3,
-   "trail_active": true,
-   "trail_stop_premium": 5.08,
-   "effective_stop_premium": 5.08,
-   "value": 635.0,
-   "pl": 414.0,
-   "pl_pct": 187.3
-  },
-  {
-   "contract": "RDDT260828C00162500",
-   "underlying": "RDDT",
-   "type": "call",
-   "strike": 162.5,
-   "expiry": "2026-08-28",
-   "source_call": "mover 2026-08-28: S&P 500 inclusion announced 8/13, effective before Tuesday\u2019s open \u2014 index funds are forced buyers",
-   "entry_date": "2026-08-25",
-   "entry_ask": 2.24,
-   "entry_bid": 2.06,
-   "contracts_n": 1,
-   "cost": 224.0,
-   "exit_by": "2026-08-27",
-   "status": "open",
-   "oi": 2207.0,
-   "iv": 0.6405,
-   "entry_spot": 158.31,
-   "note": "2.65% OTM, 8.0% spread, OI 2207.0. Breakeven ratio 0.86 \u2014 needs 4.06% vs 4.74% implied over the hold.",
-   "target_premium": 13.44,
-   "stop_premium": 1.12,
-   "conf": 74,
-   "conf_band": "B",
-   "conf_parts": {
-    "execution": 14,
-    "breakeven": 20,
-    "signal": 22,
-    "clock": 8,
-    "iv_cost": 10
-   },
-   "conf_detail": {
-    "spread_pct": 8.0,
-    "oi": 2207.0,
-    "required_move_pct": 4.06,
-    "expected_move_pct": 4.74,
-    "be_ratio": 0.86,
-    "signal_tier": "catalyst_hard",
-    "days_left_at_exit": 1,
-    "iv_vs_realized": 0.56,
-    "iv_rank_proxy": 50.0,
-    "delta": 0.349,
-    "vol_oi_ratio": 0.41
-   },
-   "current_bid": 3.5,
-   "current_ask": 3.9,
-   "peak_premium": 3.5,
-   "peak_pl_pct": 56.2,
-   "trail_active": true,
-   "trail_stop_premium": 2.8,
-   "effective_stop_premium": 2.8,
-   "value": 350.0,
-   "pl": 126.0,
-   "pl_pct": 56.2
+   "value": 400.0,
+   "pl": 102.0,
+   "pl_pct": 34.2
   },
   {
    "contract": "QQQ260904C00735000",
@@ -2641,16 +2551,16 @@
     "delta": 0.128,
     "vol_oi_ratio": 0.02
    },
-   "current_bid": 1.18,
-   "current_ask": 1.19,
+   "current_bid": 0.88,
+   "current_ask": 0.91,
    "peak_premium": 1.27,
    "peak_pl_pct": 0.0,
    "trail_active": false,
    "trail_stop_premium": null,
    "effective_stop_premium": 0.635,
-   "value": 236.0,
-   "pl": -18.0,
-   "pl_pct": -7.1
+   "value": 176.0,
+   "pl": -78.0,
+   "pl_pct": -30.7
   },
   {
    "contract": "IWM260911C00306000",
@@ -2694,16 +2604,16 @@
     "delta": 0.259,
     "vol_oi_ratio": 0.01
    },
-   "current_bid": 1.46,
-   "current_ask": 1.52,
+   "current_bid": 1.11,
+   "current_ask": 1.17,
    "peak_premium": 1.49,
    "peak_pl_pct": 0.0,
    "trail_active": false,
    "trail_stop_premium": null,
    "effective_stop_premium": 0.745,
-   "value": 292.0,
-   "pl": -6.0,
-   "pl_pct": -2.0
+   "value": 222.0,
+   "pl": -76.0,
+   "pl_pct": -25.5
   },
   {
    "contract": "SMH260904C00600000",
@@ -2747,102 +2657,16 @@
     "delta": 0.114,
     "vol_oi_ratio": 0.69
    },
-   "current_bid": 1.55,
-   "current_ask": 1.9,
+   "current_bid": 1.35,
+   "current_ask": 1.59,
    "peak_premium": 1.95,
    "peak_pl_pct": 0.0,
    "trail_active": false,
    "trail_stop_premium": null,
    "effective_stop_premium": 0.975,
-   "value": 155.0,
-   "pl": -40.0,
-   "pl_pct": -20.5
-  },
-  {
-   "contract": "TSLA260828C00360000",
-   "underlying": "TSLA",
-   "type": "call",
-   "strike": 360.0,
-   "expiry": "2026-08-28",
-   "source_call": "bluechip 2026-08-28: thematic alignment with an active world signal, no company-specific event",
-   "entry_date": "2026-08-25",
-   "entry_ask": 2.38,
-   "entry_bid": 2.34,
-   "contracts_n": 1,
-   "cost": 238.0,
-   "exit_by": "2026-08-27",
-   "status": "open",
-   "oi": 9621.0,
-   "iv": 0.4618,
-   "entry_spot": 350.56,
-   "note": "2.69% OTM, 1.7% spread, OI 9621.0. Breakeven ratio 0.99 \u2014 needs 3.37% vs 3.42% implied over the hold.",
-   "target_premium": 14.28,
-   "stop_premium": 1.19,
-   "conf": 72,
-   "conf_band": "B",
-   "conf_parts": {
-    "execution": 23,
-    "breakeven": 20,
-    "signal": 13,
-    "clock": 8,
-    "iv_cost": 8
-   },
-   "conf_detail": {
-    "spread_pct": 1.7,
-    "oi": 9621.0,
-    "required_move_pct": 3.37,
-    "expected_move_pct": 3.42,
-    "be_ratio": 0.99,
-    "signal_tier": "catalyst_soft",
-    "days_left_at_exit": 1,
-    "iv_vs_realized": 1.16,
-    "iv_rank_proxy": 50.0,
-    "delta": 0.27,
-    "vol_oi_ratio": 2.87
-   }
-  },
-  {
-   "contract": "RDDT260828C00167500",
-   "underlying": "RDDT",
-   "type": "call",
-   "strike": 167.5,
-   "expiry": "2026-08-28",
-   "source_call": "mover 2026-08-28: S&P 500 inclusion announced 8/13, effective before Tuesday\u2019s open \u2014 index funds are forced buyers",
-   "entry_date": "2026-08-25",
-   "entry_ask": 1.94,
-   "entry_bid": 1.73,
-   "contracts_n": 1,
-   "cost": 194.0,
-   "exit_by": "2026-08-27",
-   "status": "open",
-   "oi": 809.0,
-   "iv": 0.6377,
-   "entry_spot": 161.87,
-   "note": "3.48% OTM, 10.8% spread, OI 809.0. Breakeven ratio 0.99 \u2014 needs 4.68% vs 4.72% implied over the hold.",
-   "target_premium": 11.64,
-   "stop_premium": 0.97,
-   "conf": 66,
-   "conf_band": "B",
-   "conf_parts": {
-    "execution": 6,
-    "breakeven": 20,
-    "signal": 22,
-    "clock": 8,
-    "iv_cost": 10
-   },
-   "conf_detail": {
-    "spread_pct": 10.8,
-    "oi": 809.0,
-    "required_move_pct": 4.68,
-    "expected_move_pct": 4.72,
-    "be_ratio": 0.99,
-    "signal_tier": "catalyst_hard",
-    "days_left_at_exit": 1,
-    "iv_vs_realized": 0.55,
-    "iv_rank_proxy": 50.0,
-    "delta": 0.314,
-    "vol_oi_ratio": 1.04
-   }
+   "value": 135.0,
+   "pl": -60.0,
+   "pl_pct": -30.8
   },
   {
    "contract": "NU260904C00015500",
@@ -2885,49 +2709,274 @@
     "iv_rank_proxy": 50.0,
     "delta": 0.366,
     "vol_oi_ratio": 0.72
+   },
+   "current_bid": 0.23,
+   "current_ask": 0.24,
+   "peak_premium": 0.25,
+   "peak_pl_pct": 0.0,
+   "trail_active": false,
+   "trail_stop_premium": null,
+   "effective_stop_premium": 0.125,
+   "value": 276.0,
+   "pl": -24.0,
+   "pl_pct": -8.0
+  },
+  {
+   "contract": "PLTR260828C00180000",
+   "underlying": "PLTR",
+   "type": "call",
+   "strike": 180.0,
+   "expiry": "2026-08-28",
+   "source_call": "bluechip 2026-08-28: thematic alignment with an active world signal, no company-specific event",
+   "entry_date": "2026-08-26",
+   "entry_ask": 1.22,
+   "entry_bid": 1.19,
+   "contracts_n": 2,
+   "cost": 244.0,
+   "exit_by": "2026-08-28",
+   "status": "open",
+   "oi": 28005.0,
+   "iv": 0.5689,
+   "entry_spot": 174.8,
+   "note": "2.97% OTM, 2.5% spread, OI 28005.0. Breakeven ratio 0.87 \u2014 needs 3.67% vs 4.21% implied over the hold.",
+   "target_premium": 7.32,
+   "stop_premium": 0.61,
+   "conf": 68,
+   "conf_band": "B",
+   "conf_parts": {
+    "execution": 22,
+    "breakeven": 20,
+    "signal": 13,
+    "clock": 3,
+    "iv_cost": 10
+   },
+   "conf_detail": {
+    "spread_pct": 2.5,
+    "oi": 28005.0,
+    "required_move_pct": 3.67,
+    "expected_move_pct": 4.21,
+    "be_ratio": 0.87,
+    "signal_tier": "catalyst_soft",
+    "days_left_at_exit": 0,
+    "iv_vs_realized": 0.56,
+    "iv_rank_proxy": 50.0,
+    "delta": 0.265,
+    "vol_oi_ratio": 0.68
    }
   },
   {
-   "contract": "LUNR260828C00017500",
-   "underlying": "LUNR",
+   "contract": "AAPL260911C00325000",
+   "underlying": "AAPL",
    "type": "call",
-   "strike": 17.5,
-   "expiry": "2026-08-28",
-   "source_call": "mover 2026-08-28: Q2 earnings, $1B revenue goal reaffirmed, +11.1%",
-   "entry_date": "2026-08-25",
-   "entry_ask": 0.29,
-   "entry_bid": 0.25,
-   "contracts_n": 10,
-   "cost": 290.0,
-   "exit_by": "2026-08-27",
+   "strike": 325.0,
+   "expiry": "2026-09-11",
+   "source_call": "bluechip 2026-09-11: thematic alignment with an active world signal, no company-specific event",
+   "entry_date": "2026-08-26",
+   "entry_ask": 2.54,
+   "entry_bid": 2.44,
+   "contracts_n": 1,
+   "cost": 254.0,
+   "exit_by": "2026-08-28",
    "status": "open",
-   "oi": 541.0,
-   "iv": 1.0224,
-   "entry_spot": 16.56,
-   "note": "5.68% OTM, 13.8% spread, OI 541.0. Breakeven ratio 0.98 \u2014 needs 7.43% vs 7.57% implied over the hold.",
-   "target_premium": 1.74,
-   "stop_premium": 0.145,
-   "conf": 64,
+   "oi": 5310.0,
+   "iv": 0.2469,
+   "entry_spot": 313.2,
+   "note": "3.77% OTM, 3.9% spread, OI 5310.0. Breakeven ratio 2.51 \u2014 needs 4.58% vs 1.83% implied over the hold.",
+   "target_premium": 15.24,
+   "stop_premium": 1.27,
+   "conf": 58,
+   "conf_band": "C",
+   "conf_parts": {
+    "execution": 20,
+    "breakeven": 0,
+    "signal": 13,
+    "clock": 15,
+    "iv_cost": 10
+   },
+   "conf_detail": {
+    "spread_pct": 3.9,
+    "oi": 5310.0,
+    "required_move_pct": 4.58,
+    "expected_move_pct": 1.83,
+    "be_ratio": 2.51,
+    "signal_tier": "catalyst_soft",
+    "days_left_at_exit": 14,
+    "iv_vs_realized": 0.75,
+    "iv_rank_proxy": 50.0,
+    "delta": 0.26,
+    "vol_oi_ratio": 0.04
+   }
+  },
+  {
+   "contract": "COIN260828C00185000",
+   "underlying": "COIN",
+   "type": "call",
+   "strike": 185.0,
+   "expiry": "2026-08-28",
+   "source_call": "bluechip 2026-08-28: thematic alignment with an active world signal, no company-specific event",
+   "entry_date": "2026-08-26",
+   "entry_ask": 2.58,
+   "entry_bid": 2.43,
+   "contracts_n": 1,
+   "cost": 258.0,
+   "exit_by": "2026-08-28",
+   "status": "open",
+   "oi": 5223.0,
+   "iv": 0.7384,
+   "entry_spot": 180.95,
+   "note": "2.24% OTM, 5.8% spread, OI 5223.0. Breakeven ratio 0.67 \u2014 needs 3.66% vs 5.47% implied over the hold.",
+   "target_premium": 15.48,
+   "stop_premium": 1.29,
+   "conf": 67,
    "conf_band": "B",
    "conf_parts": {
-    "execution": 6,
-    "breakeven": 20,
+    "execution": 16,
+    "breakeven": 25,
+    "signal": 13,
+    "clock": 3,
+    "iv_cost": 10
+   },
+   "conf_detail": {
+    "spread_pct": 5.8,
+    "oi": 5223.0,
+    "required_move_pct": 3.66,
+    "expected_move_pct": 5.47,
+    "be_ratio": 0.67,
+    "signal_tier": "catalyst_soft",
+    "days_left_at_exit": 0,
+    "iv_vs_realized": 0.95,
+    "iv_rank_proxy": 50.0,
+    "delta": 0.367,
+    "vol_oi_ratio": 0.23
+   }
+  },
+  {
+   "contract": "RDDT260904C00165000",
+   "underlying": "RDDT",
+   "type": "call",
+   "strike": 165.0,
+   "expiry": "2026-09-04",
+   "source_call": "mover 2026-09-04: S&P 500 inclusion announced 8/13, effective before Tuesday\u2019s open \u2014 index funds are forced buyers",
+   "entry_date": "2026-08-26",
+   "entry_ask": 2.9,
+   "entry_bid": 2.7,
+   "contracts_n": 1,
+   "cost": 290.0,
+   "exit_by": "2026-08-28",
+   "status": "open",
+   "oi": 1354.0,
+   "iv": 0.5755,
+   "entry_spot": 157.05,
+   "note": "5.06% OTM, 6.9% spread, OI 1354.0. Breakeven ratio 1.62 \u2014 needs 6.91% vs 4.26% implied over the hold.",
+   "target_premium": 17.4,
+   "stop_premium": 1.45,
+   "conf": 62,
+   "conf_band": "B",
+   "conf_parts": {
+    "execution": 12,
+    "breakeven": 5,
     "signal": 22,
-    "clock": 8,
+    "clock": 13,
+    "iv_cost": 10
+   },
+   "conf_detail": {
+    "spread_pct": 6.9,
+    "oi": 1354.0,
+    "required_move_pct": 6.91,
+    "expected_move_pct": 4.26,
+    "be_ratio": 1.62,
+    "signal_tier": "catalyst_hard",
+    "days_left_at_exit": 7,
+    "iv_vs_realized": 0.49,
+    "iv_rank_proxy": 50.0,
+    "delta": 0.318,
+    "vol_oi_ratio": 0.05
+   }
+  },
+  {
+   "contract": "SMH260828C00570000",
+   "underlying": "SMH",
+   "type": "call",
+   "strike": 570.0,
+   "expiry": "2026-08-28",
+   "source_call": "etf 2026-08-28: SPY composite BULLISH 64 \u2014 index-level expression of the model call",
+   "entry_date": "2026-08-26",
+   "entry_ask": 2.76,
+   "entry_bid": 2.36,
+   "contracts_n": 1,
+   "cost": 276.0,
+   "exit_by": "2026-08-28",
+   "status": "open",
+   "oi": 1826.0,
+   "iv": 0.4618,
+   "entry_spot": 554.43,
+   "note": "2.81% OTM, 14.5% spread, OI 1826.0. Breakeven ratio 0.97 \u2014 needs 3.31% vs 3.42% implied over the hold.",
+   "target_premium": 16.56,
+   "stop_premium": 1.38,
+   "conf": 42,
+   "conf_band": "D",
+   "conf_parts": {
+    "execution": 8,
+    "breakeven": 20,
+    "signal": 3,
+    "clock": 3,
     "iv_cost": 8
    },
    "conf_detail": {
-    "spread_pct": 13.8,
-    "oi": 541.0,
-    "required_move_pct": 7.43,
-    "expected_move_pct": 7.57,
-    "be_ratio": 0.98,
-    "signal_tier": "catalyst_hard",
-    "days_left_at_exit": 1,
-    "iv_vs_realized": 1.14,
+    "spread_pct": 14.5,
+    "oi": 1826.0,
+    "required_move_pct": 3.31,
+    "expected_move_pct": 3.42,
+    "be_ratio": 0.97,
+    "signal_tier": "none",
+    "days_left_at_exit": 0,
+    "iv_vs_realized": 1.18,
     "iv_rank_proxy": 50.0,
-    "delta": 0.295,
-    "vol_oi_ratio": 1.11
+    "delta": 0.224,
+    "vol_oi_ratio": 1.38
+   }
+  },
+  {
+   "contract": "XLE260828C00064000",
+   "underlying": "XLE",
+   "type": "call",
+   "strike": 64.0,
+   "expiry": "2026-08-28",
+   "source_call": "etf 2026-08-28: SPY composite BULLISH 64 \u2014 index-level expression of the model call",
+   "entry_date": "2026-08-26",
+   "entry_ask": 0.14,
+   "entry_bid": 0.12,
+   "contracts_n": 21,
+   "cost": 294.0,
+   "exit_by": "2026-08-28",
+   "status": "open",
+   "oi": 4258.0,
+   "iv": 0.2726,
+   "entry_spot": 62.74,
+   "note": "2.0% OTM, 14.3% spread, OI 4258.0. Breakeven ratio 1.1 \u2014 needs 2.22% vs 2.02% implied over the hold.",
+   "target_premium": 0.84,
+   "stop_premium": 0.07,
+   "conf": 39,
+   "conf_band": "D",
+   "conf_parts": {
+    "execution": 10,
+    "breakeven": 15,
+    "signal": 3,
+    "clock": 3,
+    "iv_cost": 8
+   },
+   "conf_detail": {
+    "spread_pct": 14.3,
+    "oi": 4258.0,
+    "required_move_pct": 2.22,
+    "expected_move_pct": 2.02,
+    "be_ratio": 1.1,
+    "signal_tier": "none",
+    "days_left_at_exit": 0,
+    "iv_vs_realized": 1.15,
+    "iv_rank_proxy": 50.0,
+    "delta": 0.18,
+    "vol_oi_ratio": 0.1
    }
   }
  ],
@@ -4517,25 +4566,367 @@
    "exit_bid": 0.07,
    "exit_reason": "hard stop -50%",
    "outcome": "loss"
+  },
+  {
+   "contract": "AAPL260904C00320000",
+   "underlying": "AAPL",
+   "type": "call",
+   "strike": 320.0,
+   "expiry": "2026-09-04",
+   "source_call": "bluechip 2026-09-04: thematic alignment with an active world signal, no company-specific event",
+   "entry_date": "2026-08-24",
+   "entry_ask": 2.03,
+   "entry_bid": 1.95,
+   "contracts_n": 1,
+   "cost": 203.0,
+   "exit_by": "2026-08-26",
+   "status": "closed",
+   "oi": 8235.0,
+   "iv": 0.2455,
+   "entry_spot": 310.75,
+   "note": "2.98% OTM, 3.9% spread, OI 8235.0. Breakeven ratio 2.0 \u2014 needs 3.63% vs 1.82% implied over the hold.",
+   "target_premium": 12.18,
+   "stop_premium": 1.015,
+   "conf": 61,
+   "conf_band": "B",
+   "conf_parts": {
+    "execution": 20,
+    "breakeven": 5,
+    "signal": 13,
+    "clock": 13,
+    "iv_cost": 10
+   },
+   "conf_detail": {
+    "spread_pct": 3.9,
+    "oi": 8235.0,
+    "required_move_pct": 3.63,
+    "expected_move_pct": 1.82,
+    "be_ratio": 2.0,
+    "signal_tier": "catalyst_soft",
+    "days_left_at_exit": 9,
+    "iv_vs_realized": 0.75,
+    "iv_rank_proxy": 50.0,
+    "delta": 0.256,
+    "vol_oi_ratio": 0.23
+   },
+   "current_bid": 2.25,
+   "current_ask": 2.35,
+   "peak_premium": 2.25,
+   "peak_pl_pct": 10.8,
+   "trail_active": false,
+   "trail_stop_premium": null,
+   "effective_stop_premium": 1.015,
+   "value": 225.0,
+   "pl": 22.0,
+   "pl_pct": 10.8,
+   "exit_date": "2026-08-26",
+   "exit_bid": 2.25,
+   "exit_reason": "time exit (no profit)",
+   "outcome": "win"
+  },
+  {
+   "contract": "RDDT260828C00157500",
+   "underlying": "RDDT",
+   "type": "call",
+   "strike": 157.5,
+   "expiry": "2026-08-28",
+   "source_call": "mover 2026-08-28: S&P 500 inclusion announced 8/13, effective before Tuesday\u2019s open \u2014 index funds are forced buyers",
+   "entry_date": "2026-08-24",
+   "entry_ask": 2.21,
+   "entry_bid": 2.01,
+   "contracts_n": 1,
+   "cost": 221.0,
+   "exit_by": "2026-08-26",
+   "status": "closed",
+   "oi": 984.0,
+   "iv": 0.6171,
+   "entry_spot": 152.7,
+   "note": "3.14% OTM, 9.0% spread, OI 984.0. Breakeven ratio 1.0 \u2014 needs 4.59% vs 4.57% implied over the hold.",
+   "target_premium": 13.26,
+   "stop_premium": 1.105,
+   "conf": 65,
+   "conf_band": "B",
+   "conf_parts": {
+    "execution": 10,
+    "breakeven": 15,
+    "signal": 22,
+    "clock": 8,
+    "iv_cost": 10
+   },
+   "conf_detail": {
+    "spread_pct": 9.0,
+    "oi": 984.0,
+    "required_move_pct": 4.59,
+    "expected_move_pct": 4.57,
+    "be_ratio": 1.0,
+    "signal_tier": "catalyst_hard",
+    "days_left_at_exit": 2,
+    "iv_vs_realized": 0.54,
+    "iv_rank_proxy": 50.0,
+    "delta": 0.337,
+    "vol_oi_ratio": 0.88
+   },
+   "current_bid": 2.74,
+   "current_ask": 2.94,
+   "peak_premium": 6.35,
+   "peak_pl_pct": 187.3,
+   "trail_active": true,
+   "trail_stop_premium": 5.08,
+   "effective_stop_premium": 5.08,
+   "value": 274.0,
+   "pl": 53.0,
+   "pl_pct": 24.0,
+   "exit_date": "2026-08-26",
+   "exit_bid": 2.74,
+   "exit_reason": "trailing stop",
+   "outcome": "win"
+  },
+  {
+   "contract": "RDDT260828C00162500",
+   "underlying": "RDDT",
+   "type": "call",
+   "strike": 162.5,
+   "expiry": "2026-08-28",
+   "source_call": "mover 2026-08-28: S&P 500 inclusion announced 8/13, effective before Tuesday\u2019s open \u2014 index funds are forced buyers",
+   "entry_date": "2026-08-25",
+   "entry_ask": 2.24,
+   "entry_bid": 2.06,
+   "contracts_n": 1,
+   "cost": 224.0,
+   "exit_by": "2026-08-27",
+   "status": "closed",
+   "oi": 2207.0,
+   "iv": 0.6405,
+   "entry_spot": 158.31,
+   "note": "2.65% OTM, 8.0% spread, OI 2207.0. Breakeven ratio 0.86 \u2014 needs 4.06% vs 4.74% implied over the hold.",
+   "target_premium": 13.44,
+   "stop_premium": 1.12,
+   "conf": 74,
+   "conf_band": "B",
+   "conf_parts": {
+    "execution": 14,
+    "breakeven": 20,
+    "signal": 22,
+    "clock": 8,
+    "iv_cost": 10
+   },
+   "conf_detail": {
+    "spread_pct": 8.0,
+    "oi": 2207.0,
+    "required_move_pct": 4.06,
+    "expected_move_pct": 4.74,
+    "be_ratio": 0.86,
+    "signal_tier": "catalyst_hard",
+    "days_left_at_exit": 1,
+    "iv_vs_realized": 0.56,
+    "iv_rank_proxy": 50.0,
+    "delta": 0.349,
+    "vol_oi_ratio": 0.41
+   },
+   "current_bid": 1.1,
+   "current_ask": 1.26,
+   "peak_premium": 3.5,
+   "peak_pl_pct": 56.2,
+   "trail_active": true,
+   "trail_stop_premium": 2.8,
+   "effective_stop_premium": 2.8,
+   "value": 110.0,
+   "pl": -114.0,
+   "pl_pct": -50.9,
+   "exit_date": "2026-08-26",
+   "exit_bid": 1.1,
+   "exit_reason": "trailing stop",
+   "outcome": "loss"
+  },
+  {
+   "contract": "TSLA260828C00360000",
+   "underlying": "TSLA",
+   "type": "call",
+   "strike": 360.0,
+   "expiry": "2026-08-28",
+   "source_call": "bluechip 2026-08-28: thematic alignment with an active world signal, no company-specific event",
+   "entry_date": "2026-08-25",
+   "entry_ask": 2.38,
+   "entry_bid": 2.34,
+   "contracts_n": 1,
+   "cost": 238.0,
+   "exit_by": "2026-08-27",
+   "status": "closed",
+   "oi": 9621.0,
+   "iv": 0.4618,
+   "entry_spot": 350.56,
+   "note": "2.69% OTM, 1.7% spread, OI 9621.0. Breakeven ratio 0.99 \u2014 needs 3.37% vs 3.42% implied over the hold.",
+   "target_premium": 14.28,
+   "stop_premium": 1.19,
+   "conf": 72,
+   "conf_band": "B",
+   "conf_parts": {
+    "execution": 23,
+    "breakeven": 20,
+    "signal": 13,
+    "clock": 8,
+    "iv_cost": 8
+   },
+   "conf_detail": {
+    "spread_pct": 1.7,
+    "oi": 9621.0,
+    "required_move_pct": 3.37,
+    "expected_move_pct": 3.42,
+    "be_ratio": 0.99,
+    "signal_tier": "catalyst_soft",
+    "days_left_at_exit": 1,
+    "iv_vs_realized": 1.16,
+    "iv_rank_proxy": 50.0,
+    "delta": 0.27,
+    "vol_oi_ratio": 2.87
+   },
+   "current_bid": 0.78,
+   "current_ask": 0.8,
+   "peak_premium": 2.38,
+   "peak_pl_pct": 0.0,
+   "trail_active": false,
+   "trail_stop_premium": null,
+   "effective_stop_premium": 1.19,
+   "value": 78.0,
+   "pl": -160.0,
+   "pl_pct": -67.2,
+   "exit_date": "2026-08-26",
+   "exit_bid": 0.78,
+   "exit_reason": "hard stop -50%",
+   "outcome": "loss"
+  },
+  {
+   "contract": "RDDT260828C00167500",
+   "underlying": "RDDT",
+   "type": "call",
+   "strike": 167.5,
+   "expiry": "2026-08-28",
+   "source_call": "mover 2026-08-28: S&P 500 inclusion announced 8/13, effective before Tuesday\u2019s open \u2014 index funds are forced buyers",
+   "entry_date": "2026-08-25",
+   "entry_ask": 1.94,
+   "entry_bid": 1.73,
+   "contracts_n": 1,
+   "cost": 194.0,
+   "exit_by": "2026-08-27",
+   "status": "closed",
+   "oi": 809.0,
+   "iv": 0.6377,
+   "entry_spot": 161.87,
+   "note": "3.48% OTM, 10.8% spread, OI 809.0. Breakeven ratio 0.99 \u2014 needs 4.68% vs 4.72% implied over the hold.",
+   "target_premium": 11.64,
+   "stop_premium": 0.97,
+   "conf": 66,
+   "conf_band": "B",
+   "conf_parts": {
+    "execution": 6,
+    "breakeven": 20,
+    "signal": 22,
+    "clock": 8,
+    "iv_cost": 10
+   },
+   "conf_detail": {
+    "spread_pct": 10.8,
+    "oi": 809.0,
+    "required_move_pct": 4.68,
+    "expected_move_pct": 4.72,
+    "be_ratio": 0.99,
+    "signal_tier": "catalyst_hard",
+    "days_left_at_exit": 1,
+    "iv_vs_realized": 0.55,
+    "iv_rank_proxy": 50.0,
+    "delta": 0.314,
+    "vol_oi_ratio": 1.04
+   },
+   "current_bid": 0.43,
+   "current_ask": 0.49,
+   "peak_premium": 1.94,
+   "peak_pl_pct": 0.0,
+   "trail_active": false,
+   "trail_stop_premium": null,
+   "effective_stop_premium": 0.97,
+   "value": 43.0,
+   "pl": -151.0,
+   "pl_pct": -77.8,
+   "exit_date": "2026-08-26",
+   "exit_bid": 0.43,
+   "exit_reason": "hard stop -50%",
+   "outcome": "loss"
+  },
+  {
+   "contract": "LUNR260828C00017500",
+   "underlying": "LUNR",
+   "type": "call",
+   "strike": 17.5,
+   "expiry": "2026-08-28",
+   "source_call": "mover 2026-08-28: Q2 earnings, $1B revenue goal reaffirmed, +11.1%",
+   "entry_date": "2026-08-25",
+   "entry_ask": 0.29,
+   "entry_bid": 0.25,
+   "contracts_n": 10,
+   "cost": 290.0,
+   "exit_by": "2026-08-27",
+   "status": "closed",
+   "oi": 541.0,
+   "iv": 1.0224,
+   "entry_spot": 16.56,
+   "note": "5.68% OTM, 13.8% spread, OI 541.0. Breakeven ratio 0.98 \u2014 needs 7.43% vs 7.57% implied over the hold.",
+   "target_premium": 1.74,
+   "stop_premium": 0.145,
+   "conf": 64,
+   "conf_band": "B",
+   "conf_parts": {
+    "execution": 6,
+    "breakeven": 20,
+    "signal": 22,
+    "clock": 8,
+    "iv_cost": 8
+   },
+   "conf_detail": {
+    "spread_pct": 13.8,
+    "oi": 541.0,
+    "required_move_pct": 7.43,
+    "expected_move_pct": 7.57,
+    "be_ratio": 0.98,
+    "signal_tier": "catalyst_hard",
+    "days_left_at_exit": 1,
+    "iv_vs_realized": 1.14,
+    "iv_rank_proxy": 50.0,
+    "delta": 0.295,
+    "vol_oi_ratio": 1.11
+   },
+   "current_bid": 0.09,
+   "current_ask": 0.12,
+   "peak_premium": 0.29,
+   "peak_pl_pct": 0.0,
+   "trail_active": false,
+   "trail_stop_premium": null,
+   "effective_stop_premium": 0.145,
+   "value": 90.0,
+   "pl": -200.0,
+   "pl_pct": -69.0,
+   "exit_date": "2026-08-26",
+   "exit_bid": 0.09,
+   "exit_reason": "hard stop -50%",
+   "outcome": "loss"
   }
  ],
  "spy_state": {
-  "price": 765.91,
-  "sma20": 764.8,
-  "sma50": 752.75,
-  "ret5": -0.2,
-  "vix": 15.45,
-  "vix_chg5": -2.5,
-  "breadth_pct": 62,
+  "price": 765.15,
+  "sma20": 766.58,
+  "sma50": 752.95,
+  "ret5": -0.51,
+  "vix": 15.5,
+  "vix_chg5": 4.1,
+  "breadth_pct": 50,
   "parts": {
-   "trend": 30,
-   "momentum": 11,
+   "trend": 18,
+   "momentum": 9,
    "volatility": 20,
-   "breadth": 9,
+   "breadth": 8,
    "news": 9
   },
-  "day_pct": 0.32,
-  "score": 79,
+  "day_pct": -0.1,
+  "score": 64,
   "bias": "BULLISH"
  },
  "spy_calls": [
@@ -4596,8 +4987,8 @@
     "news": 9
    },
    "spy_close": 763.47,
-   "next_ret": null,
-   "outcome": null
+   "next_ret": 0.32,
+   "outcome": "hit"
   },
   {
    "date": "2026-08-25",
@@ -4611,6 +5002,21 @@
     "news": 9
    },
    "spy_close": 765.38,
+   "next_ret": null,
+   "outcome": null
+  },
+  {
+   "date": "2026-08-26",
+   "bias": "BULLISH",
+   "score": 64,
+   "parts": {
+    "trend": 18,
+    "momentum": 9,
+    "volatility": 20,
+    "breadth": 8,
+    "news": 9
+   },
+   "spy_close": 765.15,
    "next_ret": null,
    "outcome": null
   }
@@ -4667,13 +5073,13 @@
   }
  ],
  "spy_entry_candidate": {
-  "scanned_at": "Aug 25, 2026 \u00b7 5:25 PM ET",
-  "spot_at_scan": 765.91,
-  "expiry": "2026-08-26",
+  "scanned_at": "Aug 26, 2026 \u00b7 12:08 PM ET",
+  "spot_at_scan": 765.15,
+  "expiry": "2026-08-27",
   "type": "call",
   "bias": "BULLISH",
-  "score": 79,
-  "realized_vol": 0.133,
+  "score": 64,
+  "realized_vol": 0.117,
   "best": null,
   "passing": [],
   "near_misses": [],
