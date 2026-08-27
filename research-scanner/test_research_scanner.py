@@ -236,7 +236,10 @@ def test_dashboard_rendering():
                   "Feed Health", "Stop Distance", "High-Water Mark", "Last Exit Eval",
                   # Phase 1 system feed-status section
                   "Data-Feed System Status", "Discovery provider", "Active-position provider",
-                  "Heartbeat", "Fallback status", "Stale / disconnected"):
+                  "Heartbeat", "Fallback status", "Stale / disconnected",
+                  # explicit waiting-position entry-eligibility diagnostics
+                  "Entry Eligibility", "Waiting Reason", "Market Session", "Last Entry Eval",
+                  "Latest Qualification", "Provider Quote TS", "Observed Lag"):
         assert label in html, f"dashboard missing '{label}'"
     # a stale/disconnected feed must never be able to render as normal — the class + warning exist
     assert "feed-STALE" in html and "feed-DISCONNECTED" in html, "dashboard lacks stale/disconnected feed styling"
@@ -293,6 +296,54 @@ def test_never_entered():
     a = arch["2026-08"][0]
     assert a["paper_position"]["status"] == "NEVER_ENTERED"
     assert a["paper_position"]["exit_reason"] == "NEVER ENTERED"
+
+# ---- entry-eligibility regression (the 10:03 ET production issue) ----
+def test_1003et_run_with_15min_delayed_quote_enters():
+    # REGRESSION: a workflow that executes at 10:03 ET (14:03 UTC) with a ~15-min-delayed CBOE
+    # snapshot (09:48 ET) MUST enter a qualifying WAITING contract at the observed midpoint. A
+    # delayed quote timestamp must NOT make the workflow 'off-hours'.
+    now = "2026-08-27T14:03:00+00:00"                        # 10:03 ET (regular session)
+    assert R.is_market_hours(now) is True, "10:03 ET must be market hours"
+    res = R.screen(mkp(2.05)); res["provider_quote_ts"] = "2026-08-27T09:48:00"   # ~15 min delayed, today
+    card = {"paper_position": R._paper_init(POL)}
+    R.paper_update(card, res, now, POL, True)
+    pp = card["paper_position"]
+    assert pp["status"] == "ACTIVE", f"should ENTER; got {pp['status']} / {pp.get('waiting_reason')}"
+    assert pp["entry_mid"] == 2.05 and pp["entry_bid"] is not None and pp["entry_ask"] is not None
+    assert pp["waiting_reason"] is None
+    assert pp["market_session_state"] == "REGULAR"
+    assert pp["provider_quote_timestamp"] == "2026-08-27T09:48:00"
+    assert 0 <= pp["observed_lag"] <= R.MAX_ENTRY_LAG_SEC     # ~900s, within tolerance
+    assert pp["latest_qualification_state"] == "QUALIFIES"
+
+def test_prior_close_quote_at_market_hours_stays_waiting_stale():
+    # a frozen prior-close quote during a market-hours run must NOT enter; stay WAITING, stale reason
+    now = "2026-08-27T14:03:00+00:00"                        # 10:03 ET
+    res = R.screen(mkp(2.05)); res["provider_quote_ts"] = "2026-08-26T16:00:00"   # yesterday's close
+    card = {"paper_position": R._paper_init(POL)}
+    R.paper_update(card, res, now, POL, True)
+    pp = card["paper_position"]
+    assert pp["status"] == "WAITING_FOR_ENTRY", "must not enter off a stale prior-close"
+    assert pp["waiting_reason"] == "WAITING — PROVIDER QUOTE STALE"
+    assert pp["entry_mid"] is None, "NO entry created from yesterday's close"
+    assert pp["observed_lag"] > R.MAX_ENTRY_LAG_SEC
+
+def test_waiting_positions_always_have_a_reason():
+    # off-hours qualifier: WAITING with an explicit reason + all diagnostic fields populated
+    now = "2026-08-27T03:00:00+00:00"                        # 23:00 ET prior evening -> off hours
+    assert R.is_market_hours(now) is False
+    res = R.screen(mkp(2.05)); res["provider_quote_ts"] = "2026-08-26T16:00:00"
+    card = {"paper_position": R._paper_init(POL)}
+    R.paper_update(card, res, now, POL, False)
+    pp = card["paper_position"]
+    assert pp["status"] == "WAITING_FOR_ENTRY"
+    assert pp["waiting_reason"] == "WAITING — NO MARKET-HOURS SCAN YET"
+    assert pp["market_session_state"] == "CLOSED"
+    assert pp["last_entry_evaluation_time"] == now
+    assert pp["latest_qualification_state"] == "QUALIFIES"
+    for f in ("waiting_reason","last_entry_evaluation_time","market_session_state",
+              "provider_quote_timestamp","observed_lag","latest_qualification_state"):
+        assert f in pp, f"waiting position missing diagnostic field {f}"
 
 def test_initial_stop_loss():
     st, _, cid = pscan({"active": {}}, 2.0, DAYS[0], mh=True)       # enter @2.0, stop @1.4
