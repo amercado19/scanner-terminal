@@ -218,7 +218,9 @@ def test_dashboard_rendering():
         print("    (skip dashboard test: index.html not co-located)"); return
     html = open(path, encoding="utf-8").read()
     for label in ("First Qualified", "Days Qualified", "Current Option", "Current Underlying",
-                  "Highest Option", "Highest Underlying", "MFE", "MAE", "Archive", "Analytics"):
+                  "Highest Option", "Highest Underlying", "MFE", "MAE", "Archive", "Analytics",
+                  "Paper Position", "Entry Price", "Current Stop", "Trailing", "Days Held",
+                  "WAITING", "Research Lifecycle"):
         assert label in html, f"dashboard missing '{label}'"
     # The dashboard legitimately NAMES the forbidden concepts inside its non-predictive
     # disclaimers (to say it does none of them). Strip disclaimer sentences, then assert
@@ -231,6 +233,195 @@ def test_dashboard_rendering():
     for bad in ("expected return", "win probability", "probability of profit",
                 "buy signal", "sell signal", "conviction score", "alpha score"):
         assert bad not in low, f"dashboard uses forbidden concept outside a disclaimer: {bad}"
+
+# ======================= v3: paper-position simulation =======================
+POL = R.DEFAULT_POLICY
+def mkp(mid, underlying=90.09, dte=51, bid=None, ask=None, right="call", strike=90.0,
+        iv=0.18, delta=0.52, theta=-0.0239, oi=5970, vol=151):
+    if bid is None: bid = round(mid - 0.05, 4)
+    if ask is None: ask = round(mid + 0.05, 4)
+    return R.Contract(symbol="KO", right=right, strike=strike, expiration="2026-10-16",
+                      underlying=underlying, bid=bid, ask=ask, mark=mid, iv=iv, delta=delta,
+                      theta=theta, open_interest=oi, volume=vol, dte=dte, hv=None,
+                      earnings_in_window=None, days_to_earnings=None)
+def pscan(state, mid, now, mh=True, **kw):
+    r = R.screen(mkp(mid, **kw))
+    st, arch = R.update_watchlist(state, [r], now, ok_symbols={"KO"}, policy=POL, market_hours=mh)
+    return st, arch, r["contract_id"]
+
+DAYS = ["2026-08-27T14:05:00+00:00","2026-08-28T14:05:00+00:00","2026-08-29T14:05:00+00:00",
+        "2026-08-30T14:05:00+00:00","2026-08-31T14:05:00+00:00","2026-09-01T14:05:00+00:00",
+        "2026-09-02T14:05:00+00:00","2026-09-03T14:05:00+00:00"]
+
+def test_premarket_qualification_waits():
+    st, arch, cid = pscan({"active": {}}, 2.0, DAYS[0], mh=False)   # qualifies OFF market hours
+    pp = st["active"][cid]["paper_position"]
+    assert pp["status"] == "WAITING_FOR_ENTRY" and pp["entry_ts"] is None, "no entry off-hours"
+
+def test_first_market_hours_entry():
+    st, _, cid = pscan({"active": {}}, 2.0, DAYS[0], mh=False)      # WAITING
+    st, _, cid = pscan(st, 2.05, DAYS[1], mh=True)                  # first market-hours scan -> enter
+    pp = st["active"][cid]["paper_position"]
+    assert pp["status"] == "ACTIVE" and pp["entry_ts"] == DAYS[1]
+    assert pp["entry_mid"] == 2.05 and pp["initial_stop_level"] == round(2.05*0.7,4)
+    for f in ("entry_bid","entry_ask","entry_dte","entry_iv","entry_delta","entry_theta","entry_underlying"):
+        assert pp[f] is not None, f"entry missing {f}"
+
+def test_never_entered():
+    st, _, cid = pscan({"active": {}}, 2.0, DAYS[0], mh=False)      # WAITING
+    # next scan it no longer qualifies (premium > $3) BEFORE any market-hours entry
+    r = R.screen(mkp(3.4, bid=3.35, ask=3.45))
+    st, arch = R.update_watchlist(st, [r], DAYS[1], ok_symbols={"KO"}, policy=POL, market_hours=True)
+    a = arch["2026-08"][0]
+    assert a["paper_position"]["status"] == "NEVER_ENTERED"
+    assert a["paper_position"]["exit_reason"] == "NEVER ENTERED"
+
+def test_initial_stop_loss():
+    st, _, cid = pscan({"active": {}}, 2.0, DAYS[0], mh=True)       # enter @2.0, stop @1.4
+    st, arch, cid = pscan(st, 1.40, DAYS[1], mh=True)               # -30% -> INITIAL STOP
+    # paper closes but the research contract still qualifies -> stays on the active card
+    pp = st["active"][cid]["paper_position"]
+    assert pp["exit_reason"] == "INITIAL_STOP" and pp["status"] == "CLOSED"
+    assert st["active"][cid]["current_status"] == "ACTIVE", "research contract not archived by a paper stop"
+
+def test_trailing_activation():
+    st, _, cid = pscan({"active": {}}, 2.0, DAYS[0], mh=True)
+    st, _, cid = pscan(st, 2.5, DAYS[1], mh=True)                   # +25% -> activate
+    pp = st["active"][cid]["paper_position"]
+    assert pp["trailing_active"] and pp["status"] == "TRAILING_ACTIVE"
+    assert pp["trailing_high"] == 2.5 and pp["trailing_stop_level"] == round(2.5*0.8,4)
+
+def test_no_trailing_before_activation():
+    st, _, cid = pscan({"active": {}}, 2.0, DAYS[0], mh=True)
+    st, _, cid = pscan(st, 2.4, DAYS[1], mh=True)                   # +20% only -> no trailing yet
+    pp = st["active"][cid]["paper_position"]
+    assert not pp["trailing_active"] and pp["current_stop_level"] == pp["initial_stop_level"]
+
+def test_trailing_high_increases_and_stop_never_decreases():
+    st, _, cid = pscan({"active": {}}, 2.0, DAYS[0], mh=True)
+    st, _, cid = pscan(st, 2.5, DAYS[1], mh=True)                   # activate, high 2.5, stop 2.0
+    st, _, cid = pscan(st, 2.9, DAYS[2], mh=True)                   # high 2.9, stop 2.32
+    pp = st["active"][cid]["paper_position"]
+    assert pp["trailing_high"] == 2.9 and pp["trailing_stop_level"] == round(2.9*0.8,4)
+    st, _, cid = pscan(st, 2.6, DAYS[3], mh=True)                   # price down, high & stop hold
+    pp = st["active"][cid]["paper_position"]
+    assert pp["trailing_high"] == 2.9, "trailing high never decreases"
+    assert pp["trailing_stop_level"] == round(2.9*0.8,4), "trailing stop never decreases"
+
+def test_gap_through_stop_and_bid_based_exit():
+    st, _, cid = pscan({"active": {}}, 2.0, DAYS[0], mh=True)
+    st, _, cid = pscan(st, 2.8, DAYS[1], mh=True)                   # activate, high 2.8, stop 2.24
+    # gap straight down through the stop; bid distinct from mid
+    st, arch, cid = pscan(st, 2.10, DAYS[2], mh=True, bid=2.00, ask=2.20)
+    a = st["active"][cid]["paper_position"]
+    assert a["exit_reason"] == "TRAILING_STOP"
+    assert a["exit_price"] == 2.00, "conservative exit at current bid, not the stop level"
+    assert "first observed" in a["exit_note"]
+
+def test_time_stop():
+    st = {"active": {}}
+    st, _, cid = pscan(st, 2.0, DAYS[0], mh=True, dte=58)           # day 1
+    for i, d in enumerate(DAYS[1:7], start=1):                      # days 2..7, flat price
+        st, arch, _ = pscan(st, 2.0, d, mh=True, dte=58 - i)
+    a = arch["2026-09"][0]["paper_position"] if arch else st["active"][cid]["paper_position"]
+    assert a["exit_reason"] == "TIME_STOP" and a["days_held"] == 7
+
+def test_dte_stop_unit():
+    # DTE stop is a real path but pre-empted in integration by the DTE<21 research filter,
+    # so validate the paper engine directly with a sub-14 DTE quote.
+    pp = R._paper_init(POL); R._paper_enter(pp, R.screen(mkp(2.0, dte=20)), DAYS[0])
+    reason = R._paper_step(pp, R.screen(mkp(2.0, dte=13)), DAYS[1])
+    assert reason == "DTE_STOP" and pp["exit_reason"] == "DTE_STOP"
+
+def test_expiration_unit():
+    pp = R._paper_init(POL); R._paper_enter(pp, R.screen(mkp(2.0, dte=21)), DAYS[0])
+    reason = R._paper_step(pp, R.screen(mkp(1.5, dte=0)), DAYS[1])
+    assert reason == "EXPIRED"
+
+def test_filter_exit_closes_paper():
+    st, _, cid = pscan({"active": {}}, 2.0, DAYS[0], mh=True)       # ACTIVE paper
+    r = R.screen(mkp(3.4, bid=3.30, ask=3.50))                     # premium>3 -> research fails
+    st, arch = R.update_watchlist(st, [r], DAYS[1], ok_symbols={"KO"}, policy=POL, market_hours=True)
+    a = arch["2026-08"][0]
+    assert a["exit_reason"] == "premium >$3.00", "research archived on filter fail"
+    assert a["paper_position"]["exit_reason"] == "FILTER_EXIT"
+    assert a["paper_position"]["exit_price"] == 3.30, "paper exits at current bid"
+
+def test_research_history_continues_after_paper_close():
+    st, _, cid = pscan({"active": {}}, 2.0, DAYS[0], mh=True)       # enter
+    st, _, cid = pscan(st, 1.40, DAYS[1], mh=True)                  # INITIAL STOP -> paper CLOSED
+    pp = st["active"][cid]["paper_position"]
+    assert pp["status"] == "CLOSED"
+    research_obs_before = len(st["active"][cid]["observations"])
+    st, _, cid = pscan(st, 2.0, DAYS[2], mh=True)                   # research still qualifies
+    card = st["active"][cid]
+    assert card["paper_position"]["status"] == "CLOSED", "paper stays closed independently"
+    assert len(card["observations"]) == research_obs_before + 1, "research observations continue"
+
+def test_policy_version_preservation():
+    st, _, cid = pscan({"active": {}}, 2.0, DAYS[0], mh=True)       # entered under v1
+    pol2 = dict(R.DEFAULT_POLICY); pol2["policy_version"] = "paper-policy.v2"; pol2["initial_stop_pct"] = 40.0
+    r = R.screen(mkp(2.1))
+    r2 = R.screen(mkp(1.5, strike=95.0))                            # a different, new contract
+    st, arch = R.update_watchlist(st, [r, r2], DAYS[1], ok_symbols={"KO"}, policy=pol2, market_hours=True)
+    old = st["active"][cid]["paper_position"]
+    new = st["active"][r2["contract_id"]]["paper_position"]
+    assert old["policy_version"] == "paper-policy.v1" and old["params"]["initial_stop_pct"] == 30.0
+    assert new["policy_version"] == "paper-policy.v2" and new["params"]["initial_stop_pct"] == 40.0
+
+def test_migration_v2_to_v3_paper():
+    # a v2 active card (observations, no paper_position) enters at the next market-hours
+    # scan, NOT at a fabricated historical price
+    v2 = {"contract_id": "KO 90C 2026-10-16", "symbol": "KO", "right": "call", "strike": 90.0,
+          "expiration": "2026-10-16", "first_detected": "2026-08-01T14:05:00+00:00",
+          "entry_premium": 2.0, "current_premium": 2.0, "underlying_at_detection": 90.0,
+          "current_underlying": 90.0, "iv_at_detection": 0.18, "current_iv": 0.18, "dte": 51,
+          "current_status": "ACTIVE", "last_updated": "2026-08-01T14:05:00+00:00",
+          "observations": [{"ts": "2026-08-01T14:05:00+00:00", "mid": 2.0, "underlying": 90.0, "dte": 51, "passed": True}],
+          "history": []}
+    st, _ = R.update_watchlist({"active": {"KO 90C 2026-10-16": v2}}, [R.screen(mkp(2.1))],
+                               DAYS[0], ok_symbols={"KO"}, policy=POL, market_hours=True)
+    c = st["active"]["KO 90C 2026-10-16"]
+    assert c["first_detected"] == "2026-08-01T14:05:00+00:00", "research detection preserved"
+    pp = c["paper_position"]
+    assert pp["status"] == "ACTIVE" and pp["entry_ts"] == DAYS[0], "entered now, not backfilled"
+    assert pp["entry_mid"] == 2.1
+
+def test_paper_stats_descriptive():
+    st, _, cid = pscan({"active": {}}, 2.0, DAYS[0], mh=True)
+    st, arch, cid = pscan(st, 1.40, DAYS[1], mh=True)               # INITIAL_STOP (paper closed, research active)
+    s = R.paper_stats([st["active"][cid]])
+    assert s["contracts_entered"] == 1 and s["initial_stops"] == 1
+    assert "exit_reason_distribution" in s and "hold_time_distribution" in s
+    for k in s:
+        assert not any(bad in k for bad in ("rank", "score", "win_rate", "edge", "predict", "expected"))
+
+def test_no_forbidden_in_paper_record():
+    st, _, cid = pscan({"active": {}}, 2.0, DAYS[0], mh=True)
+    st, arch, cid = pscan(st, 1.40, DAYS[1], mh=True)
+    keys = set()
+    def walk(o):
+        if isinstance(o, dict):
+            for k, v in o.items(): keys.add(k.lower()); walk(v)
+        elif isinstance(o, list):
+            for v in o: walk(v)
+    walk(st["active"][cid])
+    for bad in ("score", "rank", "conviction", "expected_return", "win_probability", "recommendation", "edge"):
+        assert bad not in keys, f"forbidden key {bad}"
+
+def test_full_run_v3_writes_policy():
+    import tempfile, shutil
+    tmp = tempfile.mkdtemp()
+    try:
+        R.run("sample", root=tmp, now=DAYS[0])
+        assert os.path.exists(os.path.join(tmp, "data", "research_policy.json"))
+        wl = json.load(open(os.path.join(tmp, "data", "research_watchlist.json")))
+        assert wl["meta"]["schema_version"] == "research-scanner.v3"
+        assert "policy_version" in wl["meta"] and "paper_live" in wl["meta"]
+        any_card = next(iter(wl["active"].values()))
+        assert "paper_position" in any_card
+    finally:
+        shutil.rmtree(tmp)
 
 if __name__ == "__main__":
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
