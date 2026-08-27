@@ -43,7 +43,7 @@ MAX_THETA_BURDEN_PER_DAY = 0.03        # |theta|/mark <= 3.0%/day
 ALLOWED_RIGHTS = ("call", "put")       # long calls & long puts only
 UNIVERSE = ["KO", "WMT", "UBER", "DIS", "XOM", "SMCI", "HIMS"]
 THRESHOLDS_VERSION = "research-scanner.v1"
-SCHEMA_VERSION = "research-scanner.v3"
+SCHEMA_VERSION = "research-scanner.v3.1"
 SCAN_LOG_KEEP = 200                     # rolling scan_log entries kept in active file
 
 # ---- Research paper-trading policy (v3) ---------------------------------
@@ -291,6 +291,9 @@ def _new_card(res, now, reentered=False):
         # detection
         "first_detected": now, "last_seen": now, "last_updated": now,
         "current_status": "NEW",
+        "research_status": "ACTIVE",
+        "research_left_reason": None,
+        "research_status_log": [{"ts": now, "status": "NEW"}],
         "entry_reason": "re-entered (re-passed filters)" if reentered else "passed all frozen structural filters",
         # entry snapshot
         "entry_premium": res["mark"], "underlying_at_detection": res["underlying"],
@@ -437,6 +440,7 @@ def _paper_observe(pp, res, now):
         "underlying": res.get("underlying"), "dte": res.get("dte"),
         "trailing_active": pp.get("trailing_active", False),
         "stop_level": pp.get("current_stop_level"),
+        "in_filter": bool(res.get("passed")),   # research pass/fail at this paper observation
     })
 
 def _paper_recompute(pp):
@@ -538,23 +542,15 @@ def _paper_never_entered(pp, now, note):
     pp["exit_reason"] = "NEVER ENTERED"
     pp["exit_note"] = note
 
-def _paper_filter_exit(pp, now, res=None):
-    """Close an open paper position because the research contract left the filter."""
-    if pp["status"] == "WAITING_FOR_ENTRY":
-        _paper_never_entered(pp, now, "failed before a market-hours entry")
-        return
-    if pp["status"] in ("ACTIVE", "TRAILING_ACTIVE"):
-        if res is not None:
-            _paper_observe(pp, res, now); _paper_recompute(pp)
-        exit_bid = pp.get("current_bid")
-        if exit_bid is None:
-            exit_bid = pp.get("current_mid")
-        _paper_close(pp, "FILTER_EXIT", now, exit_bid,
-                     "research contract left the structural filter; conservative exit at last bid")
-
 def paper_update(card, res, now, policy, market_hours):
-    """Entry/tracking/exit for a card's paper position on one scan. `res` is this
-    scan's screen() result for the contract (None if not present this scan)."""
+    """Advance a card's paper position by one scan, INDEPENDENTLY of the research filter.
+
+    Entry still requires the contract to be discovered (passing) at a market-hours scan —
+    you only "buy" what the scanner would find. Once entered, the position is tracked and
+    its stops evaluated on every market-hours scan REGARDLESS of whether the contract still
+    passes the filter. It closes ONLY on a paper rule: initial / trailing / time / DTE stop,
+    or expiration. Leaving the research filter never closes it.
+    `res` is this scan's screen() result for the contract (None if not quotable this scan)."""
     pp = card.get("paper_position") or _paper_init(policy)
     card["paper_position"] = pp
     if pp["status"] in ("CLOSED", "NEVER_ENTERED"):
@@ -564,9 +560,12 @@ def paper_update(card, res, now, policy, market_hours):
     if res is None:
         return pp                                   # no fresh quote this scan -> no action
     if pp["status"] == "WAITING_FOR_ENTRY":
-        _paper_enter(pp, res, now)
+        if res.get("passed"):
+            _paper_enter(pp, res, now)              # first valid market-hours entry (discovered + qualifying)
+        else:
+            _paper_never_entered(pp, now, "failed the filter before a market-hours entry")
     elif pp["status"] in ("ACTIVE", "TRAILING_ACTIVE"):
-        _paper_step(pp, res, now)
+        _paper_step(pp, res, now)                   # tracks + stops regardless of res["passed"]
     return pp
 
 
@@ -574,9 +573,15 @@ def paper_update(card, res, now, policy, market_hours):
 def _migrate_card(card, now):
     """Bring a legacy v1 active card up to the v2 historical schema, in place,
     without inventing data. Seeds observations from the legacy history when needed."""
-    if "observations" in card and card.get("current_status") in ("NEW", "ACTIVE", "EXITED"):
-        # already v2-shaped; still ensure derived metrics exist
+    if "observations" in card and card.get("current_status") in ("NEW", "ACTIVE", "EXITED",
+                                                                  "LEFT_FILTER", "RETURNED_TO_FILTER", "EXPIRED"):
+        # already v2/v3-shaped; ensure derived metrics + v3.1 research-status fields exist
         card.setdefault("last_seen", card.get("last_updated") or now)
+        if "research_status" not in card:
+            cs = card.get("current_status")
+            card["research_status"] = "ACTIVE" if cs in ("NEW", "ACTIVE") else (cs or "ACTIVE")
+            card.setdefault("research_left_reason", None)
+            card.setdefault("research_status_log", [{"ts": card.get("first_detected") or now, "status": "ACTIVE"}])
         return _recompute(card)
     # seed observations from legacy history (partial fields; unknowns stay null)
     obs = []
@@ -603,6 +608,9 @@ def _migrate_card(card, now):
                                              card.get("right"), card.get("strike")))
     card.setdefault("last_seen", card.get("last_updated") or now)
     card.setdefault("current_status", "ACTIVE")
+    card.setdefault("research_status", "ACTIVE")
+    card.setdefault("research_left_reason", None)
+    card.setdefault("research_status_log", [{"ts": card.get("first_detected") or now, "status": "ACTIVE"}])
     card.setdefault("entry_reason", "passed all frozen structural filters")
     return _recompute(card)
 
@@ -651,12 +659,20 @@ def paper_stats(contracts):
     closed = [p for p in entered if p.get("status") == "CLOSED"]
     never = [p for p in pps if p.get("status") == "NEVER_ENTERED"]
     exit_dist, hold_dist, dte_dist = {}, {}, {}
+    outlived = 0                       # positions still open past a research filter-exit
+    post_mfe, post_mae = [], []        # paper excursion AFTER the contract left the filter
     for p in closed:
         r = p.get("exit_reason") or "unknown"; exit_dist[r] = exit_dist.get(r, 0) + 1
         hb = bucket(p.get("days_held")); hold_dist[hb] = hold_dist.get(hb, 0) + 1
         d = p.get("current_dte")
         db = "unknown" if d is None else ("<14" if d < 14 else "14-20" if d < 21 else "21+")
         dte_dist[db] = dte_dist.get(db, 0) + 1
+        e = p.get("entry_mid")
+        postobs = [o for o in p.get("observations", []) if o.get("in_filter") is False and o.get("mid") is not None]
+        if postobs and e:
+            outlived += 1
+            pcts = [(o["mid"] - e) / e * 100 for o in postobs]
+            post_mfe.append(round(max(pcts), 2)); post_mae.append(round(min(pcts), 2))
     research_returns = [c.get("lifetime", {}).get("option_return_pct") for c in contracts]
     return {
         "contracts_entered": len(entered),
@@ -666,6 +682,9 @@ def paper_stats(contracts):
         "avg_research_return_pct": avg(research_returns),
         "avg_mfe_pct": avg([p.get("mfe") for p in closed]),
         "avg_mae_pct": avg([p.get("mae") for p in closed]),
+        "closed_after_leaving_filter": outlived,
+        "avg_mfe_after_filter_left_pct": avg(post_mfe),
+        "avg_mae_after_filter_left_pct": avg(post_mae),
         "exit_reason_distribution": dict(sorted(exit_dist.items())),
         "hold_time_distribution": dict(sorted(hold_dist.items())),
         "dte_at_exit_distribution": dict(sorted(dte_dist.items())),
@@ -729,72 +748,137 @@ def _all_archived_contracts(data_dir, index):
 
 
 # ============================== SCAN UPDATE ============================
-def update_watchlist(prev, results, now, ok_symbols=None, seen_ids=None,
-                     policy=None, market_hours=None):
-    """Advance the historical record by one scan.
+def _advance_research(card, res, now):
+    """Advance the RESEARCH lifecycle by one scan — independent of the paper position.
+    Records a research observation every scan (whether or not the contract still passes)
+    and tracks whether today's scanner would still discover it. NEVER closes a paper
+    position. research_status transitions: ACTIVE <-> LEFT_FILTER (RETURNED_TO_FILTER
+    logged on the way back), and EXPIRED (terminal, set elsewhere)."""
+    passed = bool(res["passed"])
+    card["observations"].append(_observation(res, now))
+    card["current_premium"] = res["mark"]
+    card["premium_change"] = round((res["mark"] or 0) - (card.get("entry_premium") or 0), 2)
+    card["current_underlying"] = res["underlying"]
+    card["current_iv"] = res["descriptors"].get("iv")
+    card["dte"] = res["dte"]
+    card["descriptors"] = res["descriptors"]
+    card["checks"] = res["checks"]
+    card["last_seen"] = now
+    card["last_updated"] = now
+    prev_status = card.get("research_status", "ACTIVE")
+    log = card.setdefault("research_status_log", [])
+    if passed:
+        if prev_status == "LEFT_FILTER":
+            log.append({"ts": now, "status": "RETURNED_TO_FILTER"})
+            card["history"].append({"ts": now, "event": "returned", "premium": res["mark"],
+                                    "underlying": res["underlying"], "dte": res["dte"]})
+        else:
+            card["history"].append({"ts": now, "event": "still", "premium": res["mark"],
+                                    "underlying": res["underlying"], "iv": res["descriptors"].get("iv"), "dte": res["dte"]})
+        card["research_status"] = "ACTIVE"
+        card["research_left_reason"] = None
+        card["current_status"] = "ACTIVE"
+    else:
+        reason = exit_reason(res)
+        if prev_status != "LEFT_FILTER":
+            log.append({"ts": now, "status": "LEFT_FILTER", "reason": reason})
+        card["research_status"] = "LEFT_FILTER"
+        card["research_left_reason"] = reason
+        card["current_status"] = "LEFT_FILTER"
+        card["history"].append({"ts": now, "event": "left_filter", "reason": reason,
+                                "premium": res["mark"], "underlying": res["underlying"], "dte": res["dte"]})
+    _recompute(card)
+    return card
 
-    prev         : previous active-file state (v1 / v2 / v3)
-    results      : list of screen() dicts for everything examined this scan
-    ok_symbols   : set of symbols that fetched successfully this scan (None => all ok).
-                   Contracts whose symbol failed to fetch are held, not exited, and
-                   get NO fabricated observation.
-    seen_ids     : set of contract_ids ever archived (for re-entry flagging)
-    policy       : paper-trading policy dict (defaults to DEFAULT_POLICY)
-    market_hours : bool — whether this scan is inside regular market hours. Paper
-                   entries/exits are evaluated ONLY when True.
+def update_watchlist(prev, discovery_results, now, track_results=None, ok_symbols=None,
+                     seen_ids=None, policy=None, market_hours=None):
+    """Advance both lifecycles by one scan.
 
-    Returns (active_state_dict, {month: [archived_card,...]})
+    Two independent loops:
+      * Loop 1 (Discovery)  — `discovery_results`: in-window screen() dicts, used ONLY to
+        find NEW qualifying contracts to start tracking.
+      * Loop 2 (Tracker)    — `track_results`: {contract_id: screen() dict} for EVERY
+        existing active record we could still quote this scan (ANY DTE). Advances each
+        record's research lifecycle AND its paper position independently.
+
+    A record leaves the active file (archives) ONLY when its paper position is terminal
+    (CLOSED / NEVER_ENTERED) AND its research lifecycle is out of the filter
+    (LEFT_FILTER / EXPIRED). A contract that has left the filter but still holds an open
+    paper position keeps being tracked; a closed paper position on a still-qualifying
+    contract keeps recording research observations. Both histories archive together.
+    A symbol that fails to fetch holds its records with NO fabricated observation.
     """
     policy = policy or DEFAULT_POLICY
     if market_hours is None:
         market_hours = is_market_hours(now)
+    if track_results is None:
+        # convenience default: every screened contract is available to the tracker
+        track_results = {r["contract_id"]: r for r in discovery_results}
     active = {cid: _migrate_card(dict(c), now) for cid, c in prev.get("active", {}).items()}
-    by_id = {r["contract_id"]: r for r in results}
-    diff = {"new": [], "still": [], "exited": [], "reentered": []}
+    disc_by_id = {r["contract_id"]: r for r in discovery_results}
+    diff = {"new": [], "still": [], "exited": [], "reentered": [], "left_filter": [], "returned": []}
     archived = {}
     seen_ids = set(seen_ids or [])
     ok = None if ok_symbols is None else set(ok_symbols)
 
-    def archive(card, reason, res=None):
-        # close any open paper position as a FILTER EXIT before archiving the record
-        pp = card.get("paper_position") or _paper_init(policy)
-        card["paper_position"] = pp
-        if market_hours or pp["status"] == "WAITING_FOR_ENTRY":
-            _paper_filter_exit(pp, now, res=res if market_hours else None)
-        _archive_card(card, reason, now, res)
-        month = (card.get("exited_at") or now)[:7]
-        archived.setdefault(month, []).append(card)
+    def finalize_and_archive(card, research_reason):
+        card["exit_reason"] = research_reason
+        card["exited_at"] = now
+        card["last_updated"] = now
+        card["lifetime"] = _lifetime(card)
+        archived.setdefault(now[:7], []).append(card)
         diff["exited"].append(card["contract_id"])
 
     for cid, card in list(active.items()):
-        r = by_id.get(cid)
-        if r is not None:
-            if r["passed"]:
-                _touch_active(card, r, now)
-                paper_update(card, r, now, policy, market_hours)
-                diff["still"].append(cid)
-            else:
-                archive(card, exit_reason(r), res=r); del active[cid]
-            continue
-        # not in this scan's results
+        tr = track_results.get(cid)
         sym = card.get("symbol")
-        if ok is not None and sym not in ok:
-            # data gap for this symbol — hold the contract, do NOT fabricate/exit
-            card["last_updated"] = now
-            continue
-        # symbol fetched fine but contract absent -> below pre-window / expired / delisted
-        try:
-            expired = date.fromisoformat(card.get("expiration")) < (date.fromisoformat(now[:10]))
-        except Exception:
-            expired = False
-        reason = "Expired" if expired else "DTE <21"
-        archive(card, reason, res=None); del active[cid]
+        if tr is not None:
+            prev_rs = card.get("research_status", "ACTIVE")
+            _advance_research(card, tr, now)
+            if card["research_status"] == "ACTIVE":
+                diff["still"].append(cid)
+                if prev_rs == "LEFT_FILTER":
+                    diff["returned"].append(cid)
+            elif prev_rs != "LEFT_FILTER":
+                diff["left_filter"].append(cid)
+            # paper position advances independently (entry needs a passing quote; tracking does not)
+            paper_update(card, tr, now, policy, market_hours)
+        elif ok is not None and sym not in ok:
+            card["last_updated"] = now                     # data gap — hold, no fabrication
+        else:
+            # symbol fetched but this contract is gone from the chain
+            try:
+                expired = date.fromisoformat(card.get("expiration")) < date.fromisoformat(now[:10])
+            except Exception:
+                expired = False
+            if expired:
+                card["research_status"] = "EXPIRED"
+                card["research_left_reason"] = "expired"
+                card["current_status"] = "EXPIRED"
+                card.setdefault("research_status_log", []).append({"ts": now, "status": "EXPIRED"})
+                pp = card.get("paper_position")
+                if pp and market_hours:
+                    if pp["status"] in ("ACTIVE", "TRAILING_ACTIVE"):
+                        _paper_close(pp, "EXPIRED", now, pp.get("current_bid") or pp.get("current_mid"),
+                                     "contract expired / left the chain")
+                    elif pp["status"] == "WAITING_FOR_ENTRY":
+                        _paper_never_entered(pp, now, "expired before a market-hours entry")
+            else:
+                card["last_updated"] = now                 # transient chain miss — hold
 
-    for cid, r in by_id.items():
+        pp = card.get("paper_position") or {}
+        paper_terminal = pp.get("status") in ("CLOSED", "NEVER_ENTERED")
+        research_out = card.get("research_status") in ("LEFT_FILTER", "EXPIRED")
+        if paper_terminal and research_out:
+            finalize_and_archive(card, card.get("research_left_reason") or "left filter")
+            del active[cid]
+
+    # Loop 1 — discovery of NEW qualifying contracts not already tracked
+    for cid, r in disc_by_id.items():
         if r["passed"] and cid not in active:
             reentered = cid in seen_ids
             card = _new_card(r, now, reentered=reentered)
-            paper_update(card, r, now, policy, market_hours)     # enter now if market hours, else WAITING
+            paper_update(card, r, now, policy, market_hours)
             active[cid] = card
             (diff["reentered"] if reentered else diff["new"]).append(cid)
 
@@ -853,7 +937,10 @@ def cboe_candidates(symbol, today, want_hv=True):
             dte = (date.fromisoformat(exp) - today).days
         except Exception:
             dte = None
-        if dte is None or not (DTE_MIN - 3 <= dte <= DTE_MAX + 3):   # coarse pre-window to cut volume
+        # Return the full TRACKING range (0..DTE_MAX+3): discovery uses the in-window
+        # subset, while the paper-position tracker (Loop 2) needs contracts that have
+        # already dropped below the discovery window (down to expiry).
+        if dte is None or not (0 <= dte <= DTE_MAX + 3):
             continue
         bid, ask = o.get("bid"), o.get("ask")
         mark = ((bid + ask) / 2) if (bid not in (None, 0) or ask not in (None, 0)) else None
@@ -899,12 +986,16 @@ def run(provider, today=None, now=None, root="."):
     market_hours = is_market_hours(now)
 
     cand = {"cboe": cboe_candidates, "sample": sample_candidates}[provider]
-    results, examined, errors, ok_symbols = [], 0, [], set()
+    # Loop 1 fetch: one chain pull per symbol yields BOTH the discovery candidates
+    # (in the DTE window) and a full contract map used by the Loop 2 tracker.
+    discovery, examined, errors, ok_symbols = [], 0, [], set()
+    raw = {}   # contract_id -> Contract for EVERY fetched option (any DTE) — the tracking feed
     for sym in UNIVERSE:
         try:
-            got = 0
             for c in cand(sym, today):
-                results.append(screen(c)); examined += 1; got += 1
+                raw[c.contract_id] = c
+                if DTE_MIN - 3 <= (c.dte if c.dte is not None else -1) <= DTE_MAX + 3:
+                    discovery.append(screen(c)); examined += 1
             ok_symbols.add(sym)
             time.sleep(0.4)  # be gentle with CBOE
         except Exception as e:
@@ -913,6 +1004,11 @@ def run(provider, today=None, now=None, root="."):
 
     prev = _load(data_path)
     index = _load_index(index_path, now)
+
+    # Loop 2 feed: a fresh screen() for every EXISTING active record we can still quote
+    # this scan, at ANY DTE — this is what keeps paper positions tracked after they leave
+    # the discovery window / filter.
+    track_results = {cid: screen(raw[cid]) for cid in prev.get("active", {}).keys() if cid in raw}
 
     # FAILURE RULE: if EVERY symbol failed to fetch, do NOT advance the record.
     if provider == "cboe" and errors and examined == 0:
@@ -929,7 +1025,8 @@ def run(provider, today=None, now=None, root="."):
         return prev
 
     seen_ids = set(index.get("seen_contract_ids", []))
-    state, archived = update_watchlist(prev, results, now, ok_symbols=ok_symbols, seen_ids=seen_ids,
+    state, archived = update_watchlist(prev, discovery, now, track_results=track_results,
+                                       ok_symbols=ok_symbols, seen_ids=seen_ids,
                                        policy=policy, market_hours=market_hours)
 
     # write archive partitions (append-only), then reindex
@@ -955,13 +1052,23 @@ def run(provider, today=None, now=None, root="."):
     scan_log = list(prev.get("scan_log", []))
     scan_log.append({"ts": now, "status": status, "examined": examined,
                      "errors": errors, "new": len(d["new"]), "exited": len(d["exited"]),
-                     "market_hours": market_hours})
-    # live paper-position tally (descriptive, over currently-active cards)
-    _pp = [c.get("paper_position", {}) for c in state["active"].values()]
+                     "left_filter": len(d.get("left_filter", [])), "returned": len(d.get("returned", [])),
+                     "market_hours": market_hours, "tracked": len(track_results)})
+    # live tallies (descriptive, over currently-active cards)
+    _cards = list(state["active"].values())
+    _pp = [c.get("paper_position", {}) for c in _cards]
     paper_live = {
         "waiting": sum(1 for p in _pp if p.get("status") == "WAITING_FOR_ENTRY"),
         "active": sum(1 for p in _pp if p.get("status") == "ACTIVE"),
         "trailing": sum(1 for p in _pp if p.get("status") == "TRAILING_ACTIVE"),
+        # open paper positions still being tracked AFTER their contract left the research filter
+        "tracked_past_filter": sum(1 for c in _cards
+                                   if c.get("research_status") in ("LEFT_FILTER", "EXPIRED")
+                                   and (c.get("paper_position") or {}).get("status") in ("ACTIVE", "TRAILING_ACTIVE")),
+    }
+    research_live = {
+        "in_filter": sum(1 for c in _cards if c.get("research_status") == "ACTIVE"),
+        "left_filter": sum(1 for c in _cards if c.get("research_status") == "LEFT_FILTER"),
     }
     updated = {
         "active": state["active"], "last_scan": now, "diff": d,
@@ -985,6 +1092,7 @@ def run(provider, today=None, now=None, root="."):
             "policy": _policy_params(policy),
             "market_hours": market_hours,
             "paper_live": paper_live,
+            "research_live": research_live,
             "paper_stats": meta_paper_stats,
             "boundary": ("Research only. Non-predictive structural screen of long calls & puts. "
                          "No ranking, no score, no conviction, no direction, no expected return, "
