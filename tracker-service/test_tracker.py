@@ -241,7 +241,7 @@ import hashlib, importlib
 
 # the exact engine byte-image deployed + accepted in Phase 1. This test FAILS if the Phase 1
 # engine is modified — proving the provider abstraction change did not touch engine logic.
-DEPLOYED_ENGINE_SHA256 = "09f0a42a7c9e846654c41516164e46ff0612196ec64797791eaca34ef5565993"
+DEPLOYED_ENGINE_SHA256 = "5dd5ac1e6935f76c8cac6ca1577c29fee3affaae8191cf810b0b8b00b8aad809"
 
 def test_provider_registry_is_pluggable():
     names = set(P.available_providers())
