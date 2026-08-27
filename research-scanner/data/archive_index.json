@@ -1,9 +1,72 @@
 {
-  "partitions": [],
+  "partitions": [
+    {
+      "count": 21,
+      "date_range": [
+        "2026-08-27T14:52:26+00:00",
+        "2026-08-27T14:52:26+00:00"
+      ],
+      "month": "2026-08",
+      "path": "archive/2026/2026-08.json",
+      "tickers": [
+        "DIS",
+        "HIMS",
+        "KO",
+        "SMCI",
+        "UBER",
+        "WMT",
+        "XOM"
+      ]
+    }
+  ],
   "schema_version": "research-scanner.v2",
-  "seen_contract_ids": [],
-  "stats": null,
-  "tickers": [],
-  "total_archived": 0,
-  "updated_at": "2026-08-27T03:32:40+00:00"
+  "seen_contract_ids": [
+    "DIS 110C 2026-09-18",
+    "DIS 110P 2026-09-18",
+    "DIS 115C 2026-10-16",
+    "HIMS 29P 2026-09-18",
+    "HIMS 30C 2026-09-18",
+    "HIMS 30P 2026-09-18",
+    "KO 85P 2026-10-16",
+    "KO 90C 2026-10-16",
+    "SMCI 35P 2026-10-16",
+    "SMCI 37P 2026-09-18",
+    "SMCI 38P 2026-09-18",
+    "SMCI 40C 2026-09-25",
+    "UBER 72.5P 2026-10-16",
+    "UBER 77.5P 2026-09-18",
+    "UBER 80C 2026-09-18",
+    "UBER 82.5C 2026-10-16",
+    "UBER 90C 2026-10-16",
+    "WMT 105C 2026-09-18",
+    "WMT 105P 2026-09-18",
+    "WMT 106C 2026-09-18",
+    "XOM 175C 2026-10-16"
+  ],
+  "stats": {
+    "avg_days_qualified": 1.0,
+    "avg_option_return_pct": -7.8,
+    "avg_premium_at_detection": 2.05,
+    "avg_premium_at_exit": 1.89,
+    "avg_underlying_move_pct": -0.74,
+    "count_ever_qualified": 21,
+    "exit_reason_distribution": {
+      "bid/ask too wide": 1,
+      "liquidity failure (volume)": 13,
+      "premium <$0.75": 1,
+      "premium >$3.00": 2,
+      "theta burden too high": 4
+    }
+  },
+  "tickers": [
+    "DIS",
+    "HIMS",
+    "KO",
+    "SMCI",
+    "UBER",
+    "WMT",
+    "XOM"
+  ],
+  "total_archived": 21,
+  "updated_at": "2026-08-27T14:52:26+00:00"
 }
