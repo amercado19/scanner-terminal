@@ -1,20 +1,30 @@
 name: Research Scanner (structural, non-predictive)
 
-# Independent of any legacy workflow. Reuses only the repo's free-data technique
-# (CBOE delayed). No secrets needed. cron is UTC. These are US market hours on
-# EDT (UTC-4) + one post-close run. Builds a permanent historical record:
-# active watchlist + monthly archive partitions + archive_index.json.
+# Phase 1 hybrid tracking: ONE workflow runs BOTH loops (discovery + paper tracking) on
+# free CBOE DELAYED data, ~every 15 minutes during regular US market hours. Minutes are
+# STAGGERED off the quarter-hour to dodge GitHub Actions congestion. 15 min (not 5) is a
+# deliberate choice: the data is ~15-min delayed and scheduled runs are best-effort (GitHub
+# often delays them 5-15+ min or drops them under load), so a tighter cadence would add
+# commit/Pages pressure without improving what delayed data can show. This improves
+# observation density and exercises the feed-health, lag, paper-position and
+# STOP-FIRST-OBSERVED logic — it does NOT make delayed data real-time. cron is UTC; regular
+# market hours 09:30-16:00 ET = 13:30-20:00 UTC during EDT. The engine's is_market_hours()
+# gate evaluates paper entries/exits only inside 09:30-16:00 ET.
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: "5 14 * * 1-5"    # ~10:05 ET
-    - cron: "5 16 * * 1-5"    # ~12:05 ET
-    - cron: "5 18 * * 1-5"    # ~14:05 ET
-    - cron: "20 20 * * 1-5"   # ~16:20 ET (post-close)
+    - cron: "33,48 13 * * 1-5"        # 09:33, 09:48 ET (after the open)
+    - cron: "3,18,33,48 14 * * 1-5"   # 10:xx ET
+    - cron: "3,18,33,48 15 * * 1-5"   # 11:xx ET
+    - cron: "3,18,33,48 16 * * 1-5"   # 12:xx ET
+    - cron: "3,18,33,48 17 * * 1-5"   # 13:xx ET
+    - cron: "3,18,33,48 18 * * 1-5"   # 14:xx ET
+    - cron: "3,18,33,48 19 * * 1-5"   # 15:xx ET (through 15:48 ET)
+    - cron: "3 20 * * 1-5"            # 16:03 ET post-close research observation
 
 concurrency:
   group: research-scanner
-  cancel-in-progress: false
+  cancel-in-progress: false        # never cancel a mid-flight scan; queue instead
 
 permissions:
   contents: write
@@ -27,14 +37,29 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Structural research scan (CBOE delayed, free) — appends observations, archives exits
+      # Loop 1 (discovery) + Loop 2 (paper tracking) both run here on delayed CBOE data.
+      # Stores provider quote timestamp, workflow timestamp, and observed lag; labels data
+      # DELAYED; evaluates paper stops only on successful market-hours observations; never
+      # overwrites the last valid state after a failed provider run (logged to failed_scans).
+      - name: Structural research scan + paper tracking (CBOE delayed) — timestamped & lag-labelled
         run: python3 research-scanner/research_scanner.py --provider cboe --root research-scanner
-      - name: Tests (filters, no-prediction invariants, historical DB, MFE/MAE, dashboard)
+      - name: Tests (filters, no-prediction, historical DB, paper sim, decoupling, feed timestamps)
         run: python3 research-scanner/test_research_scanner.py
-      - name: Commit updated research record (watchlist + archive partitions + index)
+      # Commit ONLY when meaningful state changed. The engine writes a timestamp-free
+      # state_fingerprint.txt; if it is unchanged (e.g. a weekend/after-hours scan where CBOE
+      # data is static, or a repeated provider outage), we discard the timestamp-only churn
+      # and skip the commit so GitHub Pages is not rebuilt for an identical state.
+      - name: Commit updated research record — only on meaningful change
         run: |
           git config user.name "research-scanner-bot"
           git config user.email "research-scanner-bot@users.noreply.github.com"
           git add research-scanner/data
-          git commit -m "research-scanner: update historical record [skip ci]" || echo "no changes"
-          git push
+          if git diff --cached --quiet -- research-scanner/data/state_fingerprint.txt; then
+            echo "No meaningful state change (fingerprint unchanged) — skipping commit to avoid Pages churn."
+            git reset -q
+            git checkout -- research-scanner/data || true
+          else
+            git commit -m "research-scanner: update historical record [skip ci]"
+            git pull --rebase --autostash origin main || true
+            git push
+          fi
