@@ -8,11 +8,12 @@
   :root{
     --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --ink:#e6edf3; --mut:#8b949e;
     --line:#2a313c; --pass:#3fb950; --fail:#f85149; --warn:#d29922; --call:#58a6ff; --put:#bc8cff;
+    --new:#39d0d8; --exit:#8b949e;
     --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:13px;line-height:1.5}
-  .wrap{max-width:1200px;margin:0 auto;padding:0 18px 90px}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 18px 90px}
   header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);padding:14px 0 0;z-index:5}
   .brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
   h1{font-size:19px;margin:0;letter-spacing:.02em} h1 .dot{color:var(--pass)}
@@ -25,33 +26,49 @@
   .boundary{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--call);
     border-radius:7px;padding:9px 12px;color:var(--mut);font-size:12px;margin:16px 0}
   .status{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px}
-  .st{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:8px 12px;min-width:120px}
+  .st{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:8px 12px;min-width:118px}
   .st b{display:block;font-size:15px} .st span{color:var(--mut);font-size:10px;text-transform:uppercase;letter-spacing:.06em}
   .st.offline{border-color:var(--fail)} .st.offline b{color:var(--fail)}
   .st.ok b{color:var(--pass)} .st.partial b{color:var(--warn)}
   .pane{display:none} .pane.on{display:block}
   h2{font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin:20px 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:11px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(390px,1fr));gap:11px}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:12px 13px}
   .card.call{border-top:2px solid var(--call)} .card.put{border-top:2px solid var(--put)}
   .cid{font-weight:600;font-size:14px} .r{font-size:11px;padding:1px 6px;border-radius:4px;margin-left:6px}
   .r.call{background:rgba(88,166,255,.15);color:var(--call)} .r.put{background:rgba(188,140,255,.15);color:var(--put)}
-  .seen{float:right;color:var(--mut);font-size:11px}
+  .stat-badge{float:right;font-size:10px;padding:2px 8px;border-radius:99px;letter-spacing:.05em;font-weight:600}
+  .stat-NEW{background:rgba(57,208,216,.15);color:var(--new)}
+  .stat-ACTIVE{background:rgba(63,185,80,.15);color:var(--pass)}
+  .stat-EXITED{background:rgba(139,148,158,.18);color:var(--exit)}
+  .life{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px;margin:9px 0}
+  .lc{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:5px 8px}
+  .lc b{display:block;font-size:12.5px} .lc span{color:var(--mut);font-size:9.5px;text-transform:uppercase;letter-spacing:.04em}
+  .up{color:var(--pass)} .down{color:var(--fail)}
   .checks{display:flex;flex-wrap:wrap;gap:5px;margin:9px 0}
   .chk{font-size:10.5px;padding:2px 6px;border-radius:4px;border:1px solid var(--line);white-space:nowrap}
   .chk.p{color:var(--pass);border-color:rgba(63,185,80,.3)} .chk.f{color:var(--fail);border-color:rgba(248,81,73,.3)}
   .fields{display:grid;grid-template-columns:1fr 1fr;gap:1px 14px;border-top:1px solid var(--line);padding-top:8px;font-size:11.5px;color:var(--mut)}
-  .fields b{color:var(--ink)} .warnθ{color:var(--warn)}
+  .fields b{color:var(--ink)}
   details{margin-top:8px;border-top:1px solid var(--line);padding-top:6px} summary{cursor:pointer;color:var(--mut);font-size:11px}
-  .log{font-size:11px;color:var(--mut);margin-top:6px} .log div{padding:1px 0}
-  table{width:100%;border-collapse:collapse;font-size:11.5px} th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line)}
-  th{color:var(--mut);font-size:10.5px;text-transform:uppercase}
+  table{width:100%;border-collapse:collapse;font-size:11px} th,td{text-align:right;padding:4px 7px;border-bottom:1px solid var(--line);white-space:nowrap}
+  th:first-child,td:first-child{text-align:left} th{color:var(--mut);font-size:10px;text-transform:uppercase}
+  .obswrap{overflow-x:auto;margin-top:6px}
   .empty{color:var(--mut);padding:16px;border:1px dashed var(--line);border-radius:8px;text-align:center}
   .pill{font-size:10.5px;padding:1px 7px;border-radius:99px;border:1px solid var(--line);color:var(--mut);display:inline-block;margin:2px}
   .legacybox{background:var(--panel);border:1px solid var(--warn);border-radius:9px;padding:16px}
   .legacytag{color:var(--warn);font-weight:700;letter-spacing:.05em}
   a{color:var(--call)} .foot{margin-top:30px;color:var(--mut);font-size:11px;border-top:1px solid var(--line);padding-top:12px}
-  .up{color:var(--pass)} .down{color:var(--fail)}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin:12px 0}
+  .filters label{display:flex;flex-direction:column;gap:3px;font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+  .filters input,.filters select{background:var(--panel);border:1px solid var(--line);color:var(--ink);
+    font-family:var(--mono);font-size:12px;padding:6px 8px;border-radius:6px;min-width:120px}
+  .filters button{background:var(--panel2);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);
+    font-size:12px;padding:7px 14px;border-radius:6px;cursor:pointer}
+  .filters button:hover{border-color:var(--call)}
+  .dist{display:flex;flex-direction:column;gap:5px;margin-top:8px}
+  .distrow{display:grid;grid-template-columns:180px 1fr 42px;gap:8px;align-items:center;font-size:11.5px}
+  .distbar{height:12px;background:var(--call);border-radius:3px;min-width:2px;opacity:.65}
 </style>
 </head>
 <body>
@@ -71,143 +88,302 @@
     <div id="diffline"></div>
     <h2>Structurally qualified — this scan</h2>
     <div id="summary"></div>
-    <p class="brandsub">Open <b>Active Calls</b> / <b>Active Puts</b> for full research cards, or <b>Watchlist History</b> for exits. This is the primary research workspace; the legacy paper-trading system is archived and inactive (see <b>Legacy Archive</b>).</p>
+    <p class="brandsub">This is a continuously growing <b>research database</b>. Every qualified contract is tracked through its whole lifecycle — one observation stored per scan, permanently archived on exit, nothing deleted. Open <b>Active Calls</b> / <b>Active Puts</b> for live cards, <b>Archive</b> to search the historical record, or <b>Analytics</b> for descriptive statistics. It documents what happened after contracts entered the structural filter; it does not forecast what will happen.</p>
   </section>
   <section class="pane" data-pane="calls"><h2>Active Qualified Calls <span class="pill" id="ncalls"></span></h2><div class="grid" id="calls"></div></section>
   <section class="pane" data-pane="puts"><h2>Active Qualified Puts <span class="pill" id="nputs"></span></h2><div class="grid" id="puts"></div></section>
-  <section class="pane" data-pane="new"><h2>New Today</h2><div id="newtoday"></div></section>
-  <section class="pane" data-pane="exited"><h2>Exited Today</h2><div id="exittoday"></div></section>
-  <section class="pane" data-pane="reentered"><h2>Re-entered</h2><div id="reentered"></div></section>
-  <section class="pane" data-pane="history"><h2>Watchlist History — exited archive</h2><div id="history"></div></section>
+  <section class="pane" data-pane="new"><h2>New Today</h2><div class="grid" id="newtoday"></div></section>
+  <section class="pane" data-pane="exited"><h2>Exited Today — archived to the historical record</h2><div id="exittoday"></div></section>
+  <section class="pane" data-pane="archive">
+    <h2>Historical Archive — searchable research database</h2>
+    <div id="archiveintro" class="brandsub"></div>
+    <div class="filters" id="archfilters"></div>
+    <div id="archresults"></div>
+  </section>
+  <section class="pane" data-pane="analytics">
+    <h2>Descriptive Analytics</h2>
+    <p class="brandsub">Descriptive statistics of the historical record only — counts, averages, and the distribution of exit reasons. <b>No rankings, no scores, no probabilities, no expected return, no edge claims.</b> Past structure does not imply future performance.</p>
+    <div id="analytics"></div>
+  </section>
   <section class="pane" data-pane="status">
     <h2>Provider / System Status</h2><div id="sysstatus"></div>
+    <h2>Recent Scan Log</h2><div id="scanlog"></div>
     <h2>Frozen Structural Filters</h2><div id="thresholds" class="brandsub"></div>
   </section>
   <section class="pane" data-pane="legacy">
     <h2>Legacy Archive</h2>
     <div class="legacybox">
       <div class="legacytag">LEGACY PAPER-TRADING ARCHIVE — NOT ACTIVE</div>
-      <p class="brandsub" style="margin:8px 0">The former paper-trading system (five books, conviction scores, direction calls, SPY-alpha, 0DTE/1DTE trades) has been reset out of active operation and preserved read-only. Its scores and predictions are <b>not</b> part of this research terminal and never affect the watchlist above.</p>
+      <p class="brandsub" style="margin:8px 0">The former paper-trading system (five books, conviction scores, direction calls, SPY-alpha, 0DTE/1DTE trades) has been reset out of active operation and preserved read-only. Its scores and predictions are <b>not</b> part of this research terminal and never affect the record above.</p>
       <p><a href="/scanner-terminal/archive/legacy-paper-terminal-2026-08-27/scanner_dashboard.html" target="_blank" rel="noopener">Open the archived legacy dashboard (read-only) →</a></p>
       <p class="brandsub"><a href="/scanner-terminal/archive/legacy-paper-terminal-2026-08-27/RESET_MANIFEST.md" target="_blank" rel="noopener">Reset manifest &amp; restore instructions</a></p>
     </div>
   </section>
 
   <div class="foot">
-    Research only — a non-predictive structural screen of long calls and long puts. It never ranks, scores,
-    predicts direction, estimates return or win probability, or recommends a trade. Data is delayed (CBOE).
+    Research only — a non-predictive structural screen of long calls and long puts, kept as a permanent historical record.
+    It never ranks, scores, predicts direction, estimates return or win probability, or recommends a trade. Data is delayed (CBOE).
     Canonical source: <span id="srcpath">research-scanner/data/research_watchlist.json</span>.
   </div>
 </div>
 <script>
-const TABS=[["research","Research Scanner"],["calls","Active Calls"],["puts","Active Puts"],["new","New Today"],["exited","Exited Today"],["reentered","Re-entered"],["history","Watchlist History"],["status","Provider / Status"],["legacy","Legacy Archive"]];
+const TABS=[["research","Research Scanner"],["calls","Active Calls"],["puts","Active Puts"],["new","New Today"],["exited","Exited Today"],["archive","Archive"],["analytics","Analytics"],["status","Provider / Status"],["legacy","Legacy Archive"]];
+let DATA_DIR="research-scanner/data/";
+let INDEX=null, PART_CACHE={};
+
 function n(x,d){return x==null?'—':(typeof x==='number'?x.toFixed(d==null?2:d):x);}
-function pct(x,d){return x==null?'—':(x>0?'+':'')+x.toFixed(d==null?2:d)+'%';}
+function pctc(x){ if(x==null) return '—'; const s=(x>0?'+':'')+x.toFixed(2)+'%'; return `<span class="${x>0?'up':(x<0?'down':'')}">${s}</span>`; }
 function ivp(x){return x==null?'—':(x*100).toFixed(1)+'%';}
+function dslice(t){return (t||'').slice(0,10);}
+function tsmin(t){return (t||'').slice(0,16).replace('T',' ');}
 function show(id){document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.dataset.pane===id));
   document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===id));
-  try{location.hash=id;}catch(e){}}
+  try{location.hash=id;}catch(e){}
+  if(id==='archive') initArchive();
+  if(id==='analytics') initAnalytics();}
 function buildNav(counts){
   document.getElementById('nav').innerHTML=TABS.map(([id,label])=>{
     const b=counts[id]!=null?`<span class="badge">${counts[id]}</span>`:'';
     return `<button data-t="${id}">${label}${b}</button>`;}).join('');
   document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>show(b.dataset.t));
 }
-function card(c,meta){
+
+// bid/ask reconstructed from mark(=mid) and bid_ask_pct when raw quotes weren't stored
+function bidask(mark,pct,rawBid,rawAsk){
+  if(rawBid!=null&&rawAsk!=null) return [rawBid,rawAsk];
+  if(mark==null||pct==null) return [null,null];
+  const sp=pct/100*mark; return [mark-sp/2, mark+sp/2];
+}
+function obsTable(obs){
+  if(!obs||!obs.length) return '<div class="brandsub">—</div>';
+  const rows=obs.map(o=>{
+    const [b,a]=bidask(o.mid,o.bid_ask_pct,o.bid,o.ask);
+    return `<tr><td>${tsmin(o.ts)}</td><td>${n(o.underlying)}</td><td>${n(b)}</td><td>${n(a)}</td>
+      <td>${n(o.mid)}</td><td>${ivp(o.iv)}</td><td>${n(o.delta,3)}</td><td>${n(o.theta,4)}</td>
+      <td>${o.dte==null?'—':o.dte}</td><td>${o.volume==null?'—':o.volume}</td><td>${o.open_interest==null?'—':o.open_interest}</td>
+      <td>${o.bid_ask_pct==null?'—':o.bid_ask_pct+'%'}</td><td>${o.passed?'✓':'✗'}</td></tr>`;}).join('');
+  return `<div class="obswrap"><table><thead><tr><th>Time (UTC)</th><th>Undl</th><th>Bid</th><th>Ask</th><th>Mid</th>
+    <th>IV</th><th>Δ</th><th>θ</th><th>DTE</th><th>Vol</th><th>OI</th><th>Spread</th><th>Pass</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function lifeBlock(c){
+  const cells=[
+    ['First Qualified', dslice(c.first_detected)],
+    ['Days Qualified', c.days_qualified==null?'—':c.days_qualified],
+    ['Observations', c.scan_count==null?'—':c.scan_count],
+    ['Current Option %', pctc(c.current_option_pct)],
+    ['Current Underlying %', pctc(c.current_underlying_pct)],
+    ['Highest Option %', pctc(c.highest_option_pct)],
+    ['Highest Underlying %', pctc(c.highest_underlying_pct)],
+    ['MFE Option', pctc(c.mfe_option)],
+    ['MAE Option', pctc(c.mae_option)],
+    ['MFE Underlying', pctc(c.mfe_underlying)],
+    ['MAE Underlying', pctc(c.mae_underlying)],
+    ['High / Low Option', (c.highest_option==null?'—':'$'+n(c.highest_option))+' / '+(c.lowest_option==null?'—':'$'+n(c.lowest_option))],
+  ];
+  return `<div class="life">${cells.map(([k,v])=>`<div class="lc"><b>${v}</b><span>${k}</span></div>`).join('')}</div>`;
+}
+function structFields(c,meta){
   meta=meta||{};
-  const de=c.descriptors||{}, r=c.right;
-  const thetaW=(de.theta_burden_pct_day!=null&&de.theta_burden_pct_day>=3.0)?'warnθ':'';
-  const chks=(c.checks||[]).map(k=>`<span class="chk ${k.passed?'p':'f'}" title="${k.name}">${k.passed?'✓':'✗'} ${k.detail}</span>`).join('');
-  const pc=c.premium_change, pcs=(pc>0?'+':'')+(pc==null?0:pc).toFixed(2);
-  // bid/ask reconstructed exactly from mark (=mid) and bid_ask_pct (=(ask-bid)/mid) when the
-  // provider stored the spread % rather than the two raw quotes; falls back to raw fields if present.
+  const de=c.descriptors||{};
   const mark=c.current_premium;
-  const sp=(de.bid_ask_pct!=null&&mark!=null)?(de.bid_ask_pct/100*mark):null;
-  const bid=(c.bid!=null)?c.bid:(sp!=null?mark-sp/2:null);
-  const ask=(c.ask!=null)?c.ask:(sp!=null?mark+sp/2:null);
-  const cost=(c.cost!=null)?c.cost:(mark!=null?mark*100:null);
-  const provTs=c.provider_timestamp||c.last_updated||meta.generated_at||'';
-  const filtVer=c.filter_version||meta.thresholds_version||'—';
+  const [bid,ask]=bidask(mark,de.bid_ask_pct,null,null);
+  const cost=(mark!=null)?mark*100:null;
+  const provTs=c.last_seen||c.last_updated||meta.generated_at||'';
+  const filtVer=meta.thresholds_version||'—';
   const F=[
     ['strike','$'+n(c.strike)], ['expiration',c.expiration], ['DTE',c.dte],
     ['bid','$'+n(bid)], ['ask','$'+n(ask)], ['mark','$'+n(mark)],
-    ['cost','$'+n(cost,0)], ['Δ premium',pcs], ['open interest',de.open_interest??'—'],
+    ['cost','$'+n(cost,0)], ['open interest',de.open_interest??'—'],
     ['daily volume',de.volume??'—'], ['bid/ask %',de.bid_ask_pct!=null?de.bid_ask_pct+'%':'—'],
-    ['theta',n(de.theta,4)], ['theta burden',de.theta_burden_pct_day!=null?de.theta_burden_pct_day+'%/day':'—','θ'],
-    ['delta',n(de.delta,3)], ['IV',ivp(de.iv)], ['HV',ivp(de.hv)],
-    ['IV vs HV',de.iv_vs_hv||'n/a'], ['break-even','$'+n(de.break_even)+' ('+pct(de.break_even_move_pct)+')'],
-    ['earnings',de.earnings_in_window==null?'n/a':(de.earnings_in_window?'IN WINDOW':'no')],
-    ['days to earnings',de.days_to_earnings??'n/a'], ['underlying','$'+n(c.current_underlying)],
-    ['first detected',(c.first_detected||'').slice(0,10)], ['last observed',(c.last_observed||c.last_updated||'').slice(0,16).replace('T',' ')],
-    ['status',c.current_status||'ACTIVE'], ['provider ts',(provTs||'').slice(0,16).replace('T',' ')],
-    ['filter version',filtVer],
+    ['theta',n(de.theta,4)], ['theta burden',de.theta_burden_pct_day!=null?de.theta_burden_pct_day+'%/day':'—'],
+    ['delta',n(de.delta,3)], ['IV',ivp(de.iv)], ['HV',ivp(de.hv)], ['IV vs HV',de.iv_vs_hv||'n/a'],
+    ['break-even','$'+n(de.break_even)], ['underlying','$'+n(c.current_underlying)],
+    ['last observed',tsmin(provTs)], ['filter version',filtVer],
   ];
-  const fields=F.map(([k,v,w])=>`<span class="${w==='θ'&&thetaW?'warnθ':''}">${k} <b>${v}</b></span>`).join('');
-  const log=(c.history||[]).slice(-8).map(h=>{
-    const ev=h.event, extra=[];
-    if(h.premium!=null)extra.push('prem $'+n(h.premium)); if(h.underlying!=null)extra.push('u $'+n(h.underlying));
-    if(h.iv!=null)extra.push('IV '+ivp(h.iv)); if(h.delta!=null)extra.push('Δ '+n(h.delta,2)); if(h.dte!=null)extra.push('DTE '+h.dte);
-    if(h.reason)extra.push(h.reason);
-    return `<div>· ${(h.ts||'').slice(0,16).replace('T',' ')} — <b>${ev}</b> ${extra.join(' · ')}</div>`;}).join('');
+  return `<div class="fields">${F.map(([k,v])=>`<span>${k} <b>${v}</b></span>`).join('')}</div>`;
+}
+function card(c,meta){
+  const r=c.right, st=c.current_status||'ACTIVE';
+  const chks=(c.checks||[]).map(k=>`<span class="chk ${k.passed?'p':'f'}" title="${k.name}">${k.passed?'✓':'✗'} ${k.detail}</span>`).join('');
   return `<div class="card ${r}">
     <div><span class="cid">${c.symbol} ${n(c.strike)}${r[0].toUpperCase()}<span class="r ${r}">${r.toUpperCase()}</span></span>
-      <span class="seen">seen ${(c.first_detected||'').slice(0,10)}</span></div>
+      <span class="stat-badge stat-${st}">${st}</span></div>
+    ${lifeBlock(c)}
     <div class="checks">${chks}</div>
-    <div class="fields">${fields}</div>
-    <details><summary>change log (${(c.history||[]).length})</summary><div class="log">${log||'<div>—</div>'}</div></details>
+    ${structFields(c,meta)}
+    <details><summary>observation history (${(c.observations||[]).length})</summary>${obsTable(c.observations)}</details>
   </div>`;
 }
-function idlist(ids){return ids && ids.length ? ids.map(x=>`<span class="pill">${x}</span>`).join(' ') : '<div class="empty">none</div>';}
+function exitCard(c){
+  const r=c.right, L=c.lifetime||{};
+  const cells=[
+    ['Exit Reason', c.exit_reason||'—'],['Exited', dslice(c.exited_at)],
+    ['First Qualified', dslice(c.first_detected)],['Days Qualified', L.days_qualified??c.days_qualified??'—'],
+    ['Option Return %', pctc(L.option_return_pct)],['Underlying Move %', pctc(L.underlying_return_pct)],
+    ['Highest Option %', pctc(L.highest_option_pct)],['Max Option Drawdown %', pctc(L.largest_option_drawdown_pct)],
+    ['MFE Underlying', pctc(L.mfe_underlying)],['MAE Underlying', pctc(L.mae_underlying)],
+    ['Premium In → Out', '$'+n(L.premium_at_detection)+' → $'+n(L.premium_at_exit)],['Observations', c.scan_count??'—'],
+  ];
+  return `<div class="card ${r}">
+    <div><span class="cid">${c.symbol} ${n(c.strike)}${r[0].toUpperCase()}<span class="r ${r}">${r.toUpperCase()}</span></span>
+      <span class="stat-badge stat-EXITED">EXITED</span></div>
+    <div class="life">${cells.map(([k,v])=>`<div class="lc"><b>${v}</b><span>${k}</span></div>`).join('')}</div>
+    <details><summary>observation history (${(c.observations||[]).length})</summary>${obsTable(c.observations)}</details>
+  </div>`;
+}
+
 async function loadData(){
   const paths=['research-scanner/data/research_watchlist.json','data/research_watchlist.json','../research-scanner/data/research_watchlist.json'];
-  for(const p of paths){ try{ const r=await fetch(p+'?_='+Date.now()); if(r.ok){ const j=await r.json(); document.getElementById('srcpath').textContent=p; return j; } }catch(e){} }
+  for(const p of paths){ try{ const r=await fetch(p+'?_='+Date.now()); if(r.ok){ const j=await r.json();
+    document.getElementById('srcpath').textContent=p; DATA_DIR=p.replace('research_watchlist.json',''); return j; } }catch(e){} }
   return null;
 }
+async function loadIndex(){
+  if(INDEX) return INDEX;
+  try{ const r=await fetch(DATA_DIR+'archive_index.json?_='+Date.now()); if(r.ok){ INDEX=await r.json(); return INDEX; } }catch(e){}
+  INDEX={partitions:[],total_archived:0,tickers:[],stats:null}; return INDEX;
+}
+async function loadPartition(path){
+  if(PART_CACHE[path]) return PART_CACHE[path];
+  try{ const r=await fetch(DATA_DIR+path+'?_='+Date.now()); if(r.ok){ const j=await r.json(); PART_CACHE[path]=j.contracts||[]; return PART_CACHE[path]; } }catch(e){}
+  PART_CACHE[path]=[]; return PART_CACHE[path];
+}
+
+// ---------------- Archive browser (loads partitions on demand) ----------------
+let ARCH_INIT=false;
+async function initArchive(){
+  if(ARCH_INIT) return; ARCH_INIT=true;
+  const idx=await loadIndex();
+  const intro=document.getElementById('archiveintro');
+  if(!idx.partitions||!idx.partitions.length){
+    intro.textContent='No contracts have exited yet. As qualified contracts leave the structural filter, their full lifecycle is archived here permanently.';
+    document.getElementById('archfilters').innerHTML=''; return;
+  }
+  intro.innerHTML=`<b>${idx.total_archived}</b> archived contract lifecycles across <b>${idx.partitions.length}</b> monthly partitions · tickers: ${(idx.tickers||[]).join(', ')}`;
+  const months=idx.partitions.map(p=>p.month);
+  document.getElementById('archfilters').innerHTML=`
+    <label>Ticker<input id="f_ticker" placeholder="e.g. KO"></label>
+    <label>Right<select id="f_right"><option value="">any</option><option value="call">call</option><option value="put">put</option></select></label>
+    <label>Exit month<select id="f_month"><option value="">any</option>${months.map(m=>`<option>${m}</option>`).join('')}</select></label>
+    <label>Expiration<input id="f_exp" placeholder="YYYY-MM or YYYY-MM-DD"></label>
+    <label>Exit reason<input id="f_reason" placeholder="e.g. premium, DTE, Expired"></label>
+    <label>Min days qualified<input id="f_days" type="number" min="0" style="min-width:90px"></label>
+    <button id="f_apply">Search</button>`;
+  document.getElementById('f_apply').onclick=applyArchive;
+  applyArchive();
+}
+async function applyArchive(){
+  const idx=await loadIndex();
+  const ticker=(document.getElementById('f_ticker').value||'').trim().toUpperCase();
+  const right=document.getElementById('f_right').value;
+  const month=document.getElementById('f_month').value;
+  const exp=(document.getElementById('f_exp').value||'').trim();
+  const reason=(document.getElementById('f_reason').value||'').trim().toLowerCase();
+  const minDays=parseInt(document.getElementById('f_days').value||'',10);
+  // choose partitions: by month filter, else all (optionally narrowed by ticker coverage)
+  let parts=idx.partitions;
+  if(month) parts=parts.filter(p=>p.month===month);
+  if(ticker) parts=parts.filter(p=>!p.tickers||p.tickers.includes(ticker));
+  const out=document.getElementById('archresults');
+  out.innerHTML='<div class="brandsub">loading…</div>';
+  let all=[];
+  for(const p of parts){ all=all.concat(await loadPartition(p.path)); }
+  let rows=all.filter(c=>{
+    if(ticker && (c.symbol||'').toUpperCase()!==ticker) return false;
+    if(right && c.right!==right) return false;
+    if(exp && !((c.expiration||'').startsWith(exp))) return false;
+    if(reason && !((c.exit_reason||'').toLowerCase().includes(reason))) return false;
+    if(!isNaN(minDays) && (c.days_qualified||0)<minDays) return false;
+    return true;
+  });
+  // chronological (most recently exited first) — a time order, NOT a performance ranking
+  rows.sort((a,b)=>(b.exited_at||'').localeCompare(a.exited_at||''));
+  if(!rows.length){ out.innerHTML='<div class="empty">No archived contracts match these filters.</div>'; return; }
+  out.innerHTML=`<div class="brandsub" style="margin-bottom:8px">${rows.length} archived lifecycle(s)</div><div class="grid">${rows.map(exitCard).join('')}</div>`;
+}
+
+// ---------------- Analytics (descriptive only) ----------------
+let ANALYTICS_INIT=false;
+async function initAnalytics(){
+  if(ANALYTICS_INIT) return; ANALYTICS_INIT=true;
+  const idx=await loadIndex();
+  const s=idx.stats;
+  const el=document.getElementById('analytics');
+  if(!s || !s.count_ever_qualified){
+    el.innerHTML='<div class="empty">No exited contracts yet — descriptive statistics appear once contracts complete their lifecycle and are archived.</div>';
+    return;
+  }
+  const cards=[
+    ['Contracts ever qualified', s.count_ever_qualified],
+    ['Avg days qualified', s.avg_days_qualified==null?'—':s.avg_days_qualified],
+    ['Avg option return while qualified', s.avg_option_return_pct==null?'—':s.avg_option_return_pct+'%'],
+    ['Avg underlying move while qualified', s.avg_underlying_move_pct==null?'—':s.avg_underlying_move_pct+'%'],
+    ['Avg premium at detection', s.avg_premium_at_detection==null?'—':'$'+s.avg_premium_at_detection],
+    ['Avg premium at exit', s.avg_premium_at_exit==null?'—':'$'+s.avg_premium_at_exit],
+  ];
+  const dist=s.exit_reason_distribution||{};
+  const maxc=Math.max(1,...Object.values(dist));
+  const distHtml=Object.entries(dist).map(([k,v])=>
+    `<div class="distrow"><span>${k}</span><span class="distbar" style="width:${Math.round(v/maxc*100)}%"></span><b>${v}</b></div>`).join('');
+  el.innerHTML=`<div class="status">${cards.map(([l,v])=>`<div class="st"><b>${v}</b><span>${l}</span></div>`).join('')}</div>
+    <h2>Distribution of exit reasons</h2><div class="dist">${distHtml||'<div class="brandsub">—</div>'}</div>
+    <p class="brandsub" style="margin-top:14px">These figures describe what already happened to contracts after they entered the structural filter. They are not predictions, rankings, or edge claims, and nothing here implies future performance.</p>`;
+}
+
 (async ()=>{
   const d=await loadData();
   if(!d){ document.getElementById('brandsub').textContent='No scan data found.'; buildNav({}); return; }
   const m=d.meta||{}, active=Object.values(d.active||{}), diff=d.diff||{new:[],still:[],exited:[],reentered:[]};
   const calls=active.filter(c=>c.right==='call').sort((a,b)=>a.contract_id.localeCompare(b.contract_id));
   const puts =active.filter(c=>c.right==='put').sort((a,b)=>a.contract_id.localeCompare(b.contract_id));
-  document.getElementById('brandsub').textContent=`${active.length} structurally qualified · ${(m.universe||[]).length} names · frozen ${m.thresholds_version||''}`;
+  document.getElementById('brandsub').textContent=`${active.length} active · ${(m.total_archived||0)} archived · ${(m.universe||[]).length} names · ${m.schema_version||''}`;
   document.getElementById('boundary').textContent=m.boundary||'';
-  buildNav({calls:calls.length,puts:puts.length,new:(diff.new||[]).length,exited:(diff.exited||[]).length,reentered:(diff.reentered||[]).length,history:(d.exited||[]).length});
+  buildNav({calls:calls.length,puts:puts.length,new:(diff.new||[]).length,exited:(diff.exited||[]).length,archive:(m.total_archived||0)});
 
   const offline=(m.provider_status==='OFFLINE');
   const scls=offline?'offline':(m.provider_status==='PARTIAL'?'partial':'ok');
   const statCards=[
     [`st ${scls}`,'Provider',(m.provider||'?')+' · '+(m.provider_status||'?')],
-    ['st','Qualified',active.length],['st','Calls',calls.length],['st','Puts',puts.length],
-    ['st','Examined',m.examined??'—'],
-    ['st','Data timestamp',(m.generated_at||d.last_scan||'—').replace('T',' ').slice(0,16)],
-    ['st','Last successful scan',(m.last_successful_scan||d.last_scan||'—').replace('T',' ').slice(0,16)],
+    ['st','Active',active.length],['st','Calls',calls.length],['st','Puts',puts.length],
+    ['st','Archived',m.total_archived||0],['st','Examined',m.examined??'—'],
+    ['st','Data timestamp',tsmin(m.generated_at||d.last_scan||'—')],
+    ['st','Last successful scan',tsmin(m.last_successful_scan||d.last_scan||'—')],
   ];
   document.getElementById('status').innerHTML=statCards.map(([c,l,v])=>`<div class="${c}"><b>${v}</b><span>${l}</span></div>`).join('');
   document.getElementById('sysstatus').innerHTML=statCards.concat([
-    ['st','Delayed data','CBOE · yes'],['st','Page updated',new Date().toISOString().replace('T',' ').slice(0,16)],
-    ['st','Provider errors',(m.errors&&m.errors.length)?m.errors.length:'0'],['st','Coverage',(m.examined!=null?m.examined+' contracts':'—')],
+    ['st','Delayed data','CBOE · yes'],['st','Page updated',tsmin(new Date().toISOString())],
+    ['st','Provider errors',(m.errors&&m.errors.length)?m.errors.length:'0'],
   ]).map(([c,l,v])=>`<div class="${c}"><b>${v}</b><span>${l}</span></div>`).join('') + (m.errors&&m.errors.length?`<div class="boundary" style="border-left-color:var(--fail)">${m.errors.map(e=>e).join('<br>')}</div>`:'');
-  if(offline) document.getElementById('diffline').innerHTML=`<div class="boundary" style="border-left-color:var(--fail);color:var(--fail)">PROVIDER OFFLINE — showing last successful scan. Watchlist preserved, not overwritten.</div>`;
+  if(offline) document.getElementById('diffline').innerHTML=`<div class="boundary" style="border-left-color:var(--fail);color:var(--fail)">PROVIDER OFFLINE — showing last successful scan. Record preserved, not overwritten.</div>`;
 
   document.getElementById('summary').innerHTML=`<div class="status">
     <div class="st ok"><b>${calls.length}</b><span>qualified calls</span></div>
     <div class="st ok"><b>${puts.length}</b><span>qualified puts</span></div>
     <div class="st"><b>${(diff.new||[]).length}</b><span>new today</span></div>
     <div class="st"><b>${(diff.exited||[]).length}</b><span>exited today</span></div>
-    <div class="st"><b>${(diff.reentered||[]).length}</b><span>re-entered</span></div></div>`;
+    <div class="st"><b>${m.total_archived||0}</b><span>total archived</span></div></div>`;
 
   document.getElementById('calls').innerHTML=calls.length?calls.map(c=>card(c,m)).join(''):'<div class="empty">NO STRUCTURALLY QUALIFIED CALLS TODAY</div>';
   document.getElementById('puts').innerHTML=puts.length?puts.map(c=>card(c,m)).join(''):'<div class="empty">NO STRUCTURALLY QUALIFIED PUTS TODAY</div>';
   document.getElementById('ncalls').textContent=calls.length; document.getElementById('nputs').textContent=puts.length;
-  document.getElementById('newtoday').innerHTML=idlist(diff.new);
-  document.getElementById('exittoday').innerHTML=idlist(diff.exited);
-  document.getElementById('reentered').innerHTML=idlist(diff.reentered);
 
-  const ex=(d.exited||[]).slice(-80).reverse();
-  document.getElementById('history').innerHTML=ex.length?(
-    '<table><thead><tr><th>Contract</th><th>First detected</th><th>Exited</th><th>Reason</th></tr></thead><tbody>'+
-    ex.map(c=>`<tr><td>${c.contract_id}</td><td>${(c.first_detected||'').slice(0,10)}</td><td>${(c.exited_at||'').slice(0,10)}</td><td>${c.exit_reason||''}</td></tr>`).join('')+'</tbody></table>'
-  ):'<div class="empty">no exits yet — history accrues as contracts leave the filter set</div>';
+  const newIds=new Set(diff.new||[]);
+  const newCards=active.filter(c=>newIds.has(c.contract_id));
+  document.getElementById('newtoday').innerHTML=newCards.length?newCards.map(c=>card(c,m)).join(''):'<div class="empty">no newly qualified contracts this scan</div>';
+
+  const rex=d.recently_exited||[];
+  document.getElementById('exittoday').innerHTML=rex.length?(
+    '<div class="obswrap"><table><thead><tr><th>Contract</th><th>Right</th><th>Exit reason</th><th>Days qualified</th><th>Exited</th><th>Partition</th></tr></thead><tbody>'+
+    rex.map(c=>`<tr><td>${c.contract_id}</td><td>${c.right}</td><td>${c.exit_reason||''}</td><td>${c.days_qualified??'—'}</td><td>${dslice(c.exited_at)}</td><td>${c.month||''}</td></tr>`).join('')+
+    '</tbody></table></div><p class="brandsub">Full lifecycles are in the <b>Archive</b> tab.</p>'
+  ):'<div class="empty">no contracts exited on this scan</div>';
+
+  const sl=(d.scan_log||[]).slice(-15).reverse();
+  document.getElementById('scanlog').innerHTML=sl.length?(
+    '<div class="obswrap"><table><thead><tr><th>Scan (UTC)</th><th>Status</th><th>Examined</th><th>New</th><th>Exited</th><th>Errors</th></tr></thead><tbody>'+
+    sl.map(e=>`<tr><td>${tsmin(e.ts)}</td><td>${e.status}</td><td>${e.examined}</td><td>${e.new??'—'}</td><td>${e.exited??'—'}</td><td>${(e.errors&&e.errors.length)||0}</td></tr>`).join('')+
+    '</tbody></table></div>'
+  ):'<div class="brandsub">—</div>';
 
   const t=m.thresholds||{};
   document.getElementById('thresholds').textContent=t.premium?
