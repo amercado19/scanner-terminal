@@ -49,6 +49,22 @@
   .rs-active{background:rgba(63,185,80,.12);color:var(--pass)}
   .rs-left{background:rgba(210,153,34,.15);color:var(--warn)}
   .rs-exp{background:rgba(139,148,158,.18);color:var(--exit)}
+  /* ---- data-feed status (separate axis from research + paper status) ---- */
+  .feedbadge{font-size:9.5px;padding:2px 7px;border-radius:99px;letter-spacing:.05em;font-weight:600;
+    margin-left:6px;border:1px solid transparent;vertical-align:middle}
+  .feed-LIVE{background:rgba(63,185,80,.15);color:var(--pass);border-color:rgba(63,185,80,.35)}
+  .feed-DELAYED{background:rgba(210,153,34,.14);color:var(--warn);border-color:rgba(210,153,34,.35)}
+  .feed-STALE,.feed-DISCONNECTED,.feed-NO_DATA{background:rgba(248,81,73,.16);color:var(--fail);border-color:rgba(248,81,73,.45)}
+  .feed-UNKNOWN,.feed-FALLBACK_TO_CBOE,.feed-DELAYED_FALLBACK{background:rgba(139,148,158,.18);color:var(--exit);border-color:rgba(139,148,158,.35)}
+  .feedbox{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:7px 9px;margin:8px 0 2px;
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px 12px;font-size:11px;color:var(--mut)}
+  .feedbox.bad{border-color:var(--fail);background:rgba(248,81,73,.06)}
+  .feedbox.delayed{border-left:3px solid var(--warn)}
+  .feedbox b{color:var(--ink);font-weight:600}
+  .feedhdr{grid-column:1/-1;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink);
+    font-weight:600;display:flex;align-items:center;gap:6px;margin-bottom:2px}
+  .st.stale{border-color:var(--fail)} .st.stale b{color:var(--fail)}
+  .st.delayed b{color:var(--warn)} .st.live b{color:var(--pass)}
   .paper{background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--new);border-radius:7px;padding:8px 10px;margin:9px 0}
   .paphdr{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink);font-weight:600}
   .paphdr .sim{color:var(--mut);font-weight:400;text-transform:none;letter-spacing:0;margin-left:6px;font-size:10px}
@@ -117,6 +133,9 @@
     <div id="analytics"></div>
   </section>
   <section class="pane" data-pane="status">
+    <h2>Data-Feed System Status</h2>
+    <p class="brandsub">Feed health is a <b>third, independent axis</b> — separate from research-filter status and paper-position status. A delayed feed is expected in Phase 1 and is labelled; a stale or disconnected feed is flagged, never shown as normal.</p>
+    <div id="feedstatus"></div>
     <h2>Provider / System Status</h2><div id="sysstatus"></div>
     <h2>Recent Scan Log</h2><div id="scanlog"></div>
     <h2>Frozen Structural Filters</h2><div id="thresholds" class="brandsub"></div>
@@ -147,6 +166,56 @@ function pctc(x){ if(x==null) return '—'; const s=(x>0?'+':'')+x.toFixed(2)+'%
 function ivp(x){return x==null?'—':(x*100).toFixed(1)+'%';}
 function dslice(t){return (t||'').slice(0,10);}
 function tsmin(t){return (t||'').slice(0,16).replace('T',' ');}
+function tssec(t){return (t||'').slice(0,19).replace('T',' ');}
+// human-readable lag; never fabricates a value when lag is unknown
+function lagfmt(sec){
+  if(sec==null) return '—';
+  const s=Math.abs(sec);
+  if(s<90) return sec+'s';
+  if(s<5400) return (s/60).toFixed(s<600?1:0)+'m';
+  if(s<172800) return (s/3600).toFixed(1)+'h';
+  return (s/86400).toFixed(1)+'d';
+}
+// health is its OWN axis: LIVE=ok, DELAYED=expected-in-phase-1 (amber), STALE/DISCONNECTED/NO_DATA=problem (red)
+const FEED_BAD=new Set(['STALE','DISCONNECTED','NO_DATA']);
+function feedHealthOf(pp){
+  return (pp&&(pp.feed_health||pp.feed_mode))||'UNKNOWN';
+}
+function feedBadge(pp){
+  const h=feedHealthOf(pp);
+  const rt=(pp&&pp.feed_mode==='REALTIME');
+  const lbl=rt?'REAL-TIME':(h==='DELAYED'||pp&&pp.feed_mode==='DELAYED'?'DELAYED':h.replace(/_/g,' '));
+  return `<span class="feedbadge feed-${h}" title="data-feed status (independent of research + paper status)">◇ ${lbl}</span>`;
+}
+// per-card feed-quality panel — required so a stale/disconnected feed can never read as normal
+function feedBlock(pp){
+  if(!pp) return '';
+  const h=feedHealthOf(pp);
+  const bad=FEED_BAD.has(h);
+  const delayed=(h==='DELAYED'||pp.feed_mode==='DELAYED');
+  const stopDist=(pp.current_mid!=null&&pp.current_stop_level!=null&&pp.current_mid>0)
+    ? ((pp.current_mid-pp.current_stop_level)/pp.current_mid*100) : null;
+  const hwm = pp.trailing_high!=null ? '$'+n(pp.trailing_high)
+            : (pp.highest_pct!=null ? pctc(pp.highest_pct) : '—');
+  const lastEval = pp.last_stop_eval || pp.last_update_ts || pp.quote_ts;
+  const rows=[
+    ['Feed Mode', pp.feed_mode||'—'],
+    ['Provider', pp.feed_provider||'—'],
+    ['Quote Timestamp', pp.quote_ts?tssec(pp.quote_ts):'—'],
+    ['Last Update', pp.last_update_ts?tssec(pp.last_update_ts):'—'],
+    ['Observed Lag', lagfmt(pp.observed_lag_sec)],
+    ['Feed Health', h.replace(/_/g,' ')],
+    ['Current Stop', pp.current_stop_level==null?'—':'$'+n(pp.current_stop_level)],
+    ['Stop Distance', stopDist==null?'—':(stopDist>=0?'+':'')+stopDist.toFixed(1)+'%'],
+    ['Trailing Active', pp.trailing_active?'yes':'no'],
+    ['High-Water Mark', hwm],
+    ['Last Exit Eval', lastEval?tssec(lastEval):'—'],
+  ];
+  return `<div class="feedbox${bad?' bad':(delayed?' delayed':'')}">
+    <div class="feedhdr">Data Feed ${feedBadge(pp)}${bad?'<span style="color:var(--fail)">⚠ not receiving fresh quotes</span>':''}</div>
+    ${rows.map(([k,v])=>`<span>${k} <b>${v}</b></span>`).join('')}
+  </div>`;
+}
 function show(id){document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.dataset.pane===id));
   document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===id));
   try{location.hash=id;}catch(e){}
@@ -251,7 +320,8 @@ function paperBlock(pp){
   const exitline = pp.status==='CLOSED'
     ? `<div class="brandsub" style="padding:3px 0"><b>Closed (simulated):</b> ${(pp.exit_reason||'').replace(/_/g,' ')} @ $${n(pp.exit_price)} — ${pp.exit_note||''}</div>` : '';
   return `<div class="paper">
-    <div class="paphdr">Paper Position <span class="sim">simulated · policy ${pp.policy_version||''} (stop −${p.initial_stop_pct}% · trail +${p.trailing_activation_pct}%/−${p.trailing_distance_pct}% · time ${p.time_stop_trading_days}d · DTE ${p.dte_stop})</span></div>
+    <div class="paphdr">Paper Position ${feedBadge(pp)}<span class="sim">simulated · policy ${pp.policy_version||''} (stop −${p.initial_stop_pct}% · trail +${p.trailing_activation_pct}%/−${p.trailing_distance_pct}% · time ${p.time_stop_trading_days}d · DTE ${p.dte_stop})</span></div>
+    ${feedBlock(pp)}
     <div class="life">${cells.map(([k,v])=>`<div class="lc"><b>${v}</b><span>${k}</span></div>`).join('')}</div>
     ${exitline}
     <details><summary>paper price history (${(pp.observations||[]).length})</summary>${paperObsTable(pp.observations)}</details>
@@ -432,6 +502,41 @@ async function initAnalytics(){
   el.innerHTML=html;
 }
 
+// System-status feed panel — discovery vs active-position provider, heartbeat, fallback, counts.
+// Renders even when Phase 2 (real-time active-position tracker) is NOT configured, so the
+// operator can always see WHY positions are on delayed data rather than assuming it's normal.
+function feedSystemBlock(feed){
+  if(!feed) return '<div class="brandsub">No feed metadata in this record (pre-Phase-1 scan).</div>';
+  const apStatus=feed.active_position_status||'NOT_CONFIGURED';
+  const apConfigured=!(apStatus==='NOT_CONFIGURED'||feed.active_position_provider==null);
+  const stale=feed.stale_or_disconnected||0;
+  const fallback=feed.fallback_active;
+  // discovery feed class: delayed is EXPECTED in phase 1 (amber), not a fault
+  const discCls=feed.delayed?'delayed':'live';
+  const apCls=!apConfigured?'':(apStatus==='LIVE'?'live':(FEED_BAD.has(apStatus)?'stale':'delayed'));
+  const cards=[
+    [`st ${discCls}`,'Discovery provider',(feed.discovery_provider||'?')+' · '+(feed.discovery_mode||'?')],
+    ['st','Discovery quote ts',tssec(feed.provider_quote_ts)||'—'],
+    ['st','Discovery observed lag',lagfmt(feed.observed_lag_sec)],
+    ['st','Workflow ts',tssec(feed.workflow_ts)||'—'],
+    [`st ${apCls}`,'Active-position provider',apConfigured?((feed.active_position_provider||'?')+' · '+apStatus):'NOT CONFIGURED'],
+    ['st','Heartbeat',feed.heartbeat_ts?tssec(feed.heartbeat_ts):'—'],
+    ['st','Last valid real-time',feed.last_realtime_update?tssec(feed.last_realtime_update):'—'],
+    ['st','Last valid delayed',feed.last_delayed_update?tssec(feed.last_delayed_update):'—'],
+    [`st ${fallback?'delayed':''}`,'Fallback status',fallback?'ON DELAYED FALLBACK':'none'],
+    ['st','Open paper positions',feed.open_paper_positions??'—'],
+    ['st','Receiving real-time',feed.receiving_realtime??0],
+    ['st','On delayed fallback',feed.on_delayed_fallback??'—'],
+    [`st ${stale?'stale':''}`,'Stale / disconnected',stale],
+  ];
+  let html=`<div class="status">${cards.map(([c,l,v])=>`<div class="${c}"><b>${v}</b><span>${l}</span></div>`).join('')}</div>`;
+  if(!apConfigured)
+    html+=`<div class="boundary" style="border-left-color:var(--warn);color:var(--mut)">Real-time active-position tracker not configured — every open paper position is tracked on <b>CBOE delayed</b> data. This is expected in Phase 1; it is labelled, not hidden.</div>`;
+  if(stale)
+    html+=`<div class="boundary" style="border-left-color:var(--fail);color:var(--fail)">${stale} position(s) on a STALE or DISCONNECTED feed — quotes are not fresh. Stops were NOT evaluated against stale data.</div>`;
+  return html;
+}
+
 (async ()=>{
   const d=await loadData();
   if(!d){ document.getElementById('brandsub').textContent='No scan data found.'; buildNav({}); return; }
@@ -457,6 +562,16 @@ async function initAnalytics(){
     ['st','Last successful scan',tsmin(m.last_successful_scan||d.last_scan||'—')],
   ];
   document.getElementById('status').innerHTML=statCards.map(([c,l,v])=>`<div class="${c}"><b>${v}</b><span>${l}</span></div>`).join('');
+  const FEED=m.feed||d.feed||null;
+  document.getElementById('feedstatus').innerHTML=feedSystemBlock(FEED);
+  // compact feed banner on the research pane so delayed/stale state is visible without opening Status
+  if(FEED){
+    const stale=FEED.stale_or_disconnected||0;
+    const bcls=stale?'var(--fail)':(FEED.delayed?'var(--warn)':'var(--pass)');
+    const lbl=stale?`${stale} POSITION(S) STALE/DISCONNECTED`:(FEED.delayed?'DELAYED DATA (CBOE)':'REAL-TIME');
+    document.getElementById('diffline').insertAdjacentHTML('afterbegin',
+      `<div class="boundary" style="border-left-color:${bcls}"><b>Feed:</b> ${lbl} · discovery ${FEED.discovery_provider||'?'} lag ${lagfmt(FEED.observed_lag_sec)} · active-position tracker ${FEED.active_position_status||'NOT_CONFIGURED'} · ${FEED.open_paper_positions??0} open, ${FEED.receiving_realtime??0} real-time, ${FEED.on_delayed_fallback??0} delayed</div>`);
+  }
   document.getElementById('sysstatus').innerHTML=statCards.concat([
     ['st','Delayed data','CBOE · yes'],['st','Page updated',tsmin(new Date().toISOString())],
     ['st','Provider errors',(m.errors&&m.errors.length)?m.errors.length:'0'],
