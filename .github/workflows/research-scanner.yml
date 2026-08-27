@@ -1,8 +1,9 @@
 name: Research Scanner (structural, non-predictive)
 
-# Independent of worker.yml / nightly_scan.yml / intraday-exits.yml.
-# Reuses only the repo's free-data technique (CBOE delayed). No secrets needed.
-# cron is UTC. These are US market hours on EDT (UTC-4) + one post-close run.
+# Independent of any legacy workflow. Reuses only the repo's free-data technique
+# (CBOE delayed). No secrets needed. cron is UTC. These are US market hours on
+# EDT (UTC-4) + one post-close run. Builds a permanent historical record:
+# active watchlist + monthly archive partitions + archive_index.json.
 on:
   workflow_dispatch: {}
   schedule:
@@ -26,14 +27,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Structural research scan (CBOE delayed, free)
+      - name: Structural research scan (CBOE delayed, free) — appends observations, archives exits
         run: python3 research-scanner/research_scanner.py --provider cboe --root research-scanner
-      - name: Tests (filters + no-prediction invariants)
+      - name: Tests (filters, no-prediction invariants, historical DB, MFE/MAE, dashboard)
         run: python3 research-scanner/test_research_scanner.py
-      - name: Commit updated research watchlist (ONLY this module's data)
+      - name: Commit updated research record (watchlist + archive partitions + index)
         run: |
           git config user.name "research-scanner-bot"
           git config user.email "research-scanner-bot@users.noreply.github.com"
-          git add research-scanner/data/research_watchlist.json
-          git commit -m "research-scanner: update watchlist [skip ci]" || echo "no changes"
+          git add research-scanner/data
+          git commit -m "research-scanner: update historical record [skip ci]" || echo "no changes"
           git push
