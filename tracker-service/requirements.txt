@@ -1,0 +1,8 @@
+# Phase 2 real-time active-position tracker.
+# The scaffold + Tradier/CBOE adapters use only the Python standard library (urllib, json),
+# so there are NO required third-party packages to run the worker or its tests.
+#
+# Optional, only if you swap in a provider SDK instead of the stdlib REST adapter:
+#   requests>=2.31      # nicer HTTP than urllib, if you prefer it
+#   websocket-client>=1.6  # ONLY for a persistent-host WebSocket provider (never inside GitHub Actions)
+#   polygon-api-client>=1.13  # if you implement providers/polygon.py
