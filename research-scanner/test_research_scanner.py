@@ -113,25 +113,35 @@ def test_data_gap_does_not_exit():
     assert not arch, "not archived on a data gap"
     assert state["active"][cid]["scan_count"] == 1, "no fabricated observation"
 
-def test_exit_archiving():
+def test_research_leaves_filter_paper_continues_then_archives():
+    # DECOUPLED: leaving the research filter never closes the paper position.
     r = R.screen(mk()); cid = r["contract_id"]
-    state, _ = R.update_watchlist({"active": {}}, [r], T[0])
-    # premium jumps above $3 -> structural fail -> archived, not deleted
-    state, arch = R.update_watchlist(state, [R.screen(mk(mark=3.4, bid=3.35, ask=3.45))], T[1])
-    assert cid not in state["active"], "removed from active on exit"
-    month = "2026-08"
-    assert month in arch and arch[month][0]["contract_id"] == cid
-    a = arch[month][0]
-    assert a["current_status"] == "EXITED" and a["exit_reason"] == "premium >$3.00"
-    assert a["exited_at"] == T[1] and a["observations"][-1]["mid"] == 3.4, "final observation appended"
-    assert "lifetime" in a and a["lifetime"]["exit_reason"] == "premium >$3.00"
+    state, _ = R.update_watchlist({"active": {}}, [r], T[0], market_hours=True)   # paper enters @2.475
+    assert state["active"][cid]["paper_position"]["status"] == "ACTIVE"
+    # OI collapses -> research LEFT_FILTER (liquidity), premium unchanged -> paper keeps running
+    state, arch = R.update_watchlist(state, [R.screen(mk(open_interest=500))], T[1], market_hours=True)
+    c = state["active"][cid]
+    assert c["research_status"] == "LEFT_FILTER" and "liquidity" in (c["research_left_reason"] or "")
+    assert c["paper_position"]["status"] in ("ACTIVE", "TRAILING_ACTIVE"), "paper survives filter exit"
+    assert not arch, "NOT archived while the paper position is still open"
+    # paper then hits its own stop while research stays out of the filter -> archive BOTH histories
+    state, arch = R.update_watchlist(state, [R.screen(mk(open_interest=500, mark=1.6, bid=1.55, ask=1.65))], T[2], market_hours=True)
+    assert cid not in state["active"], "archived once BOTH lifecycles are terminal"
+    a = arch["2026-08"][0]
+    assert a["paper_position"]["exit_reason"] == "INITIAL_STOP"
+    assert a["research_status"] == "LEFT_FILTER"
+    assert len(a["observations"]) >= 3 and len(a["paper_position"]["observations"]) >= 3, "both histories stored together"
+    assert "lifetime" in a
 
-def test_expiry_and_dte_exit():
-    r = R.screen(mk()); cid = r["contract_id"]
-    state, _ = R.update_watchlist({"active": {}}, [r], T[0])
-    # contract absent from results, symbol fetched OK, not past expiry -> DTE <21
-    state, arch = R.update_watchlist(state, [], T[1], ok_symbols={"KO"})
-    assert cid not in state["active"] and arch["2026-08"][0]["exit_reason"] == "DTE <21"
+def test_expiry_closes_paper_and_archives():
+    r = R.screen(mkp(2.0, dte=21)); cid = r["contract_id"]
+    state, _ = R.update_watchlist({"active": {}}, [r], DAYS[0], market_hours=True)  # paper enters
+    # a later scan past the expiration date, contract gone from the chain -> EXPIRED
+    past = "2026-10-20T14:00:00+00:00"
+    state, arch = R.update_watchlist(state, [], past, track_results={}, ok_symbols={"KO"}, market_hours=True)
+    assert cid not in state["active"]
+    a = arch["2026-10"][0]
+    assert a["research_status"] == "EXPIRED" and a["paper_position"]["exit_reason"] == "EXPIRED"
 
 def test_mfe_mae_option_and_underlying():
     # call: underlying up is favorable. Path: entry 90.09/2.475 -> 95/3.0 (up) -> 88/2.0 (down)
@@ -338,14 +348,45 @@ def test_expiration_unit():
     reason = R._paper_step(pp, R.screen(mkp(1.5, dte=0)), DAYS[1])
     assert reason == "EXPIRED"
 
-def test_filter_exit_closes_paper():
+def test_filter_exit_does_NOT_close_paper():
     st, _, cid = pscan({"active": {}}, 2.0, DAYS[0], mh=True)       # ACTIVE paper
-    r = R.screen(mkp(3.4, bid=3.30, ask=3.50))                     # premium>3 -> research fails
-    st, arch = R.update_watchlist(st, [r], DAYS[1], ok_symbols={"KO"}, policy=POL, market_hours=True)
+    st, arch, cid = pscan(st, 2.0, DAYS[1], mh=True, oi=500)        # OI collapses -> research leaves filter
+    c = st["active"][cid]
+    assert c["research_status"] == "LEFT_FILTER"
+    assert c["paper_position"]["status"] == "ACTIVE", "paper is NOT closed by leaving the filter"
+    assert c["paper_position"]["exit_reason"] is None
+    assert not arch, "record stays active because the paper position is still open"
+
+def test_returned_to_filter():
+    st, _, cid = pscan({"active": {}}, 2.0, DAYS[0], mh=True)       # ACTIVE, in filter
+    st, _, cid = pscan(st, 2.0, DAYS[1], mh=True, oi=500)           # leaves filter
+    assert st["active"][cid]["research_status"] == "LEFT_FILTER"
+    st, arch, cid = pscan(st, 2.0, DAYS[2], mh=True, oi=5970)       # OI recovers -> returns to filter
+    c = st["active"][cid]
+    assert c["research_status"] == "ACTIVE", "research returned to the filter"
+    log = [e["status"] for e in c.get("research_status_log", [])]
+    assert "LEFT_FILTER" in log and "RETURNED_TO_FILTER" in log
+
+def test_dte_stop_reachable_after_filter_exit():
+    # DECOUPLING PAYOFF: a contract leaves the filter at DTE<21 but the paper keeps
+    # tracking down to its own DTE<14 stop (unreachable in v3).
+    st, _, cid = pscan({"active": {}}, 2.0, DAYS[0], mh=True, dte=22)   # enters, in filter
+    st, arch, cid = pscan(st, 2.0, DAYS[1], mh=True, dte=18)            # DTE 18<21 -> research LEFT_FILTER, paper tracks
+    assert st["active"][cid]["research_status"] == "LEFT_FILTER"
+    assert st["active"][cid]["paper_position"]["status"] == "ACTIVE", "paper survived DTE filter exit"
+    st, arch, cid = pscan(st, 2.0, DAYS[2], mh=True, dte=13)            # DTE 13<14 -> paper DTE_STOP
+    a = arch["2026-08"][0] if arch else st["active"][cid]
+    assert a["paper_position"]["exit_reason"] == "DTE_STOP", "paper DTE stop now fires post-filter"
+    assert cid not in st["active"], "archived: paper closed + research out of filter"
+
+def test_both_histories_archived_together():
+    st, _, cid = pscan({"active": {}}, 2.0, DAYS[0], mh=True, dte=22)
+    st, _, cid = pscan(st, 2.6, DAYS[1], mh=True, dte=18)               # research LEFT_FILTER; paper tracks up
+    st, arch, cid = pscan(st, 2.0, DAYS[2], mh=True, dte=13)            # DTE_STOP closes paper -> archive
     a = arch["2026-08"][0]
-    assert a["exit_reason"] == "premium >$3.00", "research archived on filter fail"
-    assert a["paper_position"]["exit_reason"] == "FILTER_EXIT"
-    assert a["paper_position"]["exit_price"] == 3.30, "paper exits at current bid"
+    assert len(a["observations"]) >= 3, "research observation history preserved"
+    assert len(a["paper_position"]["observations"]) >= 3, "paper price history preserved"
+    assert a["research_status"] in ("LEFT_FILTER", "EXPIRED") and a["paper_position"]["status"] == "CLOSED"
 
 def test_research_history_continues_after_paper_close():
     st, _, cid = pscan({"active": {}}, 2.0, DAYS[0], mh=True)       # enter
@@ -416,10 +457,10 @@ def test_full_run_v3_writes_policy():
         R.run("sample", root=tmp, now=DAYS[0])
         assert os.path.exists(os.path.join(tmp, "data", "research_policy.json"))
         wl = json.load(open(os.path.join(tmp, "data", "research_watchlist.json")))
-        assert wl["meta"]["schema_version"] == "research-scanner.v3"
-        assert "policy_version" in wl["meta"] and "paper_live" in wl["meta"]
+        assert wl["meta"]["schema_version"] == R.SCHEMA_VERSION == "research-scanner.v3.1"
+        assert "policy_version" in wl["meta"] and "paper_live" in wl["meta"] and "research_live" in wl["meta"]
         any_card = next(iter(wl["active"].values()))
-        assert "paper_position" in any_card
+        assert "paper_position" in any_card and "research_status" in any_card
     finally:
         shutil.rmtree(tmp)
 
