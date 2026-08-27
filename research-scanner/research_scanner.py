@@ -43,8 +43,53 @@ MAX_THETA_BURDEN_PER_DAY = 0.03        # |theta|/mark <= 3.0%/day
 ALLOWED_RIGHTS = ("call", "put")       # long calls & long puts only
 UNIVERSE = ["KO", "WMT", "UBER", "DIS", "XOM", "SMCI", "HIMS"]
 THRESHOLDS_VERSION = "research-scanner.v1"
-SCHEMA_VERSION = "research-scanner.v2"
+SCHEMA_VERSION = "research-scanner.v3"
 SCAN_LOG_KEEP = 200                     # rolling scan_log entries kept in active file
+
+# ---- Research paper-trading policy (v3) ---------------------------------
+# A SIMULATION policy, not a recommendation and not a real account. Defaults are
+# written to data/research_policy.json on first run; edit + version-bump there.
+# Every paper position stamps the policy_version and resolved params it entered
+# under, so changing the file NEVER rewrites historical results.
+DEFAULT_POLICY = {
+    "policy_version": "paper-policy.v1",
+    "initial_stop_pct": 30.0,          # hard stop at -30% from paper entry (mid)
+    "trailing_activation_pct": 25.0,   # trailing stop only exists after +25%
+    "trailing_distance_pct": 20.0,     # trailing stop = highest_mid * (1 - 20%)
+    "time_stop_trading_days": 7,       # exit after 7 observed market-hours days
+    "dte_stop": 14,                    # exit if DTE < 14 (usually pre-empted by DTE<21 filter)
+    "entry_price": "mid",              # paper entry = midpoint at first market-hours scan
+    "exit_price": "bid",               # conservative simulated exit = current bid
+    "note": ("Research simulation only. Paper positions are not real trades, not a "
+             "recommendation, and never the user's account. No profit is claimed."),
+}
+
+# US regular market hours, in America/New_York local time.
+MARKET_OPEN_MIN = 9 * 60 + 30          # 09:30 ET
+MARKET_CLOSE_MIN = 16 * 60             # 16:00 ET
+SCAN_LOG_KEEP_V3 = SCAN_LOG_KEEP
+
+def is_market_hours(now_iso):
+    """True iff the scan wall-clock time falls in [09:30, 16:00) ET on a weekday.
+    Paper entries and exits are evaluated ONLY when this is true. Pre-market,
+    post-close, and weekend scans record research observations but take NO paper
+    action (delayed quotes off-hours are just the prior close — never an entry)."""
+    try:
+        from datetime import datetime as _dt
+        try:
+            from zoneinfo import ZoneInfo
+            t = _dt.fromisoformat(now_iso).astimezone(ZoneInfo("America/New_York"))
+        except Exception:
+            # fallback: treat the iso as UTC and apply a fixed -4 (EDT) offset
+            base = _dt.fromisoformat(now_iso.replace("Z", "+00:00"))
+            from datetime import timedelta
+            t = base - timedelta(hours=4)
+        if t.weekday() >= 5:
+            return False
+        mins = t.hour * 60 + t.minute
+        return MARKET_OPEN_MIN <= mins < MARKET_CLOSE_MIN
+    except Exception:
+        return False
 
 # The scanner MUST NOT emit any of these (enforced by a test below):
 FORBIDDEN = ("chance_of_profit", "expected_return", "win_probability", "score",
@@ -332,7 +377,200 @@ def _archive_card(card, reason, now, res=None):
     return card
 
 
-# ============================== MIGRATION (v1 -> v2) ====================
+# ============================== PAPER POSITION (v3) ====================
+# A disciplined market-hours paper SIMULATION layered on top of the research
+# lifecycle. Completely separate from the research record: the research contract
+# keeps recording observations regardless of what the paper position does.
+def _policy_params(policy):
+    return {
+        "initial_stop_pct": policy["initial_stop_pct"],
+        "trailing_activation_pct": policy["trailing_activation_pct"],
+        "trailing_distance_pct": policy["trailing_distance_pct"],
+        "time_stop_trading_days": policy["time_stop_trading_days"],
+        "dte_stop": policy["dte_stop"],
+        "entry_price": policy.get("entry_price", "mid"),
+        "exit_price": policy.get("exit_price", "bid"),
+    }
+
+def _paper_init(policy):
+    """Skeleton for a not-yet-entered paper position. No entry is fabricated."""
+    return {
+        "status": "WAITING_FOR_ENTRY",
+        "policy_version": policy["policy_version"],
+        "params": _policy_params(policy),
+        "entry_ts": None, "entry_bid": None, "entry_ask": None, "entry_mid": None,
+        "entry_dte": None, "entry_iv": None, "entry_delta": None, "entry_theta": None,
+        "entry_underlying": None,
+        "current_bid": None, "current_ask": None, "current_mid": None,
+        "current_underlying": None, "current_dte": None,
+        "current_pct": None, "highest_pct": None, "lowest_pct": None,
+        "highest_mid": None, "lowest_mid": None,
+        "current_underlying_pct": None, "highest_underlying_pct": None, "lowest_underlying_pct": None,
+        "highest_underlying": None, "lowest_underlying": None,
+        "mfe": None, "mae": None,
+        "initial_stop_level": None, "trailing_active": False, "trailing_high": None,
+        "trailing_stop_level": None, "current_stop_level": None,
+        "days_held": 0, "trading_days_remaining": None,
+        "exit_ts": None, "exit_reason": None, "exit_price": None, "exit_note": None,
+        "observations": [],       # midpoint/bid history, separate from research observations
+    }
+
+def _paper_enter(pp, res, now):
+    """Fill the entry at the first market-hours scan. Entry price = midpoint."""
+    p = pp["params"]
+    mid = res.get("mark"); bid = res.get("bid"); ask = res.get("ask")
+    de = res.get("descriptors", {})
+    pp["status"] = "ACTIVE"
+    pp["entry_ts"] = now
+    pp["entry_bid"] = bid; pp["entry_ask"] = ask; pp["entry_mid"] = mid
+    pp["entry_dte"] = res.get("dte"); pp["entry_iv"] = de.get("iv")
+    pp["entry_delta"] = de.get("delta"); pp["entry_theta"] = de.get("theta")
+    pp["entry_underlying"] = res.get("underlying")
+    pp["initial_stop_level"] = round(mid * (1 - p["initial_stop_pct"] / 100), 4) if mid else None
+    _paper_observe(pp, res, now)
+    _paper_recompute(pp)
+    return pp
+
+def _paper_observe(pp, res, now):
+    pp["observations"].append({
+        "ts": now, "bid": res.get("bid"), "ask": res.get("ask"), "mid": res.get("mark"),
+        "underlying": res.get("underlying"), "dte": res.get("dte"),
+        "trailing_active": pp.get("trailing_active", False),
+        "stop_level": pp.get("current_stop_level"),
+    })
+
+def _paper_recompute(pp):
+    obs = pp["observations"]
+    mids = [o["mid"] for o in obs if o.get("mid") is not None]
+    unds = [o["underlying"] for o in obs if o.get("underlying") is not None]
+    e = pp.get("entry_mid"); eu = pp.get("entry_underlying")
+    cur_mid = mids[-1] if mids else None
+    cur_und = unds[-1] if unds else None
+    pp["current_mid"] = cur_mid
+    pp["current_bid"] = obs[-1]["bid"] if obs else None
+    pp["current_ask"] = obs[-1]["ask"] if obs else None
+    pp["current_underlying"] = cur_und
+    pp["current_dte"] = obs[-1]["dte"] if obs else None
+    pp["highest_mid"] = max(mids) if mids else None
+    pp["lowest_mid"] = min(mids) if mids else None
+    pp["highest_underlying"] = max(unds) if unds else None
+    pp["lowest_underlying"] = min(unds) if unds else None
+    pp["current_pct"] = _pct(cur_mid, e)
+    pp["highest_pct"] = _pct(pp["highest_mid"], e)
+    pp["lowest_pct"] = _pct(pp["lowest_mid"], e)
+    pp["mfe"] = pp["highest_pct"]; pp["mae"] = pp["lowest_pct"]
+    pp["current_underlying_pct"] = _pct(cur_und, eu)
+    pp["highest_underlying_pct"] = _pct(pp["highest_underlying"], eu)
+    pp["lowest_underlying_pct"] = _pct(pp["lowest_underlying"], eu)
+    # distinct observed market-hours dates = trading days held
+    pp["days_held"] = len({o["ts"][:10] for o in obs if o.get("ts")})
+    tstop = pp["params"]["time_stop_trading_days"]
+    pp["trading_days_remaining"] = max(0, tstop - pp["days_held"])
+    # stop levels
+    if pp.get("trailing_active"):
+        pp["current_stop_level"] = pp.get("trailing_stop_level")
+    else:
+        pp["current_stop_level"] = pp.get("initial_stop_level")
+
+def _paper_close(pp, reason, now, price, note):
+    pp["status"] = "CLOSED"
+    pp["exit_ts"] = now
+    pp["exit_reason"] = reason
+    pp["exit_price"] = price
+    pp["exit_note"] = note
+
+def _paper_step(pp, res, now):
+    """Advance an open (ACTIVE/TRAILING) paper position by one MARKET-HOURS scan:
+    append observation, update trailing, and check the exit ladder. Returns the
+    exit reason if it closed this scan, else None."""
+    p = pp["params"]
+    _paper_observe(pp, res, now)
+    _paper_recompute(pp)
+    mid = pp["current_mid"]; bid = pp["current_bid"]; dte = pp["current_dte"]
+    exit_bid = bid if bid is not None else mid   # conservative simulated exit
+
+    # 1) EXPIRED
+    if dte is not None and dte <= 0:
+        _paper_close(pp, "EXPIRED", now, exit_bid, "contract reached expiration"); return "EXPIRED"
+
+    if mid is not None and pp.get("entry_mid"):
+        # 2) trailing activation (only after +activation%)
+        if not pp["trailing_active"] and pp["current_pct"] is not None and \
+           pp["current_pct"] >= p["trailing_activation_pct"]:
+            pp["trailing_active"] = True
+            pp["status"] = "TRAILING_ACTIVE"
+            pp["trailing_high"] = pp["highest_mid"]
+            pp["trailing_stop_level"] = round(pp["trailing_high"] * (1 - p["trailing_distance_pct"] / 100), 4)
+            pp["current_stop_level"] = pp["trailing_stop_level"]
+        # 3) trailing high only ever increases; stop never decreases
+        if pp["trailing_active"]:
+            if pp["trailing_high"] is None or mid > pp["trailing_high"]:
+                pp["trailing_high"] = mid
+            new_level = round(pp["trailing_high"] * (1 - p["trailing_distance_pct"] / 100), 4)
+            pp["trailing_stop_level"] = max(new_level, pp["trailing_stop_level"] or new_level)
+            pp["current_stop_level"] = pp["trailing_stop_level"]
+            # 4) TRAILING STOP hit (record 'first observed', exit at current bid)
+            if mid <= pp["trailing_stop_level"]:
+                _paper_close(pp, "TRAILING_STOP", now, exit_bid,
+                             f"stop first observed at mid {mid} (<= trailing {pp['trailing_stop_level']}); "
+                             f"conservative exit at bid {exit_bid}")
+                return "TRAILING_STOP"
+        else:
+            # 5) INITIAL STOP (pre-trailing only): -initial_stop% from entry
+            if pp["initial_stop_level"] is not None and mid <= pp["initial_stop_level"]:
+                _paper_close(pp, "INITIAL_STOP", now, exit_bid,
+                             f"stop first observed at mid {mid} (<= initial {pp['initial_stop_level']}); "
+                             f"conservative exit at bid {exit_bid}")
+                return "INITIAL_STOP"
+
+    # 6) TIME STOP
+    if pp["days_held"] >= p["time_stop_trading_days"]:
+        _paper_close(pp, "TIME_STOP", now, exit_bid,
+                     f"reached {pp['days_held']} observed trading days"); return "TIME_STOP"
+    # 7) DTE STOP (usually pre-empted by the research DTE<21 filter)
+    if dte is not None and dte < p["dte_stop"]:
+        _paper_close(pp, "DTE_STOP", now, exit_bid, f"DTE {dte} < {p['dte_stop']}"); return "DTE_STOP"
+    return None
+
+def _paper_never_entered(pp, now, note):
+    pp["status"] = "NEVER_ENTERED"
+    pp["exit_ts"] = now
+    pp["exit_reason"] = "NEVER ENTERED"
+    pp["exit_note"] = note
+
+def _paper_filter_exit(pp, now, res=None):
+    """Close an open paper position because the research contract left the filter."""
+    if pp["status"] == "WAITING_FOR_ENTRY":
+        _paper_never_entered(pp, now, "failed before a market-hours entry")
+        return
+    if pp["status"] in ("ACTIVE", "TRAILING_ACTIVE"):
+        if res is not None:
+            _paper_observe(pp, res, now); _paper_recompute(pp)
+        exit_bid = pp.get("current_bid")
+        if exit_bid is None:
+            exit_bid = pp.get("current_mid")
+        _paper_close(pp, "FILTER_EXIT", now, exit_bid,
+                     "research contract left the structural filter; conservative exit at last bid")
+
+def paper_update(card, res, now, policy, market_hours):
+    """Entry/tracking/exit for a card's paper position on one scan. `res` is this
+    scan's screen() result for the contract (None if not present this scan)."""
+    pp = card.get("paper_position") or _paper_init(policy)
+    card["paper_position"] = pp
+    if pp["status"] in ("CLOSED", "NEVER_ENTERED"):
+        return pp                                   # terminal; research history continues elsewhere
+    if not market_hours:
+        return pp                                   # never act on off-hours prices
+    if res is None:
+        return pp                                   # no fresh quote this scan -> no action
+    if pp["status"] == "WAITING_FOR_ENTRY":
+        _paper_enter(pp, res, now)
+    elif pp["status"] in ("ACTIVE", "TRAILING_ACTIVE"):
+        _paper_step(pp, res, now)
+    return pp
+
+
+# ============================== MIGRATION (v1 -> v2/v3) =================
 def _migrate_card(card, now):
     """Bring a legacy v1 active card up to the v2 historical schema, in place,
     without inventing data. Seeds observations from the legacy history when needed."""
@@ -372,7 +610,8 @@ def _migrate_card(card, now):
 # ============================== ARCHIVE INDEX / PARTITIONS ==============
 def _empty_index(now):
     return {"schema_version": SCHEMA_VERSION, "updated_at": now, "total_archived": 0,
-            "tickers": [], "seen_contract_ids": [], "partitions": [], "stats": None}
+            "tickers": [], "seen_contract_ids": [], "partitions": [], "stats": None,
+            "paper_stats": None}
 
 def descriptive_stats(contracts):
     """Descriptive-only summary of a set of archived contracts. Counts, averages, and
@@ -394,6 +633,49 @@ def descriptive_stats(contracts):
         "avg_premium_at_detection": avg([l.get("premium_at_detection") for l in lifes]),
         "avg_premium_at_exit": avg([l.get("premium_at_exit") for l in lifes]),
         "exit_reason_distribution": dict(sorted(dist.items())),
+    }
+
+def paper_stats(contracts):
+    """Descriptive-only summary of the SIMULATED paper positions on a set of archived
+    contracts. Counts, averages, and distributions — never a ranking, a win rate, an
+    edge claim, or a forecast. Research return and paper return are reported side by
+    side but never merged."""
+    def avg(vals):
+        vals = [v for v in vals if v is not None]
+        return round(sum(vals) / len(vals), 2) if vals else None
+    def bucket(days):
+        if days is None: return "unknown"
+        return "0-1" if days <= 1 else "2-3" if days <= 3 else "4-5" if days <= 5 else "6-7" if days <= 7 else "8+"
+    pps = [c.get("paper_position") or {} for c in contracts]
+    entered = [p for p in pps if p.get("entry_ts")]
+    closed = [p for p in entered if p.get("status") == "CLOSED"]
+    never = [p for p in pps if p.get("status") == "NEVER_ENTERED"]
+    exit_dist, hold_dist, dte_dist = {}, {}, {}
+    for p in closed:
+        r = p.get("exit_reason") or "unknown"; exit_dist[r] = exit_dist.get(r, 0) + 1
+        hb = bucket(p.get("days_held")); hold_dist[hb] = hold_dist.get(hb, 0) + 1
+        d = p.get("current_dte")
+        db = "unknown" if d is None else ("<14" if d < 14 else "14-20" if d < 21 else "21+")
+        dte_dist[db] = dte_dist.get(db, 0) + 1
+    research_returns = [c.get("lifetime", {}).get("option_return_pct") for c in contracts]
+    return {
+        "contracts_entered": len(entered),
+        "contracts_never_entered": len(never),
+        "avg_days_held": avg([p.get("days_held") for p in closed]),
+        "avg_paper_return_pct": avg([p.get("current_pct") for p in closed]),
+        "avg_research_return_pct": avg(research_returns),
+        "avg_mfe_pct": avg([p.get("mfe") for p in closed]),
+        "avg_mae_pct": avg([p.get("mae") for p in closed]),
+        "exit_reason_distribution": dict(sorted(exit_dist.items())),
+        "hold_time_distribution": dict(sorted(hold_dist.items())),
+        "dte_at_exit_distribution": dict(sorted(dte_dist.items())),
+        "trailing_stops": exit_dist.get("TRAILING_STOP", 0),
+        "initial_stops": exit_dist.get("INITIAL_STOP", 0),
+        "time_stops": exit_dist.get("TIME_STOP", 0),
+        "dte_stops": exit_dist.get("DTE_STOP", 0),
+        "filter_exits": exit_dist.get("FILTER_EXIT", 0),
+        "expired": exit_dist.get("EXPIRED", 0),
+        "note": "Simulation only. Descriptive of past paper trades; not indicative of future results, not a recommendation, not a real account.",
     }
 
 def _partition_rel(month):          # month == 'YYYY-MM'
@@ -435,20 +717,37 @@ def _reindex(index, months_touched, data_dir, now):
     index["updated_at"] = now
     return index
 
+def _all_archived_contracts(data_dir, index):
+    out = []
+    for p in index.get("partitions", []):
+        try:
+            with open(os.path.join(data_dir, p["path"])) as f:
+                out.extend(json.load(f).get("contracts", []))
+        except Exception:
+            pass
+    return out
+
 
 # ============================== SCAN UPDATE ============================
-def update_watchlist(prev, results, now, ok_symbols=None, seen_ids=None):
+def update_watchlist(prev, results, now, ok_symbols=None, seen_ids=None,
+                     policy=None, market_hours=None):
     """Advance the historical record by one scan.
 
-    prev        : previous active-file state (v1 or v2)
-    results     : list of screen() dicts for everything examined this scan
-    ok_symbols  : set of symbols that fetched successfully this scan (None => all ok).
-                  Contracts whose symbol failed to fetch are held, not exited, and
-                  get NO fabricated observation.
-    seen_ids    : set of contract_ids ever archived (for re-entry flagging)
+    prev         : previous active-file state (v1 / v2 / v3)
+    results      : list of screen() dicts for everything examined this scan
+    ok_symbols   : set of symbols that fetched successfully this scan (None => all ok).
+                   Contracts whose symbol failed to fetch are held, not exited, and
+                   get NO fabricated observation.
+    seen_ids     : set of contract_ids ever archived (for re-entry flagging)
+    policy       : paper-trading policy dict (defaults to DEFAULT_POLICY)
+    market_hours : bool — whether this scan is inside regular market hours. Paper
+                   entries/exits are evaluated ONLY when True.
 
     Returns (active_state_dict, {month: [archived_card,...]})
     """
+    policy = policy or DEFAULT_POLICY
+    if market_hours is None:
+        market_hours = is_market_hours(now)
     active = {cid: _migrate_card(dict(c), now) for cid, c in prev.get("active", {}).items()}
     by_id = {r["contract_id"]: r for r in results}
     diff = {"new": [], "still": [], "exited": [], "reentered": []}
@@ -457,6 +756,11 @@ def update_watchlist(prev, results, now, ok_symbols=None, seen_ids=None):
     ok = None if ok_symbols is None else set(ok_symbols)
 
     def archive(card, reason, res=None):
+        # close any open paper position as a FILTER EXIT before archiving the record
+        pp = card.get("paper_position") or _paper_init(policy)
+        card["paper_position"] = pp
+        if market_hours or pp["status"] == "WAITING_FOR_ENTRY":
+            _paper_filter_exit(pp, now, res=res if market_hours else None)
         _archive_card(card, reason, now, res)
         month = (card.get("exited_at") or now)[:7]
         archived.setdefault(month, []).append(card)
@@ -466,7 +770,9 @@ def update_watchlist(prev, results, now, ok_symbols=None, seen_ids=None):
         r = by_id.get(cid)
         if r is not None:
             if r["passed"]:
-                _touch_active(card, r, now); diff["still"].append(cid)
+                _touch_active(card, r, now)
+                paper_update(card, r, now, policy, market_hours)
+                diff["still"].append(cid)
             else:
                 archive(card, exit_reason(r), res=r); del active[cid]
             continue
@@ -487,7 +793,9 @@ def update_watchlist(prev, results, now, ok_symbols=None, seen_ids=None):
     for cid, r in by_id.items():
         if r["passed"] and cid not in active:
             reentered = cid in seen_ids
-            active[cid] = _new_card(r, now, reentered=reentered)
+            card = _new_card(r, now, reentered=reentered)
+            paper_update(card, r, now, policy, market_hours)     # enter now if market hours, else WAITING
+            active[cid] = card
             (diff["reentered"] if reentered else diff["new"]).append(cid)
 
     return {"active": active, "last_scan": now, "diff": diff}, archived
@@ -586,6 +894,9 @@ def run(provider, today=None, now=None, root="."):
     data_dir = os.path.join(root, "data")
     data_path = os.path.join(data_dir, "research_watchlist.json")
     index_path = os.path.join(data_dir, "archive_index.json")
+    policy_path = os.path.join(data_dir, "research_policy.json")
+    policy = _load_policy(policy_path)
+    market_hours = is_market_hours(now)
 
     cand = {"cboe": cboe_candidates, "sample": sample_candidates}[provider]
     results, examined, errors, ok_symbols = [], 0, [], set()
@@ -618,7 +929,8 @@ def run(provider, today=None, now=None, root="."):
         return prev
 
     seen_ids = set(index.get("seen_contract_ids", []))
-    state, archived = update_watchlist(prev, results, now, ok_symbols=ok_symbols, seen_ids=seen_ids)
+    state, archived = update_watchlist(prev, results, now, ok_symbols=ok_symbols, seen_ids=seen_ids,
+                                       policy=policy, market_hours=market_hours)
 
     # write archive partitions (append-only), then reindex
     months_touched = []
@@ -629,12 +941,28 @@ def run(provider, today=None, now=None, root="."):
         index = _reindex(index, months_touched, data_dir, now)
     _save(index_path, index)
 
+    # Paper simulations complete when the paper position closes — which can happen
+    # while the research contract is still active. So paper_stats spans BOTH the
+    # closed positions on active cards and every archived contract.
+    _union = list(state["active"].values()) + _all_archived_contracts(data_dir, index)
+    _paper_terminal = [c for c in _union
+                       if (c.get("paper_position") or {}).get("status") in ("CLOSED", "NEVER_ENTERED")]
+    meta_paper_stats = paper_stats(_paper_terminal)
+
     # assemble active file
     d = state["diff"]
     status = "OK" if not errors else "PARTIAL"
     scan_log = list(prev.get("scan_log", []))
     scan_log.append({"ts": now, "status": status, "examined": examined,
-                     "errors": errors, "new": len(d["new"]), "exited": len(d["exited"])})
+                     "errors": errors, "new": len(d["new"]), "exited": len(d["exited"]),
+                     "market_hours": market_hours})
+    # live paper-position tally (descriptive, over currently-active cards)
+    _pp = [c.get("paper_position", {}) for c in state["active"].values()]
+    paper_live = {
+        "waiting": sum(1 for p in _pp if p.get("status") == "WAITING_FOR_ENTRY"),
+        "active": sum(1 for p in _pp if p.get("status") == "ACTIVE"),
+        "trailing": sum(1 for p in _pp if p.get("status") == "TRAILING_ACTIVE"),
+    }
     updated = {
         "active": state["active"], "last_scan": now, "diff": d,
         "scan_log": scan_log[-SCAN_LOG_KEEP:],
@@ -653,6 +981,11 @@ def run(provider, today=None, now=None, root="."):
             "errors": errors,
             "archive_index": "data/archive_index.json",
             "total_archived": index.get("total_archived", 0),
+            "policy_version": policy.get("policy_version"),
+            "policy": _policy_params(policy),
+            "market_hours": market_hours,
+            "paper_live": paper_live,
+            "paper_stats": meta_paper_stats,
             "boundary": ("Research only. Non-predictive structural screen of long calls & puts. "
                          "No ranking, no score, no conviction, no direction, no expected return, "
                          "no recommendation. This is a historical record of what happened after "
@@ -687,6 +1020,22 @@ def _load_index(p, now):
             return json.load(f)
     except Exception:
         return _empty_index(now)
+
+def _load_policy(p):
+    """Load the versioned paper-trading policy; write defaults on first run.
+    Editing this file and bumping policy_version only affects NEW positions —
+    existing paper positions keep the params they stamped at entry."""
+    if os.path.exists(p):
+        try:
+            with open(p) as f:
+                pol = json.load(f)
+            for k, v in DEFAULT_POLICY.items():
+                pol.setdefault(k, v)      # tolerate partial files without overwriting
+            return pol
+        except Exception:
+            pass
+    _save(p, DEFAULT_POLICY)
+    return dict(DEFAULT_POLICY)
 
 def _save(p, data):
     os.makedirs(os.path.dirname(p), exist_ok=True)
