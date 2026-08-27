@@ -230,8 +230,16 @@ def test_dashboard_rendering():
     for label in ("First Qualified", "Days Qualified", "Current Option", "Current Underlying",
                   "Highest Option", "Highest Underlying", "MFE", "MAE", "Archive", "Analytics",
                   "Paper Position", "Entry Price", "Current Stop", "Trailing", "Days Held",
-                  "WAITING", "Research Lifecycle"):
+                  "WAITING", "Research Lifecycle",
+                  # Phase 1 per-card feed-quality fields
+                  "Feed Mode", "Provider", "Quote Timestamp", "Last Update", "Observed Lag",
+                  "Feed Health", "Stop Distance", "High-Water Mark", "Last Exit Eval",
+                  # Phase 1 system feed-status section
+                  "Data-Feed System Status", "Discovery provider", "Active-position provider",
+                  "Heartbeat", "Fallback status", "Stale / disconnected"):
         assert label in html, f"dashboard missing '{label}'"
+    # a stale/disconnected feed must never be able to render as normal — the class + warning exist
+    assert "feed-STALE" in html and "feed-DISCONNECTED" in html, "dashboard lacks stale/disconnected feed styling"
     # The dashboard legitimately NAMES the forbidden concepts inside its non-predictive
     # disclaimers (to say it does none of them). Strip disclaimer sentences, then assert
     # the concepts never appear as functional output.
@@ -457,12 +465,137 @@ def test_full_run_v3_writes_policy():
         R.run("sample", root=tmp, now=DAYS[0])
         assert os.path.exists(os.path.join(tmp, "data", "research_policy.json"))
         wl = json.load(open(os.path.join(tmp, "data", "research_watchlist.json")))
-        assert wl["meta"]["schema_version"] == R.SCHEMA_VERSION == "research-scanner.v3.1"
+        assert wl["meta"]["schema_version"] == R.SCHEMA_VERSION == "research-scanner.v3.2"
         assert "policy_version" in wl["meta"] and "paper_live" in wl["meta"] and "research_live" in wl["meta"]
+        assert "feed" in wl["meta"] and wl["meta"]["feed"]["discovery_mode"] == "DELAYED"
+        assert "failed_scans" in wl and "feed" in wl
         any_card = next(iter(wl["active"].values()))
         assert "paper_position" in any_card and "research_status" in any_card
+        assert any_card["observations"][-1]["provider_mode"] == "DELAYED"
     finally:
         shutil.rmtree(tmp)
+
+# ======================= Phase 1: delayed-feed timestamps & lag =======================
+def test_observed_lag_calculation():
+    # provider quote at 09:45:00 ET, ingested at 14:00:00 UTC (=10:00 ET) -> 15 min = 900s
+    lag = R._lag_seconds("2026-08-27T09:45:00", "2026-08-27T14:00:00+00:00")
+    assert lag == 900, lag
+    assert R._lag_seconds(None, "2026-08-27T14:00:00+00:00") is None   # never fabricated
+
+def test_observation_has_feed_metadata():
+    c = R.Contract(symbol="KO", right="call", strike=90.0, expiration="2026-10-16",
+                   underlying=90.0, bid=2.30, ask=2.40, mark=2.35, iv=0.18, delta=0.5, theta=-0.02,
+                   open_interest=5000, volume=200, dte=51, hv=None, provider="cboe",
+                   provider_mode="DELAYED", provider_quote_ts="2026-08-27T09:45:00",
+                   option_quote_ts="2026-08-27T09:40:00")
+    r = R.screen(c)
+    assert r["provider"] == "cboe" and r["provider_mode"] == "DELAYED"
+    assert r["provider_quote_ts"] == "2026-08-27T09:45:00"
+    o = R._observation(r, "2026-08-27T14:00:00+00:00")
+    for f in ("provider", "provider_mode", "provider_quote_ts", "ingestion_ts", "observed_lag_sec"):
+        assert f in o, f
+    assert o["provider_mode"] == "DELAYED" and o["ingestion_ts"] == "2026-08-27T14:00:00+00:00"
+    assert o["observed_lag_sec"] == 900
+
+def test_paper_observation_and_feed_health():
+    # a market-hours entry carries feed metadata + a DELAYED feed_health on the position
+    r = R.screen(mkp(2.0))
+    st, _ = R.update_watchlist({"active": {}}, [r], "2026-08-27T14:05:00+00:00", market_hours=True)
+    pp = next(iter(st["active"].values()))["paper_position"]
+    assert pp["feed_mode"] == "DELAYED" and pp["feed_health"] == "DELAYED"
+    assert pp["feed_provider"] == "cboe"
+    assert "observed_lag_sec" in pp and "quote_ts" in pp and "last_update_ts" in pp
+    assert pp["observations"][-1]["provider_mode"] == "DELAYED"
+
+def test_delayed_labeling_never_realtime_phase1():
+    # Phase 1 must NEVER label CBOE data as real-time
+    import tempfile, shutil
+    tmp = tempfile.mkdtemp()
+    try:
+        R.run("sample", root=tmp, now="2026-08-27T14:05:00+00:00")
+        wl = json.load(open(os.path.join(tmp, "data", "research_watchlist.json")))
+        assert wl["meta"]["feed"]["delayed"] is True
+        assert wl["meta"]["feed"]["active_position_status"] == "NOT_CONFIGURED"
+        assert wl["meta"]["feed"]["receiving_realtime"] == 0
+        for c in wl["active"].values():
+            for o in c["observations"]:
+                assert o["provider_mode"] == "DELAYED", "no observation may claim REALTIME in Phase 1"
+    finally:
+        shutil.rmtree(tmp)
+
+def test_failed_scan_logged_separately_and_preserves_state():
+    # a total provider failure must NOT overwrite the last valid state, and logs to failed_scans
+    import tempfile, shutil, json as _j
+    tmp = tempfile.mkdtemp()
+    try:
+        os.makedirs(os.path.join(tmp, "data"))
+        good = {"active": {"KO 90C 2026-10-16": R._new_card(R.screen(mkp(2.0)), "2026-08-27T14:00:00+00:00")},
+                "last_scan": "2026-08-27T14:00:00+00:00", "meta": {"provider_status": "OK"}}
+        _j.dump(good, open(os.path.join(tmp, "data", "research_watchlist.json"), "w"))
+        # monkeypatch the cboe provider to always fail
+        orig = R.cboe_candidates
+        R.cboe_candidates = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("network down"))
+        try:
+            R.run("cboe", root=tmp, now="2026-08-27T14:05:00+00:00")
+        finally:
+            R.cboe_candidates = orig
+        wl = _j.load(open(os.path.join(tmp, "data", "research_watchlist.json")))
+        assert wl["meta"]["provider_status"] == "OFFLINE"
+        assert len(wl.get("failed_scans", [])) == 1 and wl["failed_scans"][0]["status"] == "OFFLINE"
+        assert "KO 90C 2026-10-16" in wl["active"], "last valid state preserved, not overwritten"
+    finally:
+        shutil.rmtree(tmp)
+
+def test_fifteen_minute_schedule_in_workflow():
+    # the deployed workflow must run intraday on a STAGGERED ~15-minute cadence (Phase 1 choice:
+    # 15 min for delayed data, not 5) and must SKIP identical-state commits to spare Pages.
+    here = os.path.dirname(os.path.abspath(__file__))
+    candidates = [os.path.join(here, "..", ".github", "workflows", "research-scanner.yml"),
+                  os.path.join(here, "research-scanner.yml")]
+    path = next((p for p in candidates if os.path.exists(p)), None)
+    if path is None:
+        print("    (skip: workflow not co-located)"); return
+    y = open(path).read()
+    crons = [ln for ln in y.splitlines() if "cron:" in ln]
+    assert crons, "workflow must define cron schedules"
+    import re as _re
+    mins = []
+    for ln in crons:
+        m = _re.search(r'cron:\s*"([^"]+)"', ln)
+        if m: mins.append(m.group(1).split()[0])
+    # staggered off the quarter-hour: the minute offsets must avoid :00/:15/:30/:45
+    firsts = set()
+    for spec in mins:
+        for f in spec.split(","):
+            firsts.add(f)
+    assert firsts.isdisjoint({"0", "15", "30", "45"}), \
+        "schedules must be staggered off the quarter-hour (:00/:15/:30/:45)"
+    # a 15-min cadence: at least one hour lists >= 3 offsets spaced 15 apart (e.g. 3,18,33,48)
+    assert any(len(spec.split(",")) >= 3 for spec in mins), \
+        "expected a staggered 15-minute intraday cadence"
+    # requirement 6: identical-state commits must be suppressed
+    assert "state_fingerprint" in y, "workflow must gate commits on the state fingerprint"
+    assert "skipping commit" in y.lower() or "--quiet" in y, "workflow must skip no-change commits"
+
+def test_state_fingerprint_ignores_timestamps_but_tracks_price():
+    # same meaningful state at two different times => SAME fingerprint (no churn commit);
+    # a price move => DIFFERENT fingerprint (a real observation => commit).
+    w1 = {"active": {"KO..C": {"research_status": "ACTIVE", "current_premium": 2.30,
+                               "current_underlying": 90.0,
+                               "paper_position": {"status": "ACTIVE", "current_mid": 2.30,
+                                                  "current_stop_level": 1.61, "trailing_active": False}}},
+          "diff": {"new": [], "exited": []}, "meta": {"total_archived": 0}}
+    import copy, json as _json
+    w2 = copy.deepcopy(w1)  # identical meaningful state
+    w3 = copy.deepcopy(w1); w3["active"]["KO..C"]["current_premium"] = 2.55
+    w3["active"]["KO..C"]["paper_position"]["current_mid"] = 2.55
+    f1 = R._state_fingerprint(w1, "OK")
+    f2 = R._state_fingerprint(w2, "OK")
+    f3 = R._state_fingerprint(w3, "OK")
+    assert f1 == f2, "identical state must fingerprint the same (skip identical commit)"
+    assert f1 != f3, "a price change must change the fingerprint (commit the observation)"
+    # a provider-status transition is meaningful too
+    assert R._state_fingerprint(w1, "OFFLINE") != f1, "status transition must change fingerprint"
 
 if __name__ == "__main__":
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
