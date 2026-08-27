@@ -1,0 +1,8 @@
+{
+  "_comment": "Provider-neutral config. Primary=tradier, fallback=cboe. DISABLED by default: with no TRADIER_TOKEN the worker stays NOT_CONFIGURED (dormant). Env vars override these values.",
+  "provider": "tradier",
+  "fallback": "cboe",
+  "allow_fallback": true,
+  "state_dir": "/data",
+  "poll_interval_sec": 20
+}
