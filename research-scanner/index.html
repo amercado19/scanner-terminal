@@ -41,6 +41,14 @@
   .stat-NEW{background:rgba(57,208,216,.15);color:var(--new)}
   .stat-ACTIVE{background:rgba(63,185,80,.15);color:var(--pass)}
   .stat-EXITED{background:rgba(139,148,158,.18);color:var(--exit)}
+  .pp-wait{background:rgba(210,153,34,.15);color:var(--warn)}
+  .pp-active{background:rgba(63,185,80,.15);color:var(--pass)}
+  .pp-trail{background:rgba(57,208,216,.15);color:var(--new)}
+  .pp-closed{background:rgba(248,81,73,.14);color:var(--fail)}
+  .pp-never{background:rgba(139,148,158,.18);color:var(--exit)}
+  .paper{background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--new);border-radius:7px;padding:8px 10px;margin:9px 0}
+  .paphdr{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink);font-weight:600}
+  .paphdr .sim{color:var(--mut);font-weight:400;text-transform:none;letter-spacing:0;margin-left:6px;font-size:10px}
   .life{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px;margin:9px 0}
   .lc{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:5px 8px}
   .lc b{display:block;font-size:12.5px} .lc span{color:var(--mut);font-size:9.5px;text-transform:uppercase;letter-spacing:.04em}
@@ -88,7 +96,7 @@
     <div id="diffline"></div>
     <h2>Structurally qualified — this scan</h2>
     <div id="summary"></div>
-    <p class="brandsub">This is a continuously growing <b>research database</b>. Every qualified contract is tracked through its whole lifecycle — one observation stored per scan, permanently archived on exit, nothing deleted. Open <b>Active Calls</b> / <b>Active Puts</b> for live cards, <b>Archive</b> to search the historical record, or <b>Analytics</b> for descriptive statistics. It documents what happened after contracts entered the structural filter; it does not forecast what will happen.</p>
+    <p class="brandsub">This is a continuously growing <b>research database</b> with an automated <b>paper-trading simulation</b>. Every qualified contract is tracked through its whole lifecycle — one observation per scan, permanently archived on exit, nothing deleted — and each receives a disciplined market-hours paper entry (entry = midpoint) with predefined research stops (−30% initial, +25% trailing activation, 20% trailing distance, 7-day time stop, DTE&lt;14). The <b>paper position</b> and the <b>research lifecycle</b> are kept completely separate and never merged. Everything here is a simulation — <b>not a real account, not a recommendation, no profit is claimed</b>. Open <b>Active Calls</b> / <b>Active Puts</b> for live cards, <b>Archive</b> to search history, or <b>Analytics</b> for descriptive statistics. It documents what happened; it does not forecast what will.</p>
   </section>
   <section class="pane" data-pane="calls"><h2>Active Qualified Calls <span class="pill" id="ncalls"></span></h2><div class="grid" id="calls"></div></section>
   <section class="pane" data-pane="puts"><h2>Active Qualified Puts <span class="pill" id="nputs"></span></h2><div class="grid" id="puts"></div></section>
@@ -129,7 +137,7 @@
 <script>
 const TABS=[["research","Research Scanner"],["calls","Active Calls"],["puts","Active Puts"],["new","New Today"],["exited","Exited Today"],["archive","Archive"],["analytics","Analytics"],["status","Provider / Status"],["legacy","Legacy Archive"]];
 let DATA_DIR="research-scanner/data/";
-let INDEX=null, PART_CACHE={};
+let INDEX=null, PART_CACHE={}, META={};
 
 function n(x,d){return x==null?'—':(typeof x==='number'?x.toFixed(d==null?2:d):x);}
 function pctc(x){ if(x==null) return '—'; const s=(x>0?'+':'')+x.toFixed(2)+'%'; return `<span class="${x>0?'up':(x<0?'down':'')}">${s}</span>`; }
@@ -202,16 +210,68 @@ function structFields(c,meta){
   ];
   return `<div class="fields">${F.map(([k,v])=>`<span>${k} <b>${v}</b></span>`).join('')}</div>`;
 }
+const PAPER_LABEL={WAITING_FOR_ENTRY:'WAITING FOR ENTRY',ACTIVE:'ACTIVE',TRAILING_ACTIVE:'TRAILING ACTIVE',
+  CLOSED:'CLOSED',NEVER_ENTERED:'NEVER ENTERED'};
+const PAPER_CLS={WAITING_FOR_ENTRY:'pp-wait',ACTIVE:'pp-active',TRAILING_ACTIVE:'pp-trail',CLOSED:'pp-closed',NEVER_ENTERED:'pp-never'};
+function paperBadge(pp){
+  if(!pp) return '';
+  let label=PAPER_LABEL[pp.status]||pp.status;
+  if(pp.status==='CLOSED'&&pp.exit_reason) label=(pp.exit_reason||'').replace(/_/g,' ');
+  return `<span class="stat-badge ${PAPER_CLS[pp.status]||''}" title="paper simulation">▸ ${label}</span>`;
+}
+function paperBlock(pp){
+  if(!pp) return '';
+  if(pp.status==='WAITING_FOR_ENTRY')
+    return `<div class="paper"><div class="paphdr">Paper Position <span class="sim">simulated · waiting</span></div>
+      <div class="brandsub" style="padding:2px 0">Qualified outside market hours — no valid entry price yet. Enters at the first market-hours scan (paper entry = midpoint).</div></div>`;
+  if(pp.status==='NEVER_ENTERED')
+    return `<div class="paper"><div class="paphdr">Paper Position <span class="sim">simulated · never entered</span></div>
+      <div class="brandsub" style="padding:2px 0">${pp.exit_note||'Failed before a market-hours entry.'} No entry was fabricated.</div></div>`;
+  const p=pp.params||{};
+  const cells=[
+    ['Entry Price', pp.entry_mid==null?'—':'$'+n(pp.entry_mid)],
+    ['Current Price', pp.current_mid==null?'—':'$'+n(pp.current_mid)],
+    ['Current %', pctc(pp.current_pct)],
+    ['Highest %', pctc(pp.highest_pct)],['Lowest %', pctc(pp.lowest_pct)],
+    ['MFE', pctc(pp.mfe)],['MAE', pctc(pp.mae)],
+    ['Underlying %', pctc(pp.current_underlying_pct)],
+    ['Highest Undl %', pctc(pp.highest_underlying_pct)],['Lowest Undl %', pctc(pp.lowest_underlying_pct)],
+    ['Current Stop', pp.current_stop_level==null?'—':'$'+n(pp.current_stop_level)],
+    ['Trailing Active', pp.trailing_active?'yes':'no'],
+    ['Trailing High', pp.trailing_high==null?'—':'$'+n(pp.trailing_high)],
+    ['Trailing Stop', pp.trailing_stop_level==null?'—':'$'+n(pp.trailing_stop_level)],
+    ['Days Held', pp.days_held==null?'—':pp.days_held],
+    ['Days Remaining', pp.trading_days_remaining==null?'—':pp.trading_days_remaining],
+    ['Current DTE', pp.current_dte==null?'—':pp.current_dte],
+    ['Exit Reason', pp.exit_reason?(pp.exit_reason).replace(/_/g,' '):'—'],
+  ];
+  const exitline = pp.status==='CLOSED'
+    ? `<div class="brandsub" style="padding:3px 0"><b>Closed (simulated):</b> ${(pp.exit_reason||'').replace(/_/g,' ')} @ $${n(pp.exit_price)} — ${pp.exit_note||''}</div>` : '';
+  return `<div class="paper">
+    <div class="paphdr">Paper Position <span class="sim">simulated · policy ${pp.policy_version||''} (stop −${p.initial_stop_pct}% · trail +${p.trailing_activation_pct}%/−${p.trailing_distance_pct}% · time ${p.time_stop_trading_days}d · DTE ${p.dte_stop})</span></div>
+    <div class="life">${cells.map(([k,v])=>`<div class="lc"><b>${v}</b><span>${k}</span></div>`).join('')}</div>
+    ${exitline}
+    <details><summary>paper price history (${(pp.observations||[]).length})</summary>${paperObsTable(pp.observations)}</details>
+  </div>`;
+}
+function paperObsTable(obs){
+  if(!obs||!obs.length) return '<div class="brandsub">—</div>';
+  const rows=obs.map(o=>`<tr><td>${tsmin(o.ts)}</td><td>${n(o.bid)}</td><td>${n(o.mid)}</td><td>${n(o.underlying)}</td>
+    <td>${o.dte==null?'—':o.dte}</td><td>${o.trailing_active?'yes':'no'}</td><td>${o.stop_level==null?'—':'$'+n(o.stop_level)}</td></tr>`).join('');
+  return `<div class="obswrap"><table><thead><tr><th>Time (UTC)</th><th>Bid</th><th>Mid</th><th>Undl</th><th>DTE</th><th>Trailing</th><th>Stop</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
 function card(c,meta){
-  const r=c.right, st=c.current_status||'ACTIVE';
+  const r=c.right, st=c.current_status||'ACTIVE', pp=c.paper_position;
   const chks=(c.checks||[]).map(k=>`<span class="chk ${k.passed?'p':'f'}" title="${k.name}">${k.passed?'✓':'✗'} ${k.detail}</span>`).join('');
   return `<div class="card ${r}">
     <div><span class="cid">${c.symbol} ${n(c.strike)}${r[0].toUpperCase()}<span class="r ${r}">${r.toUpperCase()}</span></span>
-      <span class="stat-badge stat-${st}">${st}</span></div>
+      ${paperBadge(pp)}</div>
+    ${paperBlock(pp)}
+    <div class="paphdr" style="margin-top:10px">Research Lifecycle <span class="sim">structural screen · status ${st}</span></div>
     ${lifeBlock(c)}
     <div class="checks">${chks}</div>
     ${structFields(c,meta)}
-    <details><summary>observation history (${(c.observations||[]).length})</summary>${obsTable(c.observations)}</details>
+    <details><summary>research observation history (${(c.observations||[]).length})</summary>${obsTable(c.observations)}</details>
   </div>`;
 }
 function exitCard(c){
@@ -304,36 +364,64 @@ async function applyArchive(){
 
 // ---------------- Analytics (descriptive only) ----------------
 let ANALYTICS_INIT=false;
+function statRow(cards){return `<div class="status">${cards.map(([l,v])=>`<div class="st"><b>${v}</b><span>${l}</span></div>`).join('')}</div>`;}
+function distBlock(dist){
+  const e=Object.entries(dist||{}); if(!e.length) return '<div class="brandsub">—</div>';
+  const maxc=Math.max(1,...e.map(([,v])=>v));
+  return '<div class="dist">'+e.map(([k,v])=>`<div class="distrow"><span>${(k||'').replace(/_/g,' ')}</span><span class="distbar" style="width:${Math.round(v/maxc*100)}%"></span><b>${v}</b></div>`).join('')+'</div>';
+}
 async function initAnalytics(){
   if(ANALYTICS_INIT) return; ANALYTICS_INIT=true;
   const idx=await loadIndex();
-  const s=idx.stats;
   const el=document.getElementById('analytics');
-  if(!s || !s.count_ever_qualified){
-    el.innerHTML='<div class="empty">No exited contracts yet — descriptive statistics appear once contracts complete their lifecycle and are archived.</div>';
-    return;
+  const ps=META.paper_stats;   // paper stats span active-closed + archived positions
+  let html='';
+  // ---- Paper (simulation) analytics ----
+  html+='<h2>Paper Positions — simulated research strategy</h2>';
+  if(ps && (ps.contracts_entered || ps.contracts_never_entered)){
+    html+=statRow([
+      ['Contracts Entered', ps.contracts_entered],
+      ['Never Entered', ps.contracts_never_entered],
+      ['Avg Days Held', ps.avg_days_held==null?'—':ps.avg_days_held],
+      ['Avg Paper Return', ps.avg_paper_return_pct==null?'—':ps.avg_paper_return_pct+'%'],
+      ['Avg Research Return', ps.avg_research_return_pct==null?'—':ps.avg_research_return_pct+'%'],
+      ['Avg MFE', ps.avg_mfe_pct==null?'—':ps.avg_mfe_pct+'%'],
+      ['Avg MAE', ps.avg_mae_pct==null?'—':ps.avg_mae_pct+'%'],
+      ['Trailing Stops', ps.trailing_stops],['Initial Stops', ps.initial_stops],
+      ['Time Stops', ps.time_stops],['DTE Stops', ps.dte_stops],['Filter Exits', ps.filter_exits],
+    ]);
+    html+='<h2>Distribution of paper exit reasons</h2>'+distBlock(ps.exit_reason_distribution);
+    html+='<h2>Distribution of hold times (trading days)</h2>'+distBlock(ps.hold_time_distribution);
+    html+='<h2>Distribution of DTE at paper exit</h2>'+distBlock(ps.dte_at_exit_distribution);
+    html+='<p class="brandsub" style="margin-top:10px"><b>Simulation only.</b> Paper positions are not real trades, not a recommendation, and never your account. Paper return and research return are shown side by side but never merged. Descriptive of past behavior; not indicative of future results.</p>';
+  } else {
+    html+='<div class="empty">No paper positions have closed yet — simulated entries are open or awaiting market-hours entry. Statistics appear once positions close.</div>';
   }
-  const cards=[
-    ['Contracts ever qualified', s.count_ever_qualified],
-    ['Avg days qualified', s.avg_days_qualified==null?'—':s.avg_days_qualified],
-    ['Avg option return while qualified', s.avg_option_return_pct==null?'—':s.avg_option_return_pct+'%'],
-    ['Avg underlying move while qualified', s.avg_underlying_move_pct==null?'—':s.avg_underlying_move_pct+'%'],
-    ['Avg premium at detection', s.avg_premium_at_detection==null?'—':'$'+s.avg_premium_at_detection],
-    ['Avg premium at exit', s.avg_premium_at_exit==null?'—':'$'+s.avg_premium_at_exit],
-  ];
-  const dist=s.exit_reason_distribution||{};
-  const maxc=Math.max(1,...Object.values(dist));
-  const distHtml=Object.entries(dist).map(([k,v])=>
-    `<div class="distrow"><span>${k}</span><span class="distbar" style="width:${Math.round(v/maxc*100)}%"></span><b>${v}</b></div>`).join('');
-  el.innerHTML=`<div class="status">${cards.map(([l,v])=>`<div class="st"><b>${v}</b><span>${l}</span></div>`).join('')}</div>
-    <h2>Distribution of exit reasons</h2><div class="dist">${distHtml||'<div class="brandsub">—</div>'}</div>
-    <p class="brandsub" style="margin-top:14px">These figures describe what already happened to contracts after they entered the structural filter. They are not predictions, rankings, or edge claims, and nothing here implies future performance.</p>`;
+  // ---- Research (archive) analytics ----
+  html+='<h2 style="margin-top:26px">Research Lifecycles — archived contracts</h2>';
+  const s=idx.stats;
+  if(s && s.count_ever_qualified){
+    html+=statRow([
+      ['Contracts ever qualified', s.count_ever_qualified],
+      ['Avg days qualified', s.avg_days_qualified==null?'—':s.avg_days_qualified],
+      ['Avg option move while qualified', s.avg_option_return_pct==null?'—':s.avg_option_return_pct+'%'],
+      ['Avg underlying move while qualified', s.avg_underlying_move_pct==null?'—':s.avg_underlying_move_pct+'%'],
+      ['Avg premium at detection', s.avg_premium_at_detection==null?'—':'$'+s.avg_premium_at_detection],
+      ['Avg premium at exit', s.avg_premium_at_exit==null?'—':'$'+s.avg_premium_at_exit],
+    ]);
+    html+='<h2>Distribution of research exit reasons</h2>'+distBlock(s.exit_reason_distribution);
+    html+='<p class="brandsub" style="margin-top:10px">Describes what happened to contracts after they entered the structural filter. Not predictions, rankings, or edge claims; nothing implies future performance.</p>';
+  } else {
+    html+='<div class="empty">No contracts have completed their research lifecycle (left the filter) yet.</div>';
+  }
+  el.innerHTML=html;
 }
 
 (async ()=>{
   const d=await loadData();
   if(!d){ document.getElementById('brandsub').textContent='No scan data found.'; buildNav({}); return; }
   const m=d.meta||{}, active=Object.values(d.active||{}), diff=d.diff||{new:[],still:[],exited:[],reentered:[]};
+  META=m;
   const calls=active.filter(c=>c.right==='call').sort((a,b)=>a.contract_id.localeCompare(b.contract_id));
   const puts =active.filter(c=>c.right==='put').sort((a,b)=>a.contract_id.localeCompare(b.contract_id));
   document.getElementById('brandsub').textContent=`${active.length} active · ${(m.total_archived||0)} archived · ${(m.universe||[]).length} names · ${m.schema_version||''}`;
@@ -342,10 +430,13 @@ async function initAnalytics(){
 
   const offline=(m.provider_status==='OFFLINE');
   const scls=offline?'offline':(m.provider_status==='PARTIAL'?'partial':'ok');
+  const pl=m.paper_live||{};
   const statCards=[
     [`st ${scls}`,'Provider',(m.provider||'?')+' · '+(m.provider_status||'?')],
     ['st','Active',active.length],['st','Calls',calls.length],['st','Puts',puts.length],
+    ['st','Paper entered',(pl.active||0)+(pl.trailing||0)],['st','Paper waiting',pl.waiting||0],
     ['st','Archived',m.total_archived||0],['st','Examined',m.examined??'—'],
+    ['st','Scan window',m.market_hours?'MARKET HOURS':'off-hours'],
     ['st','Data timestamp',tsmin(m.generated_at||d.last_scan||'—')],
     ['st','Last successful scan',tsmin(m.last_successful_scan||d.last_scan||'—')],
   ];
@@ -359,6 +450,8 @@ async function initAnalytics(){
   document.getElementById('summary').innerHTML=`<div class="status">
     <div class="st ok"><b>${calls.length}</b><span>qualified calls</span></div>
     <div class="st ok"><b>${puts.length}</b><span>qualified puts</span></div>
+    <div class="st"><b>${(pl.active||0)+(pl.trailing||0)}</b><span>paper entered</span></div>
+    <div class="st"><b>${pl.waiting||0}</b><span>paper waiting</span></div>
     <div class="st"><b>${(diff.new||[]).length}</b><span>new today</span></div>
     <div class="st"><b>${(diff.exited||[]).length}</b><span>exited today</span></div>
     <div class="st"><b>${m.total_archived||0}</b><span>total archived</span></div></div>`;
