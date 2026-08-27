@@ -46,6 +46,9 @@
   .pp-trail{background:rgba(57,208,216,.15);color:var(--new)}
   .pp-closed{background:rgba(248,81,73,.14);color:var(--fail)}
   .pp-never{background:rgba(139,148,158,.18);color:var(--exit)}
+  .rs-active{background:rgba(63,185,80,.12);color:var(--pass)}
+  .rs-left{background:rgba(210,153,34,.15);color:var(--warn)}
+  .rs-exp{background:rgba(139,148,158,.18);color:var(--exit)}
   .paper{background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--new);border-radius:7px;padding:8px 10px;margin:9px 0}
   .paphdr{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink);font-weight:600}
   .paphdr .sim{color:var(--mut);font-weight:400;text-transform:none;letter-spacing:0;margin-left:6px;font-size:10px}
@@ -96,7 +99,7 @@
     <div id="diffline"></div>
     <h2>Structurally qualified — this scan</h2>
     <div id="summary"></div>
-    <p class="brandsub">This is a continuously growing <b>research database</b> with an automated <b>paper-trading simulation</b>. Every qualified contract is tracked through its whole lifecycle — one observation per scan, permanently archived on exit, nothing deleted — and each receives a disciplined market-hours paper entry (entry = midpoint) with predefined research stops (−30% initial, +25% trailing activation, 20% trailing distance, 7-day time stop, DTE&lt;14). The <b>paper position</b> and the <b>research lifecycle</b> are kept completely separate and never merged. Everything here is a simulation — <b>not a real account, not a recommendation, no profit is claimed</b>. Open <b>Active Calls</b> / <b>Active Puts</b> for live cards, <b>Archive</b> to search history, or <b>Analytics</b> for descriptive statistics. It documents what happened; it does not forecast what will.</p>
+    <p class="brandsub">This is a continuously growing <b>research database</b> with an automated <b>paper-trading simulation</b>, built as <b>two fully independent lifecycles</b>. The <b>research lifecycle</b> answers "would today's scanner still discover this contract?" (ACTIVE → LEFT FILTER → RETURNED → EXPIRED) and is metadata only. The <b>paper position</b> answers "what would have happened after purchase?" — it enters at the first market-hours scan (entry = midpoint) and is tracked until one of its OWN rules fires (−30% initial, +25% trailing activation / 20% distance, 7-day time stop, DTE&lt;14, expiration). Leaving the research filter never closes a paper trade; the tracker keeps re-quoting it. The two are never merged. Everything here is a simulation — <b>not a real account, not a recommendation, no profit is claimed</b>. Open <b>Active Calls</b> / <b>Active Puts</b> for live cards, <b>Archive</b> to search history, or <b>Analytics</b> for descriptive statistics.</p>
   </section>
   <section class="pane" data-pane="calls"><h2>Active Qualified Calls <span class="pill" id="ncalls"></span></h2><div class="grid" id="calls"></div></section>
   <section class="pane" data-pane="puts"><h2>Active Qualified Puts <span class="pill" id="nputs"></span></h2><div class="grid" id="puts"></div></section>
@@ -260,14 +263,23 @@ function paperObsTable(obs){
     <td>${o.dte==null?'—':o.dte}</td><td>${o.trailing_active?'yes':'no'}</td><td>${o.stop_level==null?'—':'$'+n(o.stop_level)}</td></tr>`).join('');
   return `<div class="obswrap"><table><thead><tr><th>Time (UTC)</th><th>Bid</th><th>Mid</th><th>Undl</th><th>DTE</th><th>Trailing</th><th>Stop</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
+const RS_CLS={ACTIVE:'rs-active',LEFT_FILTER:'rs-left',RETURNED_TO_FILTER:'rs-active',EXPIRED:'rs-exp',NEW:'rs-active'};
+function researchBadge(c){
+  const rs=c.research_status||c.current_status||'ACTIVE';
+  const lbl=rs.replace(/_/g,' ');
+  return `<span class="stat-badge ${RS_CLS[rs]||''}" title="research lifecycle">◧ ${lbl}</span>`;
+}
 function card(c,meta){
-  const r=c.right, st=c.current_status||'ACTIVE', pp=c.paper_position;
+  const r=c.right, rs=c.research_status||c.current_status||'ACTIVE', pp=c.paper_position;
   const chks=(c.checks||[]).map(k=>`<span class="chk ${k.passed?'p':'f'}" title="${k.name}">${k.passed?'✓':'✗'} ${k.detail}</span>`).join('');
+  const rsline = (rs==='LEFT_FILTER'&&c.research_left_reason)
+    ? `<span class="sim">left filter · reason: ${c.research_left_reason}</span>`
+    : `<span class="sim">structural screen · ${rs.replace(/_/g,' ')}</span>`;
   return `<div class="card ${r}">
     <div><span class="cid">${c.symbol} ${n(c.strike)}${r[0].toUpperCase()}<span class="r ${r}">${r.toUpperCase()}</span></span>
-      ${paperBadge(pp)}</div>
+      ${paperBadge(pp)} ${researchBadge(c)}</div>
     ${paperBlock(pp)}
-    <div class="paphdr" style="margin-top:10px">Research Lifecycle <span class="sim">structural screen · status ${st}</span></div>
+    <div class="paphdr" style="margin-top:10px">Research Lifecycle ${rsline}</div>
     ${lifeBlock(c)}
     <div class="checks">${chks}</div>
     ${structFields(c,meta)}
@@ -387,8 +399,11 @@ async function initAnalytics(){
       ['Avg Research Return', ps.avg_research_return_pct==null?'—':ps.avg_research_return_pct+'%'],
       ['Avg MFE', ps.avg_mfe_pct==null?'—':ps.avg_mfe_pct+'%'],
       ['Avg MAE', ps.avg_mae_pct==null?'—':ps.avg_mae_pct+'%'],
+      ['Outlived the filter', ps.closed_after_leaving_filter||0],
+      ['Avg MFE after filter left', ps.avg_mfe_after_filter_left_pct==null?'—':ps.avg_mfe_after_filter_left_pct+'%'],
+      ['Avg MAE after filter left', ps.avg_mae_after_filter_left_pct==null?'—':ps.avg_mae_after_filter_left_pct+'%'],
       ['Trailing Stops', ps.trailing_stops],['Initial Stops', ps.initial_stops],
-      ['Time Stops', ps.time_stops],['DTE Stops', ps.dte_stops],['Filter Exits', ps.filter_exits],
+      ['Time Stops', ps.time_stops],['DTE Stops', ps.dte_stops],['Expired', ps.expired],
     ]);
     html+='<h2>Distribution of paper exit reasons</h2>'+distBlock(ps.exit_reason_distribution);
     html+='<h2>Distribution of hold times (trading days)</h2>'+distBlock(ps.hold_time_distribution);
@@ -430,11 +445,12 @@ async function initAnalytics(){
 
   const offline=(m.provider_status==='OFFLINE');
   const scls=offline?'offline':(m.provider_status==='PARTIAL'?'partial':'ok');
-  const pl=m.paper_live||{};
+  const pl=m.paper_live||{}, rl=m.research_live||{};
   const statCards=[
     [`st ${scls}`,'Provider',(m.provider||'?')+' · '+(m.provider_status||'?')],
-    ['st','Active',active.length],['st','Calls',calls.length],['st','Puts',puts.length],
+    ['st','Tracked','' +active.length],['st','In filter',rl.in_filter??'—'],['st','Left filter',rl.left_filter??'—'],
     ['st','Paper entered',(pl.active||0)+(pl.trailing||0)],['st','Paper waiting',pl.waiting||0],
+    ['st','Tracked past filter',pl.tracked_past_filter||0],
     ['st','Archived',m.total_archived||0],['st','Examined',m.examined??'—'],
     ['st','Scan window',m.market_hours?'MARKET HOURS':'off-hours'],
     ['st','Data timestamp',tsmin(m.generated_at||d.last_scan||'—')],
