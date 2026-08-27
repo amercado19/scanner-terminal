@@ -289,13 +289,31 @@ function paperBadge(pp){
   if(!pp) return '';
   let label=PAPER_LABEL[pp.status]||pp.status;
   if(pp.status==='CLOSED'&&pp.exit_reason) label=(pp.exit_reason||'').replace(/_/g,' ');
+  if(pp.status==='WAITING_FOR_ENTRY'&&pp.waiting_reason) label='WAIT: '+pp.waiting_reason.replace(/^WAITING — /,'');
   return `<span class="stat-badge ${PAPER_CLS[pp.status]||''}" title="paper simulation">▸ ${label}</span>`;
 }
 function paperBlock(pp){
   if(!pp) return '';
-  if(pp.status==='WAITING_FOR_ENTRY')
-    return `<div class="paper"><div class="paphdr">Paper Position <span class="sim">simulated · waiting</span></div>
-      <div class="brandsub" style="padding:2px 0">Qualified outside market hours — no valid entry price yet. Enters at the first market-hours scan (paper entry = midpoint).</div></div>`;
+  if(pp.status==='WAITING_FOR_ENTRY'){
+    const reason=pp.waiting_reason||'WAITING — NO MARKET-HOURS SCAN YET';
+    const bad=/STALE|FAILED|NO LONGER/.test(reason);
+    const cells=[
+      ['Waiting Reason', reason],
+      ['Market Session', pp.market_session_state||'—'],
+      ['Last Entry Eval', pp.last_entry_evaluation_time?tssec(pp.last_entry_evaluation_time):'—'],
+      ['Latest Qualification', (pp.latest_qualification_state||'—').replace(/_/g,' ')],
+      ['Provider Quote TS', pp.provider_quote_timestamp?tssec(pp.provider_quote_timestamp):'—'],
+      ['Observed Lag', lagfmt(pp.observed_lag)],
+    ];
+    return `<div class="paper">
+      <div class="paphdr">Paper Position <span class="sim">simulated · waiting for entry</span></div>
+      <div class="feedbox${bad?' bad':' delayed'}" style="margin:8px 0 2px">
+        <div class="feedhdr">Entry Eligibility <span class="feedbadge ${bad?'feed-STALE':'feed-DELAYED'}">◇ ${reason.replace(/^WAITING — /,'')}</span></div>
+        ${cells.map(([k,v])=>`<span>${k} <b>${v}</b></span>`).join('')}
+      </div>
+      <div class="brandsub" style="padding:2px 0">No entry is fabricated. Enters at the first market-hours scan with a CURRENT delayed snapshot (entry = midpoint); a stale or prior-close quote never triggers an entry.</div>
+    </div>`;
+  }
   if(pp.status==='NEVER_ENTERED')
     return `<div class="paper"><div class="paphdr">Paper Position <span class="sim">simulated · never entered</span></div>
       <div class="brandsub" style="padding:2px 0">${pp.exit_note||'Failed before a market-hours entry.'} No entry was fabricated.</div></div>`;
