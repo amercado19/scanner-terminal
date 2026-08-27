@@ -1,0 +1,30 @@
+name: SPY 0DTE worker
+on:
+  schedule:
+    - cron: "*/5 13-20 * * 1-5"
+  workflow_dispatch: {}
+concurrency:
+  group: spy-worker
+  cancel-in-progress: false
+jobs:
+  run-cycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - run: pip install -r requirements.txt
+      - name: Run one worker cycle
+        env:
+          DATA_SOURCE: alpaca
+          RUN_ONCE: "true"
+          ENABLE_LLM_NARRATIVE: "false"
+          MONGODB_PASSWORD: ${{ secrets.MONGODB_PASSWORD }}
+          ALPACA_KEY_ID: ${{ secrets.ALPACA_KEY_ID }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          FLASHALPHA_API_KEY: ${{ secrets.FLASHALPHA_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python main.py
