@@ -1,7 +1,6 @@
 name: SPY 0DTE worker
 on:
-  schedule:
-    - cron: "*/5 13-20 * * 1-5"
+  # LEGACY schedule DISABLED by scanner-terminal-research-reset.v1 (2026-08-27) — manual-only (workflow_dispatch). Does not auto-populate the active dashboard.
   workflow_dispatch: {}
 concurrency:
   group: spy-worker
