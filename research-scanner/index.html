@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Structural Research Scanner</title>
+<title>Scanner Terminal</title>
 <style>
   :root{
     --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --ink:#e6edf3; --mut:#8b949e;
@@ -12,131 +12,209 @@
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:13px;line-height:1.5}
-  .wrap{max-width:1180px;margin:0 auto;padding:22px 18px 90px}
-  header{border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:16px}
-  h1{font-size:19px;margin:0 0 3px;letter-spacing:.02em}
-  h1 .dot{color:var(--pass)}
-  .tag{color:var(--mut);font-size:12px}
-  .backlink{float:right;color:var(--mut);text-decoration:none;font-size:12px;border:1px solid var(--line);padding:4px 9px;border-radius:6px}
-  .backlink:hover{color:var(--ink);border-color:var(--mut)}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 18px 90px}
+  header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);padding:14px 0 0;z-index:5}
+  .brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  h1{font-size:19px;margin:0;letter-spacing:.02em} h1 .dot{color:var(--pass)}
+  .brandsub{color:var(--mut);font-size:12px}
+  nav{display:flex;gap:2px;flex-wrap:wrap;margin-top:12px}
+  nav button{background:none;border:none;border-bottom:2px solid transparent;color:var(--mut);
+    font-family:var(--mono);font-size:12.5px;padding:8px 11px;cursor:pointer}
+  nav button:hover{color:var(--ink)} nav button.on{color:var(--ink);border-bottom-color:var(--call)}
+  nav button .badge{font-size:10px;color:var(--mut);margin-left:5px}
   .boundary{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--call);
-    border-radius:7px;padding:9px 12px;color:var(--mut);font-size:12px;margin:12px 0 16px}
-  .status{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+    border-radius:7px;padding:9px 12px;color:var(--mut);font-size:12px;margin:16px 0}
+  .status{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px}
   .st{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:8px 12px;min-width:120px}
-  .st b{display:block;font-size:15px} .st span{color:var(--mut);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em}
+  .st b{display:block;font-size:15px} .st span{color:var(--mut);font-size:10px;text-transform:uppercase;letter-spacing:.06em}
   .st.offline{border-color:var(--fail)} .st.offline b{color:var(--fail)}
   .st.ok b{color:var(--pass)} .st.partial b{color:var(--warn)}
-  h2{font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);
-     margin:24px 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px}
-  h2 .c{color:var(--ink)}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:11px}
+  .pane{display:none} .pane.on{display:block}
+  h2{font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin:20px 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:11px}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:12px 13px}
   .card.call{border-top:2px solid var(--call)} .card.put{border-top:2px solid var(--put)}
-  .cid{font-weight:600;font-size:14px} .cid .r{font-size:11px;padding:1px 6px;border-radius:4px;margin-left:6px}
+  .cid{font-weight:600;font-size:14px} .r{font-size:11px;padding:1px 6px;border-radius:4px;margin-left:6px}
   .r.call{background:rgba(88,166,255,.15);color:var(--call)} .r.put{background:rgba(188,140,255,.15);color:var(--put)}
   .seen{float:right;color:var(--mut);font-size:11px}
   .checks{display:flex;flex-wrap:wrap;gap:5px;margin:9px 0}
   .chk{font-size:10.5px;padding:2px 6px;border-radius:4px;border:1px solid var(--line);white-space:nowrap}
   .chk.p{color:var(--pass);border-color:rgba(63,185,80,.3)} .chk.f{color:var(--fail);border-color:rgba(248,81,73,.3)}
-  .desc{display:grid;grid-template-columns:1fr 1fr;gap:2px 14px;border-top:1px solid var(--line);padding-top:8px;font-size:11.5px;color:var(--mut)}
-  .desc b{color:var(--ink)} .warnθ{color:var(--warn)}
+  .fields{display:grid;grid-template-columns:1fr 1fr;gap:1px 14px;border-top:1px solid var(--line);padding-top:8px;font-size:11.5px;color:var(--mut)}
+  .fields b{color:var(--ink)} .warnθ{color:var(--warn)}
+  details{margin-top:8px;border-top:1px solid var(--line);padding-top:6px} summary{cursor:pointer;color:var(--mut);font-size:11px}
+  .log{font-size:11px;color:var(--mut);margin-top:6px} .log div{padding:1px 0}
   table{width:100%;border-collapse:collapse;font-size:11.5px} th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line)}
-  th{color:var(--mut);font-size:10.5px;text-transform:uppercase} td .rn{color:var(--pass)}
-  .empty{color:var(--mut);padding:14px;border:1px dashed var(--line);border-radius:8px;text-align:center}
-  .pill{font-size:10.5px;padding:1px 7px;border-radius:99px;border:1px solid var(--line);color:var(--mut)}
-  .foot{margin-top:30px;color:var(--mut);font-size:11px;border-top:1px solid var(--line);padding-top:12px}
+  th{color:var(--mut);font-size:10.5px;text-transform:uppercase}
+  .empty{color:var(--mut);padding:16px;border:1px dashed var(--line);border-radius:8px;text-align:center}
+  .pill{font-size:10.5px;padding:1px 7px;border-radius:99px;border:1px solid var(--line);color:var(--mut);display:inline-block;margin:2px}
+  .legacybox{background:var(--panel);border:1px solid var(--warn);border-radius:9px;padding:16px}
+  .legacytag{color:var(--warn);font-weight:700;letter-spacing:.05em}
+  a{color:var(--call)} .foot{margin-top:30px;color:var(--mut);font-size:11px;border-top:1px solid var(--line);padding-top:12px}
   .up{color:var(--pass)} .down{color:var(--fail)}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <a class="backlink" href="../scanner_dashboard.html">← Paper-trading dashboard</a>
-    <h1><span class="dot">▍</span> Structural Research Scanner</h1>
-    <div class="tag" id="subtitle">loading…</div>
+    <div class="brand">
+      <h1><span class="dot">▍</span> Scanner Terminal</h1>
+      <span class="brandsub" id="brandsub">loading…</span>
+    </div>
+    <nav id="nav"></nav>
   </header>
+
   <div class="boundary" id="boundary"></div>
-  <div class="status" id="status"></div>
 
-  <div id="diffline"></div>
-  <h2>Active Qualified <span class="c">Calls</span> <span class="pill" id="ncalls"></span></h2>
-  <div class="grid" id="calls"></div>
-  <h2>Active Qualified <span class="c">Puts</span> <span class="pill" id="nputs"></span></h2>
-  <div class="grid" id="puts"></div>
-
-  <h2>New Today <span class="pill" id="nnew"></span></h2><div id="newtoday"></div>
-  <h2>Exited Today <span class="pill" id="nexit"></span></h2><div id="exittoday"></div>
-  <h2>Watchlist History <span class="pill">exited archive</span></h2><div id="history"></div>
-  <h2>Frozen Structural Filters</h2><div id="thresholds" class="tag"></div>
+  <section class="pane on" data-pane="research">
+    <div class="status" id="status"></div>
+    <div id="diffline"></div>
+    <h2>Structurally qualified — this scan</h2>
+    <div id="summary"></div>
+    <p class="brandsub">Open <b>Active Calls</b> / <b>Active Puts</b> for full research cards, or <b>Watchlist History</b> for exits. This is the primary research workspace; the legacy paper-trading system is archived and inactive (see <b>Legacy Archive</b>).</p>
+  </section>
+  <section class="pane" data-pane="calls"><h2>Active Qualified Calls <span class="pill" id="ncalls"></span></h2><div class="grid" id="calls"></div></section>
+  <section class="pane" data-pane="puts"><h2>Active Qualified Puts <span class="pill" id="nputs"></span></h2><div class="grid" id="puts"></div></section>
+  <section class="pane" data-pane="new"><h2>New Today</h2><div id="newtoday"></div></section>
+  <section class="pane" data-pane="exited"><h2>Exited Today</h2><div id="exittoday"></div></section>
+  <section class="pane" data-pane="reentered"><h2>Re-entered</h2><div id="reentered"></div></section>
+  <section class="pane" data-pane="history"><h2>Watchlist History — exited archive</h2><div id="history"></div></section>
+  <section class="pane" data-pane="status">
+    <h2>Provider / System Status</h2><div id="sysstatus"></div>
+    <h2>Frozen Structural Filters</h2><div id="thresholds" class="brandsub"></div>
+  </section>
+  <section class="pane" data-pane="legacy">
+    <h2>Legacy Archive</h2>
+    <div class="legacybox">
+      <div class="legacytag">LEGACY PAPER-TRADING ARCHIVE — NOT ACTIVE</div>
+      <p class="brandsub" style="margin:8px 0">The former paper-trading system (five books, conviction scores, direction calls, SPY-alpha, 0DTE/1DTE trades) has been reset out of active operation and preserved read-only. Its scores and predictions are <b>not</b> part of this research terminal and never affect the watchlist above.</p>
+      <p><a href="/scanner-terminal/archive/legacy-paper-terminal-2026-08-27/scanner_dashboard.html" target="_blank" rel="noopener">Open the archived legacy dashboard (read-only) →</a></p>
+      <p class="brandsub"><a href="/scanner-terminal/archive/legacy-paper-terminal-2026-08-27/RESET_MANIFEST.md" target="_blank" rel="noopener">Reset manifest &amp; restore instructions</a></p>
+    </div>
+  </section>
 
   <div class="foot">
-    Research only — a non-predictive structural screen of long calls and long puts. It never ranks,
-    scores, predicts direction, estimates return or win probability, or recommends a trade. Data is
-    delayed (CBOE). Separate from, and never mixed with, the paper-trading dashboard's conviction/
-    direction/0DTE logic.
+    Research only — a non-predictive structural screen of long calls and long puts. It never ranks, scores,
+    predicts direction, estimates return or win probability, or recommends a trade. Data is delayed (CBOE).
+    Canonical source: <span id="srcpath">research-scanner/data/research_watchlist.json</span>.
   </div>
 </div>
 <script>
+const TABS=[["research","Research Scanner"],["calls","Active Calls"],["puts","Active Puts"],["new","New Today"],["exited","Exited Today"],["reentered","Re-entered"],["history","Watchlist History"],["status","Provider / Status"],["legacy","Legacy Archive"]];
 function n(x,d){return x==null?'—':(typeof x==='number'?x.toFixed(d==null?2:d):x);}
 function pct(x,d){return x==null?'—':(x>0?'+':'')+x.toFixed(d==null?2:d)+'%';}
-function card(c){
+function ivp(x){return x==null?'—':(x*100).toFixed(1)+'%';}
+function show(id){document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.dataset.pane===id));
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===id));
+  try{location.hash=id;}catch(e){}}
+function buildNav(counts){
+  document.getElementById('nav').innerHTML=TABS.map(([id,label])=>{
+    const b=counts[id]!=null?`<span class="badge">${counts[id]}</span>`:'';
+    return `<button data-t="${id}">${label}${b}</button>`;}).join('');
+  document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>show(b.dataset.t));
+}
+function card(c,meta){
+  meta=meta||{};
   const de=c.descriptors||{}, r=c.right;
-  const cls=(de.theta_burden_pct_day!=null&&de.theta_burden_pct_day>=3.0)?'warnθ':'';
+  const thetaW=(de.theta_burden_pct_day!=null&&de.theta_burden_pct_day>=3.0)?'warnθ':'';
   const chks=(c.checks||[]).map(k=>`<span class="chk ${k.passed?'p':'f'}" title="${k.name}">${k.passed?'✓':'✗'} ${k.detail}</span>`).join('');
   const pc=c.premium_change, pcs=(pc>0?'+':'')+(pc==null?0:pc).toFixed(2);
+  // bid/ask reconstructed exactly from mark (=mid) and bid_ask_pct (=(ask-bid)/mid) when the
+  // provider stored the spread % rather than the two raw quotes; falls back to raw fields if present.
+  const mark=c.current_premium;
+  const sp=(de.bid_ask_pct!=null&&mark!=null)?(de.bid_ask_pct/100*mark):null;
+  const bid=(c.bid!=null)?c.bid:(sp!=null?mark-sp/2:null);
+  const ask=(c.ask!=null)?c.ask:(sp!=null?mark+sp/2:null);
+  const cost=(c.cost!=null)?c.cost:(mark!=null?mark*100:null);
+  const provTs=c.provider_timestamp||c.last_updated||meta.generated_at||'';
+  const filtVer=c.filter_version||meta.thresholds_version||'—';
+  const F=[
+    ['strike','$'+n(c.strike)], ['expiration',c.expiration], ['DTE',c.dte],
+    ['bid','$'+n(bid)], ['ask','$'+n(ask)], ['mark','$'+n(mark)],
+    ['cost','$'+n(cost,0)], ['Δ premium',pcs], ['open interest',de.open_interest??'—'],
+    ['daily volume',de.volume??'—'], ['bid/ask %',de.bid_ask_pct!=null?de.bid_ask_pct+'%':'—'],
+    ['theta',n(de.theta,4)], ['theta burden',de.theta_burden_pct_day!=null?de.theta_burden_pct_day+'%/day':'—','θ'],
+    ['delta',n(de.delta,3)], ['IV',ivp(de.iv)], ['HV',ivp(de.hv)],
+    ['IV vs HV',de.iv_vs_hv||'n/a'], ['break-even','$'+n(de.break_even)+' ('+pct(de.break_even_move_pct)+')'],
+    ['earnings',de.earnings_in_window==null?'n/a':(de.earnings_in_window?'IN WINDOW':'no')],
+    ['days to earnings',de.days_to_earnings??'n/a'], ['underlying','$'+n(c.current_underlying)],
+    ['first detected',(c.first_detected||'').slice(0,10)], ['last observed',(c.last_observed||c.last_updated||'').slice(0,16).replace('T',' ')],
+    ['status',c.current_status||'ACTIVE'], ['provider ts',(provTs||'').slice(0,16).replace('T',' ')],
+    ['filter version',filtVer],
+  ];
+  const fields=F.map(([k,v,w])=>`<span class="${w==='θ'&&thetaW?'warnθ':''}">${k} <b>${v}</b></span>`).join('');
+  const log=(c.history||[]).slice(-8).map(h=>{
+    const ev=h.event, extra=[];
+    if(h.premium!=null)extra.push('prem $'+n(h.premium)); if(h.underlying!=null)extra.push('u $'+n(h.underlying));
+    if(h.iv!=null)extra.push('IV '+ivp(h.iv)); if(h.delta!=null)extra.push('Δ '+n(h.delta,2)); if(h.dte!=null)extra.push('DTE '+h.dte);
+    if(h.reason)extra.push(h.reason);
+    return `<div>· ${(h.ts||'').slice(0,16).replace('T',' ')} — <b>${ev}</b> ${extra.join(' · ')}</div>`;}).join('');
   return `<div class="card ${r}">
-    <div><span class="cid">${c.contract_id.split(' ').slice(0,2).join(' ')}<span class="r ${r}">${r.toUpperCase()}</span></span>
+    <div><span class="cid">${c.symbol} ${n(c.strike)}${r[0].toUpperCase()}<span class="r ${r}">${r.toUpperCase()}</span></span>
       <span class="seen">seen ${(c.first_detected||'').slice(0,10)}</span></div>
     <div class="checks">${chks}</div>
-    <div class="desc">
-      <span>premium <b>$${n(c.current_premium)}</b> (Δ ${pcs})</span><span>DTE <b>${c.dte}</b></span>
-      <span>delta <b>${n(de.delta,2)}</b></span><span>break-even <b>$${n(de.break_even)}</b> <b>${pct(de.break_even_move_pct)}</b></span>
-      <span>IV <b>${de.iv!=null?(de.iv*100).toFixed(1)+'%':'—'}</b></span><span>IV vs HV <b>${de.iv_vs_hv||'n/a'}</b></span>
-      <span class="${cls}">θ/day <b>${de.theta_burden_pct_day!=null?de.theta_burden_pct_day+'%':'—'}</b>${cls?' ⚠':''}</span><span>OI <b>${de.open_interest??'—'}</b> · Vol <b>${de.volume??'—'}</b></span>
-      <span>underlying <b>$${n(c.current_underlying)}</b></span><span>earnings <b>${de.earnings_in_window==null?'n/a':(de.earnings_in_window?'IN WINDOW':'no')}</b></span>
-    </div>
+    <div class="fields">${fields}</div>
+    <details><summary>change log (${(c.history||[]).length})</summary><div class="log">${log||'<div>—</div>'}</div></details>
   </div>`;
 }
-async function load(){
-  let d; try{ d=await (await fetch('data/research_watchlist.json?_='+Date.now())).json(); }
-  catch(e){ document.getElementById('subtitle').textContent='No scan data yet.'; return; }
+function idlist(ids){return ids && ids.length ? ids.map(x=>`<span class="pill">${x}</span>`).join(' ') : '<div class="empty">none</div>';}
+async function loadData(){
+  const paths=['research-scanner/data/research_watchlist.json','data/research_watchlist.json','../research-scanner/data/research_watchlist.json'];
+  for(const p of paths){ try{ const r=await fetch(p+'?_='+Date.now()); if(r.ok){ const j=await r.json(); document.getElementById('srcpath').textContent=p; return j; } }catch(e){} }
+  return null;
+}
+(async ()=>{
+  const d=await loadData();
+  if(!d){ document.getElementById('brandsub').textContent='No scan data found.'; buildNav({}); return; }
   const m=d.meta||{}, active=Object.values(d.active||{}), diff=d.diff||{new:[],still:[],exited:[],reentered:[]};
-  document.getElementById('subtitle').textContent=`${active.length} structurally qualified · ${(m.universe||[]).length} names · frozen ${m.thresholds_version||''}`;
-  document.getElementById('boundary').textContent=m.boundary||'';
-  const offline=(m.provider_status==='OFFLINE');
-  const scls=offline?'offline':(m.provider_status==='PARTIAL'?'partial':'ok');
-  document.getElementById('status').innerHTML=[
-    [`st ${scls}`,'Provider',(m.provider||'?')+' · '+(m.provider_status||'?')],
-    ['st','Qualified',active.length],
-    ['st','Data timestamp',(m.generated_at||d.last_scan||'—').replace('T',' ').slice(0,16)],
-    ['st','Last successful scan',(m.last_successful_scan||d.last_scan||'—').replace('T',' ').slice(0,16)],
-    ['st','Coverage',(m.examined!=null?m.examined+' contracts':'—')],
-  ].map(([c,l,v])=>`<div class="${c}"><b>${v}</b><span>${l}</span></div>`).join('');
-  if(offline) document.getElementById('diffline').innerHTML=`<div class="boundary" style="border-left-color:var(--fail);color:var(--fail)">PROVIDER OFFLINE — showing last successful scan. Watchlist preserved, not overwritten.</div>`;
-
   const calls=active.filter(c=>c.right==='call').sort((a,b)=>a.contract_id.localeCompare(b.contract_id));
   const puts =active.filter(c=>c.right==='put').sort((a,b)=>a.contract_id.localeCompare(b.contract_id));
-  document.getElementById('calls').innerHTML=calls.length?calls.map(card).join(''):'<div class="empty">NO STRUCTURALLY QUALIFIED CALLS TODAY</div>';
-  document.getElementById('puts').innerHTML=puts.length?puts.map(card).join(''):'<div class="empty">NO STRUCTURALLY QUALIFIED PUTS TODAY</div>';
+  document.getElementById('brandsub').textContent=`${active.length} structurally qualified · ${(m.universe||[]).length} names · frozen ${m.thresholds_version||''}`;
+  document.getElementById('boundary').textContent=m.boundary||'';
+  buildNav({calls:calls.length,puts:puts.length,new:(diff.new||[]).length,exited:(diff.exited||[]).length,reentered:(diff.reentered||[]).length,history:(d.exited||[]).length});
+
+  const offline=(m.provider_status==='OFFLINE');
+  const scls=offline?'offline':(m.provider_status==='PARTIAL'?'partial':'ok');
+  const statCards=[
+    [`st ${scls}`,'Provider',(m.provider||'?')+' · '+(m.provider_status||'?')],
+    ['st','Qualified',active.length],['st','Calls',calls.length],['st','Puts',puts.length],
+    ['st','Examined',m.examined??'—'],
+    ['st','Data timestamp',(m.generated_at||d.last_scan||'—').replace('T',' ').slice(0,16)],
+    ['st','Last successful scan',(m.last_successful_scan||d.last_scan||'—').replace('T',' ').slice(0,16)],
+  ];
+  document.getElementById('status').innerHTML=statCards.map(([c,l,v])=>`<div class="${c}"><b>${v}</b><span>${l}</span></div>`).join('');
+  document.getElementById('sysstatus').innerHTML=statCards.concat([
+    ['st','Delayed data','CBOE · yes'],['st','Page updated',new Date().toISOString().replace('T',' ').slice(0,16)],
+    ['st','Provider errors',(m.errors&&m.errors.length)?m.errors.length:'0'],['st','Coverage',(m.examined!=null?m.examined+' contracts':'—')],
+  ]).map(([c,l,v])=>`<div class="${c}"><b>${v}</b><span>${l}</span></div>`).join('') + (m.errors&&m.errors.length?`<div class="boundary" style="border-left-color:var(--fail)">${m.errors.map(e=>e).join('<br>')}</div>`:'');
+  if(offline) document.getElementById('diffline').innerHTML=`<div class="boundary" style="border-left-color:var(--fail);color:var(--fail)">PROVIDER OFFLINE — showing last successful scan. Watchlist preserved, not overwritten.</div>`;
+
+  document.getElementById('summary').innerHTML=`<div class="status">
+    <div class="st ok"><b>${calls.length}</b><span>qualified calls</span></div>
+    <div class="st ok"><b>${puts.length}</b><span>qualified puts</span></div>
+    <div class="st"><b>${(diff.new||[]).length}</b><span>new today</span></div>
+    <div class="st"><b>${(diff.exited||[]).length}</b><span>exited today</span></div>
+    <div class="st"><b>${(diff.reentered||[]).length}</b><span>re-entered</span></div></div>`;
+
+  document.getElementById('calls').innerHTML=calls.length?calls.map(c=>card(c,m)).join(''):'<div class="empty">NO STRUCTURALLY QUALIFIED CALLS TODAY</div>';
+  document.getElementById('puts').innerHTML=puts.length?puts.map(c=>card(c,m)).join(''):'<div class="empty">NO STRUCTURALLY QUALIFIED PUTS TODAY</div>';
   document.getElementById('ncalls').textContent=calls.length; document.getElementById('nputs').textContent=puts.length;
+  document.getElementById('newtoday').innerHTML=idlist(diff.new);
+  document.getElementById('exittoday').innerHTML=idlist(diff.exited);
+  document.getElementById('reentered').innerHTML=idlist(diff.reentered);
 
-  const idset=(ids)=>ids.map(id=>`<span class="pill" style="margin:2px;display:inline-block">${id}</span>`).join(' ')||'<span class="tag">none</span>';
-  document.getElementById('newtoday').innerHTML=idset([...(diff.new||[]),...(diff.reentered||[]).map(x=>x+' (re-entered)')]);
-  document.getElementById('exittoday').innerHTML=idset(diff.exited||[]);
-  document.getElementById('nnew').textContent=(diff.new||[]).length+(diff.reentered||[]).length;
-  document.getElementById('nexit').textContent=(diff.exited||[]).length;
-
-  const ex=(d.exited||[]).slice(-60).reverse();
+  const ex=(d.exited||[]).slice(-80).reverse();
   document.getElementById('history').innerHTML=ex.length?(
     '<table><thead><tr><th>Contract</th><th>First detected</th><th>Exited</th><th>Reason</th></tr></thead><tbody>'+
     ex.map(c=>`<tr><td>${c.contract_id}</td><td>${(c.first_detected||'').slice(0,10)}</td><td>${(c.exited_at||'').slice(0,10)}</td><td>${c.exit_reason||''}</td></tr>`).join('')+'</tbody></table>'
-  ):'<div class="empty">no exits yet</div>';
+  ):'<div class="empty">no exits yet — history accrues as contracts leave the filter set</div>';
 
   const t=m.thresholds||{};
   document.getElementById('thresholds').textContent=t.premium?
-    `premium $${t.premium[0]}–$${t.premium[1]} · max cost $${t.max_cost} · DTE ${t.dte[0]}–${t.dte[1]} · OI ≥ ${t.min_oi} · volume ≥ ${t.min_vol} · bid/ask ≤ ${t.max_bidask_pct}% · theta burden ≤ ${t.max_theta_burden_pct_day}%/day · long calls & puts only`:'';
-}
-load();
+    `premium $${t.premium[0]}–$${t.premium[1]} · max cost $${t.max_cost} · DTE ${t.dte[0]}–${t.dte[1]} · OI ≥ ${t.min_oi} · volume ≥ ${t.min_vol} · bid/ask ≤ ${t.max_bidask_pct}% · theta burden ≤ ${t.max_theta_burden_pct_day}%/day · account $30,000 · max risk/trade 1% · max portfolio risk 5% · long calls & puts only`:'';
+
+  const h=(location.hash||'').replace('#',''); if(h && TABS.some(t=>t[0]===h)) show(h);
+})();
 </script>
 </body>
 </html>
