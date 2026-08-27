@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scanner Terminal — Enterprise</title>
+<style>
+:root{
+  --bg:#0B0F17; --bg2:#0e1420; --card:#1E293B; --card2:#172033; --line:#243044;
+  --ink:#F1F5F9; --ink2:#94A3B8; --muted:#64748B;
+  --up:#10B981; --down:#EF4444; --warn:#F59E0B; --info:#38BDF8; --brand:#6366F1;
+  --up-bg:rgba(16,185,129,.12); --down-bg:rgba(239,68,68,.12); --warn-bg:rgba(245,158,11,.12); --info-bg:rgba(56,189,248,.12);
+  --radius:14px; --radius-sm:9px; --shadow:0 1px 0 rgba(255,255,255,.03), 0 8px 24px rgba(0,0,0,.35);
+  --nav-w:230px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;max-width:100%}
+body{overflow-x:clip}
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+.tscroll table{min-width:600px}
+body{
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  background:radial-gradient(1200px 600px at 80% -10%,rgba(99,102,241,.10),transparent 60%),var(--bg);
+  color:var(--ink); font-size:14px; line-height:1.45; -webkit-font-smoothing:antialiased;
+}
+a{color:inherit;text-decoration:none}
+.mono{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+.pos{color:var(--up)} .neg{color:var(--down)} .neu{color:var(--warn)}
+
+/* layout */
+.app{display:grid;grid-template-columns:var(--nav-w) 1fr;min-height:100vh}
+nav.side{
+  background:linear-gradient(180deg,var(--bg2),var(--bg));border-right:1px solid var(--line);
+  padding:20px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:6px;
+}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px 18px}
+.brand .logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--brand),var(--info));display:grid;place-items:center;font-weight:800;color:#fff;font-size:15px}
+.brand .t{font-weight:800;letter-spacing:.02em;font-size:15px}
+.brand .t small{display:block;font-weight:500;color:var(--muted);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase}
+.navbtn{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:var(--radius-sm);color:var(--ink2);font-weight:600;cursor:pointer;border:1px solid transparent;transition:.15s}
+.navbtn:hover{background:var(--card2);color:var(--ink)}
+.navbtn.on{background:var(--card);color:var(--ink);border-color:var(--line)}
+.navbtn .ic{width:18px;text-align:center;opacity:.9}
+.navbtn .cnt{margin-left:auto;font-size:11px;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:20px;padding:1px 8px}
+.side .spacer{flex:1}
+.livebox{border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px 12px;background:var(--card2);font-size:12px}
+.livedot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--up);margin-right:7px;box-shadow:0 0 0 0 rgba(16,185,129,.6);animation:pulse 2s infinite}
+.livedot.stale{background:var(--down);animation:none}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(16,185,129,.5)}70%{box-shadow:0 0 0 7px rgba(16,185,129,0)}100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}}
+
+main{padding:22px 26px 60px;max-width:1500px;width:100%}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.topbar h1{font-size:21px;font-weight:800;letter-spacing:-.01em}
+.topbar .sub{color:var(--muted);font-size:12.5px;margin-top:2px}
+.tb-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:5px 11px;border-radius:20px;border:1px solid var(--line);background:var(--card2);color:var(--ink2)}
+.chip.live .d{width:7px;height:7px;border-radius:50%;background:var(--up);animation:pulse 2s infinite}
+.chip.live.stale .d{background:var(--down);animation:none}
+
+.page{display:none;animation:fade .25s ease}
+.page.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* cards + grid */
+.grid{display:grid;gap:14px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.cards3{grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}
+.cards2{grid-template-columns:repeat(auto-fill,minmax(430px,1fr))}
+.card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)}
+.card h3{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:700;margin-bottom:12px}
+.grouphdr{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:2px 2px 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.grouphdr .gt{font-size:15px;font-weight:800;letter-spacing:-.01em}
+.grouphdr .gs{font-size:12px;color:var(--muted)}
+.kpi .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+.kpi .val{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-top:6px}
+.kpi .sub{font-size:12px;color:var(--ink2);margin-top:3px}
+
+/* badges */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;letter-spacing:.03em;padding:3px 9px;border-radius:20px;border:1px solid transparent}
+.badge.call{color:var(--up);background:var(--up-bg);border-color:rgba(16,185,129,.3)}
+.badge.put{color:var(--down);background:var(--down-bg);border-color:rgba(239,68,68,.3)}
+.badge.wait{color:var(--warn);background:var(--warn-bg);border-color:rgba(245,158,11,.3)}
+.badge.info{color:var(--info);background:var(--info-bg);border-color:rgba(56,189,248,.3)}
+.badge.mut{color:var(--ink2);background:var(--card2);border-color:var(--line)}
+
+/* tables */
+table{width:100%;border-collapse:collapse}
+th{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;text-align:right;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+td{padding:11px 12px;border-bottom:1px solid rgba(36,48,68,.5);text-align:right;font-size:13px;white-space:nowrap}
+tbody tr:hover td{background:rgba(99,102,241,.06)}
+.tk{font-weight:700}
+.sub2{color:var(--muted);font-size:11px}
+.btn{font-size:11.5px;font-weight:700;padding:5px 11px;border-radius:8px;border:1px solid var(--line);background:var(--card2);color:var(--ink2);cursor:pointer;transition:.15s}
+.btn:hover{border-color:var(--brand);color:var(--ink)}
+.btn.sell{border-color:rgba(239,68,68,.35);color:#fca5a5}
+.btn.sell:hover{background:var(--down-bg)}
+
+/* option card */
+.ocard{position:relative;overflow:hidden}
+.ocard .rail{position:absolute;left:0;top:0;bottom:0;width:4px}
+.ocard.call .rail{background:var(--up)} .ocard.put .rail{background:var(--down)}
+.ohead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.ohead .tkr{font-size:19px;font-weight:800;letter-spacing:-.01em}
+.ohead .strike{font-size:13px;color:var(--ink2);margin-top:2px}
+.score{flex:0 0 auto;text-align:center;border:2px solid;border-radius:12px;padding:6px 10px;min-width:62px}
+.score .n{font-size:22px;font-weight:800;line-height:1}
+.score .l{font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.okv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 12px}
+.okv .b{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:7px 9px}
+.okv .b span{display:block;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.okv .b b{font-size:15px;font-weight:800}
+.metrics{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.metrics .m{font-size:11px;color:var(--ink2);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:4px 8px}
+.metrics .m b{color:var(--ink)}
+.thesis{font-size:12.5px;color:var(--ink2);line-height:1.5;border-top:1px solid var(--line);padding-top:11px}
+.thesis b{color:var(--ink)}
+.timing{display:flex;align-items:center;gap:8px;margin-top:11px;font-size:11.5px;padding:7px 10px;border-radius:8px;border:1px solid}
+
+/* news */
+.newscard{display:flex;gap:12px;align-items:flex-start}
+.newscard .dot{flex:0 0 auto;width:9px;height:9px;border-radius:50%;margin-top:6px}
+.newscard .h{font-weight:700;font-size:14px}
+.newscard .meta{font-size:11.5px;color:var(--muted);margin-top:3px}
+.newscard .body{font-size:12.5px;color:var(--ink2);margin-top:6px;line-height:1.5}
+.breaking{border-left:3px solid var(--warn)}
+.impact-dd{margin-top:9px;border-top:1px solid var(--line);padding-top:8px}
+.impact-dd summary{cursor:pointer;font-size:11.5px;font-weight:700;color:var(--info);list-style:none;user-select:none}
+.impact-dd summary::-webkit-details-marker{display:none}
+.impact-dd summary::before{content:'▸ ';color:var(--muted)}
+.impact-dd[open] summary::before{content:'▾ '}
+.imwrap{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.imrow{display:grid;grid-template-columns:120px 92px 1fr;gap:10px;align-items:baseline;font-size:12px;padding:6px 0;border-bottom:1px dotted var(--line)}
+.imtk{font-weight:700}
+.imbias{font-size:10.5px;font-weight:800;letter-spacing:.03em;border-radius:5px;padding:2px 7px;text-align:center}
+.imbias.bullish{color:var(--up);background:var(--up-bg)}
+.imbias.bearish{color:var(--down);background:var(--down-bg)}
+.imbias.neutral{color:var(--warn);background:var(--warn-bg)}
+.imreason{color:var(--ink2);line-height:1.45}
+@media(max-width:620px){.imrow{grid-template-columns:1fr;gap:3px}}
+.bbanner{display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,rgba(239,68,68,.20),transparent 70%);border-bottom:1px solid var(--down);padding:10px 16px;font-size:13px;font-weight:650;position:sticky;top:0;z-index:50}
+.bbanner .tag{flex:0 0 auto;background:var(--down);color:#fff;font-size:10px;font-weight:800;letter-spacing:.06em;padding:3px 9px;border-radius:20px;animation:pulse 2s infinite}
+.bbanner .htxt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bbanner .x{flex:0 0 auto;margin-left:auto;cursor:pointer;color:var(--ink2);border:1px solid var(--line);border-radius:7px;padding:4px 10px;min-height:32px}
+.bbanner[hidden]{display:none}
+.senthero{display:flex;align-items:center;gap:16px}
+.senthero .big{font-size:30px;font-weight:800}
+.gauge{flex:1;height:10px;border-radius:20px;background:linear-gradient(90deg,var(--down),var(--warn),var(--up));position:relative}
+.gauge .pin{position:absolute;top:-4px;width:4px;height:18px;border-radius:3px;background:#fff;box-shadow:0 0 8px rgba(255,255,255,.6)}
+
+/* calendar */
+.filterbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+select{background:var(--card2);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:9px 13px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;min-width:180px}
+.catrow{display:grid;grid-template-columns:76px 1fr auto;gap:14px;align-items:center;padding:13px 16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);margin-bottom:10px}
+.catrow .date{text-align:center;border-right:1px solid var(--line);padding-right:12px}
+.catrow .date .d{font-size:20px;font-weight:800;line-height:1}
+.catrow .date .m{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.catrow .main .t{font-weight:700}
+.catrow .main .setup{font-size:12px;color:var(--ink2);margin-top:3px}
+.catrow .impact{text-align:right}
+.empty{color:var(--muted);font-size:13px;padding:22px;text-align:center}
+
+/* ---- mobile: sticky top pill nav ---- */
+@media(max-width:860px){
+  .app{grid-template-columns:1fr}
+  nav.side{position:sticky;top:0;left:0;right:0;height:auto;flex-direction:row;align-items:center;gap:6px;
+    overflow-x:auto;-webkit-overflow-scrolling:touch;border-right:none;border-bottom:1px solid var(--line);
+    z-index:30;padding:8px 10px;background:var(--bg2)}
+  nav.side .brand{padding:0 6px 0 2px;flex:0 0 auto}
+  nav.side .brand .t small{display:none}
+  nav.side .spacer,nav.side .livebox{display:none}
+  .navbtn{flex:0 0 auto;min-height:44px;flex-direction:row;gap:7px;font-size:13px;padding:10px 15px;
+    white-space:nowrap;border:1px solid var(--line);border-radius:22px;background:var(--card2)}
+  .navbtn.on{background:var(--card);border-color:var(--brand);color:var(--ink)}
+  .navbtn .cnt{display:inline}
+  main{padding:16px 14px 60px}
+  .topbar h1{font-size:18px}
+}
+/* ---- mobile: single-column grids + 44px touch targets ---- */
+@media(max-width:768px){
+  .cards2,.cards3{grid-template-columns:1fr}
+  .kpis{grid-template-columns:1fr 1fr}
+  .okv{grid-template-columns:repeat(3,1fr)}
+  .btn{min-height:44px;padding:9px 13px}
+  select{min-height:44px}
+  .catrow{grid-template-columns:60px 1fr}
+  .catrow .impact{grid-column:1/-1;text-align:left}
+}
+@media(max-width:480px){
+  .kpis{grid-template-columns:1fr}
+  .okv{grid-template-columns:1fr 1fr}
+  .senthero{flex-wrap:wrap}
+  .obig{font-size:16px}
+}
+</style>
+<script>window.SCANNER_API_BASE="https://scanner-terminal-1.onrender.com";window.DASH_DATA={"meta": {"portfolioLabel": "Paper portfolio", "asOf": "Aug 26, 2026 \u00b7 8:25 PM ET", "mode": "baked"}, "portfolio": {"capital": 1000, "cash": 145.94, "realized": -2484.0, "unrealized": -80.0, "winRate": 0.18421052631578946, "winRateN": 38, "drawdown": -3.4, "positions": [{"ticker": "QQQ", "strategy": "etf 2026-09-04: SPY composite BULLISH 79 \u2014", "entryDate": "2026-08-25", "exp": "2026-09-04", "cost": 254.0, "value": 224.0, "peakPct": 0.0, "trailActive": false, "trailStop": 127.0, "hardStop": 127.0, "plPct": -11.8, "kind": "call"}, {"ticker": "IWM", "strategy": "etf 2026-09-11: SPY composite BULLISH 79 \u2014", "entryDate": "2026-08-25", "exp": "2026-09-11", "cost": 298.0, "value": 252.0, "peakPct": 0.0, "trailActive": false, "trailStop": 149.0, "hardStop": 149.0, "plPct": -15.4, "kind": "call"}, {"ticker": "SMH", "strategy": "etf 2026-09-04: SPY composite BULLISH 79 \u2014", "entryDate": "2026-08-25", "exp": "2026-09-04", "cost": 195.0, "value": 140.0, "peakPct": 0.0, "trailActive": false, "trailStop": 97.5, "hardStop": 97.5, "plPct": -28.2, "kind": "call"}, {"ticker": "NU", "strategy": "mover 2026-09-04: Q2 earnings: first billi", "entryDate": "2026-08-25", "exp": "2026-09-04", "cost": 300.0, "value": 240.0, "peakPct": 0.0, "trailActive": false, "trailStop": 150.0, "hardStop": 150.0, "plPct": -20.0, "kind": "call"}, {"ticker": "PLTR", "strategy": "bluechip 2026-08-28: thematic alignment wi", "entryDate": "2026-08-26", "exp": "2026-08-28", "cost": 244.0, "value": 418.0, "peakPct": 71.3, "trailActive": true, "trailStop": 334.4, "hardStop": 122.0, "plPct": 71.3, "kind": "call"}, {"ticker": "AAPL", "strategy": "bluechip 2026-09-11: thematic alignment wi", "entryDate": "2026-08-26", "exp": "2026-09-11", "cost": 254.0, "value": 250.0, "peakPct": 0.0, "trailActive": false, "trailStop": 127.0, "hardStop": 127.0, "plPct": -1.6, "kind": "call"}, {"ticker": "COIN", "strategy": "bluechip 2026-08-28: thematic alignment wi", "entryDate": "2026-08-26", "exp": "2026-08-28", "cost": 258.0, "value": 255.0, "peakPct": 0.0, "trailActive": false, "trailStop": 129.0, "hardStop": 129.0, "plPct": -1.2, "kind": "call"}, {"ticker": "RDDT", "strategy": "mover 2026-09-04: S&P 500 inclusion announ", "entryDate": "2026-08-26", "exp": "2026-09-04", "cost": 290.0, "value": 220.0, "peakPct": 0.0, "trailActive": false, "trailStop": 145.0, "hardStop": 145.0, "plPct": -24.1, "kind": "call"}, {"ticker": "SMH", "strategy": "etf 2026-08-28: SPY composite BULLISH 64 \u2014", "entryDate": "2026-08-26", "exp": "2026-08-28", "cost": 276.0, "value": 290.0, "peakPct": 5.1, "trailActive": false, "trailStop": 138.0, "hardStop": 138.0, "plPct": 5.1, "kind": "call"}, {"ticker": "NVDA", "strategy": "bluechip 2026-09-04: thematic alignment wi", "entryDate": "2026-08-27", "exp": "2026-09-04", "cost": 257.0, "value": 257.0, "peakPct": 0.0, "trailActive": false, "trailStop": 128.5, "hardStop": 128.5, "plPct": 0, "kind": "call"}, {"ticker": "QQQ", "strategy": "etf 2026-09-11: SPY composite BULLISH 65 \u2014", "entryDate": "2026-08-27", "exp": "2026-09-11", "cost": 268.0, "value": 268.0, "peakPct": 0.0, "trailActive": false, "trailStop": 134.0, "hardStop": 134.0, "plPct": 0, "kind": "call"}, {"ticker": "NU", "strategy": "mover 2026-09-18: Q2 earnings: first billi", "entryDate": "2026-08-27", "exp": "2026-09-18", "cost": 258.0, "value": 258.0, "peakPct": 0.0, "trailActive": false, "trailStop": 129.0, "hardStop": 129.0, "plPct": 0, "kind": "call"}, {"ticker": "CAPR", "strategy": "mover 2026-09-18: Q2 earnings, +69.6% \u2014 bi", "entryDate": "2026-08-27", "exp": "2026-09-18", "cost": 220.0, "value": 220.0, "peakPct": 0.0, "trailActive": false, "trailStop": 110.0, "hardStop": 110.0, "plPct": 0, "kind": "call"}, {"ticker": "XLK", "strategy": "etf 2026-09-18: SPY composite BULLISH 65 \u2014", "entryDate": "2026-08-27", "exp": "2026-09-18", "cost": 196.0, "value": 196.0, "peakPct": 0.0, "trailActive": false, "trailStop": 98.0, "hardStop": 98.0, "plPct": 0, "kind": "call"}, {"ticker": "XLE", "strategy": "etf 2026-09-18: SPY composite BULLISH 65 \u2014", "entryDate": "2026-08-27", "exp": "2026-09-18", "cost": 297.0, "value": 297.0, "peakPct": 0.0, "trailActive": false, "trailStop": 148.5, "hardStop": 148.5, "plPct": 0, "kind": "call"}], "closed": [{"ticker": "ONON", "strategy": "PUT", "entryDate": "2026-08-11", "exitDate": "2026-08-12", "plPct": -50.0, "result": "loss", "reason": "hard stop -50% (rule-enforced)"}, {"ticker": "NIQ", "strategy": "CALL", "entryDate": "2026-08-11", "exitDate": "2026-08-13", "plPct": -25.0, "result": "loss", "reason": "2-day exit"}, {"ticker": "FRMI", "strategy": "CALL", "entryDate": "2026-08-11", "exitDate": "2026-08-13", "plPct": -16.7, "result": "loss", "reason": "2-day exit"}, {"ticker": "SPY", "strategy": "CALL", "entryDate": "2026-08-13", "exitDate": "2026-08-13", "plPct": -50.0, "result": "loss", "reason": "hard stop -50% (rule-enforced)"}, {"ticker": "NVDA", "strategy": "CALL", "entryDate": "2026-08-13", "exitDate": "2026-08-20", "plPct": -50.0, "result": "loss", "reason": "hard stop -50% (rule-enforced)"}, {"ticker": "AAPL", "strategy": "CALL", "entryDate": "2026-08-13", "exitDate": "2026-08-20", "plPct": -50.0, "result": "loss", "reason": "hard stop -50% (rule-enforced)"}, {"ticker": "QQQ", "strategy": "CALL", "entryDate": "2026-08-13", "exitDate": "2026-08-20", "plPct": -50.0, "result": "loss", "reason": "hard stop -50% (rule-enforced)"}, {"ticker": "PLTR", "strategy": "CALL", "entryDate": "2026-08-13", "exitDate": "2026-08-20", "plPct": -50.0, "result": "loss", "reason": "hard stop -50% (rule-enforced)"}, {"ticker": "XLE", "strategy": "CALL", "entryDate": "2026-08-13", "exitDate": "2026-08-20", "plPct": 308.1, "result": "win", "reason": "1DTE Profit Lock (Overnight Protection)"}, {"ticker": "IWM", "strategy": "CALL", "entryDate": "2026-08-13", "exitDate": "2026-08-20", "plPct": -50.0, "result": "loss", "reason": "hard stop -50% (rule-enforced)"}, {"ticker": "NFLX", "strategy": "CALL", "entryDate": "2026-08-13", "exitDate": "2026-08-20", "plPct": 88.4, "result": "win", "reason": "1DTE Profit Lock (Overnight Protection)"}, {"ticker": "SPY", "strategy": "CALL", "entryDate": "2026-08-14", "exitDate": "2026-08-20", "plPct": -50.0, "result": "loss", "reason": "hard stop -50% (rule-enforced)"}, {"ticker": "XLE", "strategy": "CALL", "entryDate": "2026-08-14", "exitDate": "2026-08-20", "plPct": 69.7, "result": "win", "reason": "1DTE Profit Lock (Overnight Protection)"}, {"ticker": "NFLX", "strategy": "CALL", "entryDate": "2026-08-14", "exitDate": "2026-08-20", "plPct": -9.5, "result": "loss", "reason": "time exit (no profit)"}, {"ticker": "QQQ", "strategy": "CALL", "entryDate": "2026-08-14", "exitDate": "2026-08-20", "plPct": -50.0, "result": "loss", "reason": "hard stop -50% (rule-enforced)"}, {"ticker": "NVDA", "strategy": "CALL", "entryDate": "2026-08-14", "exitDate": "2026-08-20", "plPct": -50.0, "result": "loss", "reason": "hard stop -50% (rule-enforced)"}, {"ticker": "PLTR", "strategy": "CALL", "entryDate": "2026-08-14", "exitDate": "2026-08-20", "plPct": -50.0, "result": "loss", "reason": "hard stop -50% (rule-enforced)"}, {"ticker": "LUNR", "strategy": "CALL", "entryDate": "2026-08-14", "exitDate": "2026-08-20", "plPct": -50.0, "result": "loss", "reason": "hard stop -50% (rule-enforced)"}, {"ticker": "IWM", "strategy": "CALL", "entryDate": "2026-08-14", "exitDate": "2026-08-20", "plPct": -50.0, "result": "loss", "reason": "hard stop -50% (rule-enforced)"}, {"ticker": "SPY", "strategy": "CALL", "entryDate": "2026-08-20", "exitDate": "2026-08-21", "plPct": -84.4, "result": "loss", "reason": "0DTE Force Close (pre-liquidation)"}, {"ticker": "AAPL", "strategy": "CALL", "entryDate": "2026-08-20", "exitDate": "2026-08-21", "plPct": -55.2, "result": "loss", "reason": "hard stop -50%"}, {"ticker": "RDDT", "strategy": "CALL", "entryDate": "2026-08-20", "exitDate": "2026-08-21", "plPct": -90.9, "result": "loss", "reason": "0DTE Force Close (pre-liquidation)"}, {"ticker": "AMD", "strategy": "CALL", "entryDate": "2026-08-20", "exitDate": "2026-08-21", "plPct": -98.6, "result": "loss", "reason": "0DTE Force Close (pre-liquidation)"}, {"ticker": "PLTR", "strategy": "CALL", "entryDate": "2026-08-20", "exitDate": "2026-08-21", "plPct": -25.0, "result": "loss", "reason": "0DTE Force Close (pre-liquidation)"}, {"ticker": "NFLX", "strategy": "CALL", "entryDate": "2026-08-20", "exitDate": "2026-08-24", "plPct": -16.3, "result": "loss", "reason": "time exit (no profit)"}, {"ticker": "NVDA", "strategy": "CALL", "entryDate": "2026-08-20", "exitDate": "2026-08-24", "plPct": -57.0, "result": "loss", "reason": "hard stop -50%"}, {"ticker": "NU", "strategy": "CALL", "entryDate": "2026-08-20", "exitDate": "2026-08-25", "plPct": 22.2, "result": "win", "reason": "trailing stop"}, {"ticker": "XLE", "strategy": "CALL", "entryDate": "2026-08-24", "exitDate": "2026-08-25", "plPct": -66.7, "result": "loss", "reason": "hard stop -50%"}, {"ticker": "PLTR", "strategy": "CALL", "entryDate": "2026-08-24", "exitDate": "2026-08-25", "plPct": -56.3, "result": "loss", "reason": "hard stop -50%"}, {"ticker": "XLE", "strategy": "CALL", "entryDate": "2026-08-25", "exitDate": "2026-08-25", "plPct": -63.2, "result": "loss", "reason": "hard stop -50%"}, {"ticker": "AAPL", "strategy": "CALL", "entryDate": "2026-08-24", "exitDate": "2026-08-26", "plPct": 10.8, "result": "win", "reason": "time exit (no profit)"}, {"ticker": "RDDT", "strategy": "CALL", "entryDate": "2026-08-24", "exitDate": "2026-08-26", "plPct": 24.0, "result": "win", "reason": "trailing stop"}, {"ticker": "RDDT", "strategy": "CALL", "entryDate": "2026-08-25", "exitDate": "2026-08-26", "plPct": -50.9, "result": "loss", "reason": "trailing stop"}, {"ticker": "TSLA", "strategy": "CALL", "entryDate": "2026-08-25", "exitDate": "2026-08-26", "plPct": -67.2, "result": "loss", "reason": "hard stop -50%"}, {"ticker": "RDDT", "strategy": "CALL", "entryDate": "2026-08-25", "exitDate": "2026-08-26", "plPct": -77.8, "result": "loss", "reason": "hard stop -50%"}, {"ticker": "LUNR", "strategy": "CALL", "entryDate": "2026-08-25", "exitDate": "2026-08-26", "plPct": -69.0, "result": "loss", "reason": "hard stop -50%"}, {"ticker": "NFLX", "strategy": "CALL", "entryDate": "2026-08-24", "exitDate": "2026-08-26", "plPct": 26.2, "result": "win", "reason": "trailing stop"}, {"ticker": "XLE", "strategy": "CALL", "entryDate": "2026-08-26", "exitDate": "2026-08-26", "plPct": -50.0, "result": "loss", "reason": "hard stop -50%"}]}, "technicals": {"spySpot": null, "spyDayPct": null, "vwapDelta": null, "bollingerPctB": null, "em0dte": {}}, "chain": {"atmIV": null, "pcRatio": null, "callWall": null, "putWall": null, "gammaFlip": null}, "options": [{"ticker": "QQQ", "kind": "call", "strike": 735.0, "exp": "2026-09-04", "entry": 1.27, "target": 7.62, "stop": 0.635, "contracts": 2, "cost": 254.0, "conf": 63, "spot": 709.96, "iv": 0.1711, "otm": 3.5, "oi": 27415.0, "em": 1.27, "reqMove": 3.71, "spreadPct": 2.4, "exitBy": "2026-08-27", "thesis": "3.53% OTM, 2.4% spread, OI 27415.0. Breakeven ratio 2.93 \u2014 needs 3.71% vs 1.27% implied over the hold.", "peakPct": 0.0, "trailActive": false, "trailStop": 0.635, "uncapped": true}, {"ticker": "IWM", "kind": "call", "strike": 306.0, "exp": "2026-09-11", "entry": 1.49, "target": 8.94, "stop": 0.745, "contracts": 2, "cost": 298.0, "conf": 61, "spot": 298.94, "iv": 0.1483, "otm": 2.4, "oi": 4084.0, "em": 1.1, "reqMove": 2.86, "spreadPct": 2.7, "exitBy": "2026-08-27", "thesis": "2.36% OTM, 2.7% spread, OI 4084.0. Breakeven ratio 2.61 \u2014 needs 2.86% vs 1.1% implied over the hold.", "peakPct": 0.0, "trailActive": false, "trailStop": 0.745, "uncapped": true}, {"ticker": "SMH", "kind": "call", "strike": 600.0, "exp": "2026-09-04", "entry": 1.95, "target": 11.7, "stop": 0.975, "contracts": 1, "cost": 195.0, "conf": 51, "spot": 553.63, "iv": 0.3779, "otm": 8.4, "oi": 2196.0, "em": 2.8, "reqMove": 8.73, "spreadPct": 11.3, "exitBy": "2026-08-27", "thesis": "8.38% OTM, 11.3% spread, OI 2196.0. Breakeven ratio 3.12 \u2014 needs 8.73% vs 2.8% implied over the hold.", "peakPct": 0.0, "trailActive": false, "trailStop": 0.975, "uncapped": true}, {"ticker": "NU", "kind": "call", "strike": 15.5, "exp": "2026-09-04", "entry": 0.25, "target": 1.5, "stop": 0.125, "contracts": 12, "cost": 300.0, "conf": 53, "spot": 15.12, "iv": 0.3672, "otm": 2.5, "oi": 846.0, "em": 2.72, "reqMove": 4.17, "spreadPct": 20.0, "exitBy": "2026-08-27", "thesis": "2.51% OTM, 20.0% spread, OI 846.0. Breakeven ratio 1.53 \u2014 needs 4.17% vs 2.72% implied over the hold.", "peakPct": 0.0, "trailActive": false, "trailStop": 0.125, "uncapped": true}, {"ticker": "PLTR", "kind": "call", "strike": 180.0, "exp": "2026-08-28", "entry": 1.22, "target": 7.32, "stop": 0.61, "contracts": 2, "cost": 244.0, "conf": 68, "spot": 174.8, "iv": 0.5689, "otm": 3.0, "oi": 28005.0, "em": 4.21, "reqMove": 3.67, "spreadPct": 2.5, "exitBy": "2026-08-28", "thesis": "2.97% OTM, 2.5% spread, OI 28005.0. Breakeven ratio 0.87 \u2014 needs 3.67% vs 4.21% implied over the hold.", "peakPct": 71.3, "trailActive": true, "trailStop": 1.672, "uncapped": true}, {"ticker": "AAPL", "kind": "call", "strike": 325.0, "exp": "2026-09-11", "entry": 2.54, "target": 15.24, "stop": 1.27, "contracts": 1, "cost": 254.0, "conf": 58, "spot": 313.2, "iv": 0.2469, "otm": 3.8, "oi": 5310.0, "em": 1.83, "reqMove": 4.58, "spreadPct": 3.9, "exitBy": "2026-08-28", "thesis": "3.77% OTM, 3.9% spread, OI 5310.0. Breakeven ratio 2.51 \u2014 needs 4.58% vs 1.83% implied over the hold.", "peakPct": 0.0, "trailActive": false, "trailStop": 1.27, "uncapped": true}, {"ticker": "COIN", "kind": "call", "strike": 185.0, "exp": "2026-08-28", "entry": 2.58, "target": 15.48, "stop": 1.29, "contracts": 1, "cost": 258.0, "conf": 67, "spot": 180.95, "iv": 0.7384, "otm": 2.2, "oi": 5223.0, "em": 5.47, "reqMove": 3.66, "spreadPct": 5.8, "exitBy": "2026-08-28", "thesis": "2.24% OTM, 5.8% spread, OI 5223.0. Breakeven ratio 0.67 \u2014 needs 3.66% vs 5.47% implied over the hold.", "peakPct": 0.0, "trailActive": false, "trailStop": 1.29, "uncapped": true}, {"ticker": "RDDT", "kind": "call", "strike": 165.0, "exp": "2026-09-04", "entry": 2.9, "target": 17.4, "stop": 1.45, "contracts": 1, "cost": 290.0, "conf": 62, "spot": 157.05, "iv": 0.5755, "otm": 5.1, "oi": 1354.0, "em": 4.26, "reqMove": 6.91, "spreadPct": 6.9, "exitBy": "2026-08-28", "thesis": "5.06% OTM, 6.9% spread, OI 1354.0. Breakeven ratio 1.62 \u2014 needs 6.91% vs 4.26% implied over the hold.", "peakPct": 0.0, "trailActive": false, "trailStop": 1.45, "uncapped": true}, {"ticker": "SMH", "kind": "call", "strike": 570.0, "exp": "2026-08-28", "entry": 2.76, "target": 16.56, "stop": 1.38, "contracts": 1, "cost": 276.0, "conf": 42, "spot": 554.43, "iv": 0.4618, "otm": 2.8, "oi": 1826.0, "em": 3.42, "reqMove": 3.31, "spreadPct": 14.5, "exitBy": "2026-08-28", "thesis": "2.81% OTM, 14.5% spread, OI 1826.0. Breakeven ratio 0.97 \u2014 needs 3.31% vs 3.42% implied over the hold.", "peakPct": 5.1, "trailActive": false, "trailStop": 1.38, "uncapped": true}, {"ticker": "NVDA", "kind": "call", "strike": 225.0, "exp": "2026-09-04", "entry": 2.57, "target": 15.42, "stop": 1.285, "contracts": 1, "cost": 257.0, "conf": 73, "spot": 219.53, "iv": 0.5738, "otm": 2.5, "oi": 8539.0, "em": 6.01, "reqMove": 3.66, "spreadPct": 3.1, "exitBy": "2026-08-31", "thesis": "2.49% OTM, 3.1% spread, OI 8539.0. Breakeven ratio 0.61 \u2014 needs 3.66% vs 6.01% implied over the hold.", "peakPct": 0.0, "trailActive": false, "trailStop": 1.285, "uncapped": true}, {"ticker": "QQQ", "kind": "call", "strike": 735.0, "exp": "2026-09-11", "entry": 2.68, "target": 16.08, "stop": 1.34, "contracts": 1, "cost": 268.0, "conf": 69, "spot": 719.77, "iv": 0.1592, "otm": 2.1, "oi": 1599.0, "em": 1.67, "reqMove": 2.49, "spreadPct": 3.4, "exitBy": "2026-08-31", "thesis": "2.12% OTM, 3.4% spread, OI 1599.0. Breakeven ratio 1.49 \u2014 needs 2.49% vs 1.67% implied over the hold.", "peakPct": 0.0, "trailActive": false, "trailStop": 1.34, "uncapped": true}, {"ticker": "NU", "kind": "call", "strike": 15.5, "exp": "2026-09-18", "entry": 0.43, "target": 2.58, "stop": 0.215, "contracts": 6, "cost": 258.0, "conf": 71, "spot": 15.15, "iv": 0.3518, "otm": 2.3, "oi": 4470.0, "em": 3.68, "reqMove": 5.15, "spreadPct": 7.0, "exitBy": "2026-08-31", "thesis": "2.31% OTM, 7.0% spread, OI 4470.0. Breakeven ratio 1.4 \u2014 needs 5.15% vs 3.68% implied over the hold.", "peakPct": 0.0, "trailActive": false, "trailStop": 0.215, "uncapped": true}, {"ticker": "CAPR", "kind": "call", "strike": 10.0, "exp": "2026-09-18", "entry": 1.1, "target": 6.6, "stop": 0.55, "contracts": 2, "cost": 220.0, "conf": 71, "spot": 9.33, "iv": 1.3442, "otm": 7.2, "oi": 10070.0, "em": 14.07, "reqMove": 18.97, "spreadPct": 13.6, "exitBy": "2026-08-31", "thesis": "7.18% OTM, 13.6% spread, OI 10070.0. Breakeven ratio 1.35 \u2014 needs 18.97% vs 14.07% implied over the hold.", "peakPct": 0.0, "trailActive": false, "trailStop": 0.55, "uncapped": true}, {"ticker": "XLK", "kind": "call", "strike": 190.0, "exp": "2026-09-18", "entry": 1.96, "target": 11.76, "stop": 0.98, "contracts": 1, "cost": 196.0, "conf": 62, "spot": 182.95, "iv": 0.2393, "otm": 3.9, "oi": 4148.0, "em": 2.51, "reqMove": 4.92, "spreadPct": 8.7, "exitBy": "2026-08-31", "thesis": "3.85% OTM, 8.7% spread, OI 4148.0. Breakeven ratio 1.97 \u2014 needs 4.92% vs 2.51% implied over the hold.", "peakPct": 0.0, "trailActive": false, "trailStop": 0.98, "uncapped": true}, {"ticker": "XLE", "kind": "call", "strike": 67.5, "exp": "2026-09-18", "entry": 0.27, "target": 1.62, "stop": 0.135, "contracts": 11, "cost": 297.0, "conf": 59, "spot": 62.43, "iv": 0.2574, "otm": 8.1, "oi": 13338.0, "em": 2.69, "reqMove": 8.55, "spreadPct": 7.4, "exitBy": "2026-08-31", "thesis": "8.12% OTM, 7.4% spread, OI 13338.0. Breakeven ratio 3.17 \u2014 needs 8.55% vs 2.69% implied over the hold.", "peakPct": 0.0, "trailActive": false, "trailStop": 0.135, "uncapped": true}], "news": {"sentiment": 0.929, "sentimentLabel": "Bullish", "breakingCount": 12, "items": [{"breaking": true, "sentiment": "bullish", "ticker": "XBI", "headline": "FDA Approves First in Class Targeted Therapy for Metastatic Pancreatic Cancer", "source": "FDA Press", "time": "9h", "body": "The U.S. Food and Drug Administration today approved Rasonque (daraxonrasib), a RAS inhibitor for the most common form of pancreatic cancer\u2014delivering a new treatment option to patients with advanced pancreatic cancer months ahead of schedule.", "url": "http://www.fda.gov/news-events/press-announcements/fda-approves-first-class-targeted-therapy-metastatic-pancreatic-cancer", "impact": [{"ticker": "XBI", "sector": "Biotech", "bias": "bullish", "reason": "Approvals/positive readouts de-risk the biotech complex."}]}, {"breaking": true, "sentiment": "bullish", "ticker": "XBI", "headline": "Medical device maker Boston Scientific is being hit by a cyberattack. The shares are falling", "source": "CNBC", "time": "12h", "body": "The attack has disrupted the company's ability to ship products, and it's not clear when services will be restored.", "url": "https://www.cnbc.com/2026/08/26/medical-device-maker-boston-scientific-is-being-hit-by-a-cyber-attack-the-shares-are-falling.html", "impact": [{"ticker": "XBI", "sector": "Biotech", "bias": "bullish", "reason": "Approvals/positive readouts de-risk the biotech complex."}]}, {"breaking": true, "sentiment": "bullish", "ticker": "XBI", "headline": "FDA Approves First Therapy for Patients aged 8 years and older with Glycogen Storage Disease Type Ia", "source": "FDA Press", "time": "7d", "body": "The U.S. Food and Drug Administration today issued an accelerated approval for Genglycos (pariglasgene brecaparvovec-opnr) as the first-ever treatment for adults and children 8 years of age and older with glycogen storage disease type Ia (GSDIa)", "url": "http://www.fda.gov/news-events/press-announcements/fda-approves-first-therapy-patients-aged-8-years-and-older-glycogen-storage-disease-type-ia", "impact": [{"ticker": "XBI", "sector": "Biotech", "bias": "bullish", "reason": "Approvals/positive readouts de-risk the biotech complex."}]}, {"breaking": true, "sentiment": "bullish", "ticker": "XBI", "headline": "FDA Approves New Engineered Viral Immunotherapy for Patients with Treatment-Resistant Advanced Melanoma", "source": "FDA Press", "time": "20d", "body": "The U.S. Food and Drug Administration today granted accelerated approval to Tudriqev (vusolimogene oderparepvec-wtpg), a genetically modified oncolytic viral therapy for the treatment of advanced, refractory melanoma.", "url": "http://www.fda.gov/news-events/press-announcements/fda-approves-new-engineered-viral-immunotherapy-patients-treatment-resistant-advanced-melanoma", "impact": [{"ticker": "XBI", "sector": "Biotech", "bias": "bullish", "reason": "Approvals/positive readouts de-risk the biotech complex."}]}, {"breaking": true, "sentiment": "bullish", "ticker": "(named co.)", "headline": "8-K - CaliberCos Inc. (0001627282) (Filer)", "source": "SEC 8-K", "time": "recent", "body": "<b>Filed:</b> 2026-08-26 <b>AccNo:</b> 0001627282-26-000065 <b>Size:</b> 147 KB\n<br />Item 3.01: Notice of Delisting or Failure to Satisfy a Continued Listing Rule or Standard; Transfer of Listing", "url": "https://www.sec.gov/Archives/edgar/data/1627282/000162728226000065/0001627282-26-000065-index.htm", "impact": [{"ticker": "(named co.)", "sector": "", "bias": "bullish", "reason": "M&A / material 8-K events are typically catalysts for the named company."}]}, {"breaking": true, "sentiment": "bullish", "ticker": "(named co.)", "headline": "8-K - Bleichroeder Acquisition Corp. II (0002088295) (Filer)", "source": "SEC 8-K", "time": "recent", "body": "<b>Filed:</b> 2026-08-26 <b>AccNo:</b> 0001213900-26-094046 <b>Size:</b> 323 KB\n<br />Item 5.02: Departure of Directors or Certain Officers; Election of Directors; Appointment of Certain Officers: Compensatory Arrangements of Certain Officers\n<br />Item 5.07: Submission of Matter", "url": "https://www.sec.gov/Archives/edgar/data/2088295/000121390026094046/0001213900-26-094046-index.htm", "impact": [{"ticker": "(named co.)", "sector": "", "bias": "bullish", "reason": "M&A / material 8-K events are typically catalysts for the named company."}]}, {"breaking": true, "sentiment": "bullish", "ticker": "(named co.)", "headline": "8-K - Flash Sports & Media Holdings, Inc. (0001706524) (Filer)", "source": "SEC 8-K", "time": "recent", "body": "<b>Filed:</b> 2026-08-26 <b>AccNo:</b> 0001213900-26-094039 <b>Size:</b> 206 KB\n<br />Item 7.01: Regulation FD Disclosure\n<br />Item 9.01: Financial Statements and Exhibits", "url": "https://www.sec.gov/Archives/edgar/data/1706524/000121390026094039/0001213900-26-094039-index.htm", "impact": [{"ticker": "(named co.)", "sector": "", "bias": "bullish", "reason": "M&A / material 8-K events are typically catalysts for the named company."}]}, {"breaking": true, "sentiment": "bullish", "ticker": "(named co.)", "headline": "8-K - Future FinTech Group Inc. (0001066923) (Filer)", "source": "SEC 8-K", "time": "recent", "body": "<b>Filed:</b> 2026-08-26 <b>AccNo:</b> 0001213900-26-094034 <b>Size:</b> 229 KB\n<br />Item 3.03: Material Modifications to Rights of Security Holders\n<br />Item 5.03: Amendments to Articles of Incorporation or Bylaws; Change in Fiscal Year\n<br />Item 7.01: Regulation FD Disclosur", "url": "https://www.sec.gov/Archives/edgar/data/1066923/000121390026094034/0001213900-26-094034-index.htm", "impact": [{"ticker": "(named co.)", "sector": "", "bias": "bullish", "reason": "M&A / material 8-K events are typically catalysts for the named company."}]}, {"breaking": true, "sentiment": "bullish", "ticker": "(named co.)", "headline": "8-K - McEwen Inc. (0000314203) (Filer)", "source": "SEC 8-K", "time": "recent", "body": "<b>Filed:</b> 2026-08-26 <b>AccNo:</b> 0001104659-26-101630 <b>Size:</b> 263 KB\n<br />Item 5.02: Departure of Directors or Certain Officers; Election of Directors; Appointment of Certain Officers: Compensatory Arrangements of Certain Officers\n<br />Item 7.01: Regulation FD Disclo", "url": "https://www.sec.gov/Archives/edgar/data/314203/000110465926101630/0001104659-26-101630-index.htm", "impact": [{"ticker": "(named co.)", "sector": "", "bias": "bullish", "reason": "M&A / material 8-K events are typically catalysts for the named company."}]}, {"breaking": true, "sentiment": "bullish", "ticker": "(named co.)", "headline": "8-K - CHS INC (0000823277) (Filer)", "source": "SEC 8-K", "time": "recent", "body": "<b>Filed:</b> 2026-08-26 <b>AccNo:</b> 0000823277-26-000029 <b>Size:</b> 214 KB\n<br />Item 1.01: Entry into a Material Definitive Agreement\n<br />Item 2.03: Creation of a Direct Financial Obligation or an Obligation under an Off-Balance Sheet Arrangement of a Registrant", "url": "https://www.sec.gov/Archives/edgar/data/823277/000082327726000029/0000823277-26-000029-index.htm", "impact": [{"ticker": "(named co.)", "sector": "", "bias": "bullish", "reason": "M&A / material 8-K events are typically catalysts for the named company."}]}, {"breaking": true, "sentiment": "bullish", "ticker": "(named co.)", "headline": "8-K - Technology & Telecommunication Acquisition Corp (0001900679) (Filer)", "source": "SEC 8-K", "time": "recent", "body": "<b>Filed:</b> 2026-08-26 <b>AccNo:</b> 0001493152-26-040261 <b>Size:</b> 1 MB\n<br />Item 1.01: Entry into a Material Definitive Agreement\n<br />Item 5.03: Amendments to Articles of Incorporation or Bylaws; Change in Fiscal Year\n<br />Item 5.07: Submission of Matters to a Vote of ", "url": "https://www.sec.gov/Archives/edgar/data/1900679/000149315226040261/0001493152-26-040261-index.htm", "impact": [{"ticker": "(named co.)", "sector": "", "bias": "bullish", "reason": "M&A / material 8-K events are typically catalysts for the named company."}]}, {"breaking": true, "sentiment": "bullish", "ticker": "(named co.)", "headline": "8-K - HF Sinclair Corp (0001915657) (Filer)", "source": "SEC 8-K", "time": "recent", "body": "<b>Filed:</b> 2026-08-26 <b>AccNo:</b> 0001628280-26-059117 <b>Size:</b> 181 KB\n<br />Item 8.01: Other Events", "url": "https://www.sec.gov/Archives/edgar/data/1915657/000162828026059117/0001628280-26-059117-index.htm", "impact": [{"ticker": "(named co.)", "sector": "", "bias": "bullish", "reason": "M&A / material 8-K events are typically catalysts for the named company."}]}, {"breaking": false, "sentiment": "neutral", "ticker": "", "headline": "Gigasoft 2026 JavaScript Chart Comparison: ProEssentials, Highcharts, SciChart, LightningChart, ECharts", "source": "PR Newswire", "time": "10m", "body": "<p>ProEssentialsJS is not faster, it's [magnitudes] faster. LightningChart's published refreshing test is 1,000,000 points at 10 Hz, which is 10 million points per second. ProEssentialsJS runs 25,000,000 points at 25 frames per second, or 625 million points per second. At 100,000", "url": "https://www.prnewswire.com/news-releases/gigasoft-2026-javascript-chart-comparison-proessentials-highcharts-scichart-lightningchart-echarts-302861064.html", "impact": []}, {"breaking": false, "sentiment": "neutral", "ticker": "", "headline": "Baidu Provides Update on Voluntary Conversion to Dual-Primary Listing on the Main Board of the Hong Kong Stock Exchange", "source": "PR Newswire", "time": "25m", "body": "<p>BEIJING, Aug. 26, 2026 /PRNewswire/ -- Baidu, Inc. (\"Baidu\" or the \"Company\") (Nasdaq: BIDU; HKEX: 9888 (HKD Counter) and 89888 (RMB Counter)), a leading AI company with strong Internet foundation, today announced that the Company's voluntary conversion of its secondary listin", "url": "https://www.prnewswire.com/news-releases/baidu-provides-update-on-voluntary-conversion-to-dual-primary-listing-on-the-main-board-of-the-hong-kong-stock-exchange-302860703.html", "impact": []}]}, "catalysts": [{"date": "2026-08-22", "ticker": "CAPR", "type": "FDA/PDUFA", "impact": "high", "setup": "PDUFA Review Action (Deramiocel BLA)", "vol": "High"}, {"date": "2026-08-23", "ticker": "RARE", "type": "FDA/PDUFA", "impact": "med", "setup": "FDA Action Date (DTX401 BLA)", "vol": "Medium"}, {"date": "2026-08-25", "ticker": "JAZZ", "type": "FDA/PDUFA", "impact": "high", "setup": "FDA PDUFA Decision (Ziihera sBLA)", "vol": "High"}, {"date": "2026-08-27", "ticker": "GILD", "type": "FDA/PDUFA", "impact": "high", "setup": "FDA Decision (Bictegravir/Lenacapavir NDA)", "vol": "High"}, {"date": "2026-09-18", "ticker": "NUVL", "type": "FDA/PDUFA", "impact": "high", "setup": "PDUFA Target Date (Zidesamtinib NDA)", "vol": "High"}], "watchlist": ["AAPL", "CAPR", "COIN", "FIG", "GILD", "IWM", "JAZZ", "JMKE", "NU", "NUVL", "NVDA", "PLTR", "QMLS", "QQQ", "RARE", "RDDT", "REF", "SMH", "XLE", "XLK"], "performance": {"lifetime": {"trades": 38, "wins": 7, "losses": 31, "winRate": 0.1842, "grossPL": -2484.0, "cost": 8674.0, "roiPct": -28.6, "profitFactor": 0.33, "avgWin": 178.14, "avgLoss": -120.35, "exits": {"profitLock": 3, "trailing": 4, "hardStop": 22, "zeroDte": 4, "timeExit": 5, "other": 0}}, "weeks": [{"trades": 4, "wins": 0, "losses": 4, "winRate": 0.0, "grossPL": -282.5, "cost": 775.0, "roiPct": -36.5, "profitFactor": 0.0, "avgWin": 0.0, "avgLoss": -70.62, "exits": {"profitLock": 0, "trailing": 0, "hardStop": 2, "zeroDte": 0, "timeExit": 2, "other": 0}, "weekStart": "2026-08-10", "weekLabel": "Aug 10\u201314"}, {"trades": 20, "wins": 3, "losses": 17, "winRate": 0.15, "grossPL": -955.5, "cost": 4302.0, "roiPct": -22.2, "profitFactor": 0.52, "avgWin": 342.67, "avgLoss": -116.68, "exits": {"profitLock": 3, "trailing": 0, "hardStop": 12, "zeroDte": 4, "timeExit": 1, "other": 0}, "weekStart": "2026-08-17", "weekLabel": "Aug 17\u201321"}, {"trades": 14, "wins": 4, "losses": 10, "winRate": 0.2857, "grossPL": -1246.0, "cost": 3597.0, "roiPct": -34.6, "profitFactor": 0.15, "avgWin": 54.75, "avgLoss": -146.5, "exits": {"profitLock": 0, "trailing": 4, "hardStop": 8, "zeroDte": 0, "timeExit": 2, "other": 0}, "weekStart": "2026-08-24", "weekLabel": "Aug 24\u201328"}]}};</script></head>
+<body>
+<div id="breakingBanner" class="bbanner" hidden></div>
+<div class="app">
+  <nav class="side">
+    <div class="brand"><div class="logo">S</div><div class="t">SCANNER<small>Terminal</small></div></div>
+    <div class="navbtn on" data-nav="portfolio"><span class="ic">◧</span> Portfolio <span class="cnt" id="nav-pos">0</span></div>
+    <div class="navbtn" data-nav="options"><span class="ic">◎</span> Options Scanner <span class="cnt" id="nav-opt">0</span></div>
+    <div class="navbtn" data-nav="news"><span class="ic">✦</span> Today's News <span class="cnt" id="nav-news">0</span></div>
+    <div class="navbtn" data-nav="calendar"><span class="ic">▤</span> Catalyst Calendar <span class="cnt" id="nav-cat">0</span></div>
+    <div class="navbtn" data-nav="performance"><span class="ic">◈</span> Performance <span class="cnt" id="nav-perf">0</span></div>
+    <div class="spacer"></div>
+    <div class="livebox"><span class="livedot" id="livedot"></span><span id="livetxt">Connecting…</span><div class="sub2" id="livesrc" style="margin-top:5px"></div></div>
+  </nav>
+
+  <main>
+    <div class="topbar">
+      <div>
+        <h1 id="pageTitle">Portfolio &amp; Performance</h1>
+        <div class="sub" id="pageSub">Paper portfolio · research tool, not investment advice</div>
+      </div>
+      <div class="tb-right">
+        <span class="chip mono" id="clock">—</span>
+        <span class="chip live" id="livechip"><span class="d"></span><span id="livechiptxt">LIVE</span></span>
+      </div>
+    </div>
+
+    <section class="page on" id="page-portfolio"></section>
+    <section class="page" id="page-options"></section>
+    <section class="page" id="page-news"></section>
+    <section class="page" id="page-calendar"></section>
+    <section class="page" id="page-performance"></section>
+  </main>
+</div>
+
+<script>
+/* ============================================================================
+   Scanner Terminal — enterprise SPA
+   Data source priority:
+     1) window.DASH_DATA injected by build_dashboard.py (static GitHub Pages mode)
+     2) GET /api/data from server.py (hosted live mode)
+     3) SAMPLE below (standalone preview) — mirrors the real 2026-08-20 scan
+   Live quotes: browser-side Finnhub when window.FINNHUB_KEY is set (static mode)
+   or refreshed via /api/data (server mode). Poll every 30s, pulse = fresh<60s.
+============================================================================ */
+const POLL_MS = 30000, STALE_MS = 60000;
+const FINNHUB_KEY = (window.FINNHUB_KEY && !String(window.FINNHUB_KEY).startsWith('__')) ? window.FINNHUB_KEY : '';
+const API_BASE = String(window.SCANNER_API_BASE || 'https://scanner-terminal-1.onrender.com').replace(/\/+$/,'');
+
+const SAMPLE = {
+  meta:{ portfolioLabel:'Paper portfolio', asOf:'2026-08-20', mode:'sample' },
+  portfolio:{
+    capital:1000, cash:492.11, realized:-312.00, unrealized:179.00,
+    winRate:0.0, winRateN:4, drawdown:-4.2,
+    positions:[
+      {ticker:'NVDA', strategy:'Catalyst Call', entryDate:'2026-08-20', cost:243.00, value:243.00, target:486.00, stop:122.00, plPct:0.0, kind:'call'},
+      {ticker:'IWM', strategy:'ETF Call', entryDate:'2026-08-19', cost:210.00, value:181.00, target:420.00, stop:105.00, plPct:-13.8, kind:'call'}
+    ],
+    closed:[
+      {ticker:'SPY', strategy:'1DTE Call', entryDate:'2026-08-13', exitDate:'2026-08-14', plPct:-100.0, result:'loss', reason:'expired'},
+      {ticker:'QQQ', strategy:'ETF Call', entryDate:'2026-08-12', exitDate:'2026-08-14', plPct:-52.0, result:'loss', reason:'2-day exit'},
+      {ticker:'PLTR', strategy:'Mover Call', entryDate:'2026-08-12', exitDate:'2026-08-14', plPct:-100.0, result:'loss', reason:'stopped'},
+      {ticker:'XLE', strategy:'ETF Call', entryDate:'2026-08-12', exitDate:'2026-08-14', plPct:+38.0, result:'win', reason:'target'}
+    ]
+  },
+  technicals:{ spySpot:778.69, spyDayPct:0.34, vwapDelta:+0.42, bollingerPctB:0.61, em0dte:{low:772.4, high:785.0, sd:6.3} },
+  chain:{ atmIV:0.145, pcRatio:0.86, callWall:790, putWall:770, gammaFlip:779 },
+  options:[
+    {ticker:'NVDA', kind:'call', strike:230, exp:'2026-08-28', entry:2.43, target:4.86, stop:1.22, contracts:1, cost:243,
+     conf:71, spot:216.50, iv:0.545, ivRank:0.48, delta:0.24, thetaPct:-14.2, otm:6.2, oi:26885, em:6.0, reqMove:6.4, vwapDelta:1.2, pctB:0.58,
+     enterFrom:'2026-08-21', enterTo:'2026-08-25', catalyst:'Earnings 8/26 pm',
+     thesis:'Uptrend above 20-DMA pulling back into the print. IV 54% is mid-range (IVR 48) so not egregiously rich. 6.2% OTM ≈ the implied move — a genuine beat doubles it; sub-implied move loses to IV crush.'},
+    {ticker:'NVDA', kind:'call', strike:237.5, exp:'2026-08-28', entry:1.29, target:2.58, stop:0.65, contracts:2, cost:258,
+     conf:64, spot:216.50, iv:0.560, ivRank:0.51, delta:0.14, thetaPct:-19.8, otm:9.7, oi:5590, em:6.0, reqMove:9.9, vwapDelta:1.2, pctB:0.58,
+     enterFrom:'2026-08-21', enterTo:'2026-08-25', catalyst:'Earnings 8/26 pm',
+     thesis:'Leverage variant — two contracts for a bigger payoff if NVDA rips past 238, likelier to expire worthless. Needs a move well beyond the implied ±6%.'},
+    {ticker:'CRWD', kind:'put', strike:180, exp:'2026-08-28', entry:4.30, target:8.60, stop:2.15, contracts:1, cost:430,
+     conf:58, spot:191.79, iv:0.79, ivRank:0.83, delta:-0.28, thetaPct:-10.8, otm:6.1, oi:1018, em:9.5, reqMove:6.2, vwapDelta:-3.1, pctB:0.12,
+     enterFrom:'2026-08-21', enterTo:'2026-08-25', catalyst:'Earnings 8/26 pm', filtered:true,
+     thesis:'FILTERED — over the $300 cap. Direction is clean (broke down ~225→192, −15%/wk) but IV is 79% / IVR 83 because it already fell. You would be chasing and paying peak vol.'}
+  ],
+  news:{
+    sentiment:0.58, sentimentLabel:'Bullish',
+    items:[
+      {breaking:true, sentiment:'bullish', ticker:'NVDA', headline:'NVIDIA Q2 earnings on deck Aug 26 — options imply ±6% move', source:'Catalyst calendar', time:'today', body:'Marquee event of the week. ATM straddle prices a ~6% post-print move; the AI-capex read-through drives SMH and the broad tape.'},
+      {breaking:true, sentiment:'neutral', ticker:'SPY', headline:'Jackson Hole symposium Aug 27–29 — Fed policy signal', source:'Macro', time:'today', body:'Rate-path guidance is the macro overlay for every 3–10 DTE position this week. Expect elevated SPY vol into and out of the speech.'},
+      {breaking:false, sentiment:'bearish', ticker:'CRWD', headline:'CrowdStrike slides ~15% on the week ahead of earnings', source:'Price action', time:'1d', body:'Broke below the 20-DMA; puts now price 79% IV. Direction confirmed, but premium is rich.'},
+      {breaking:false, sentiment:'bullish', ticker:'MRVL', headline:'Marvell prints fresh highs into Aug 27 report', source:'Price action', time:'2h', body:'Up ~3% today, IV ~104% — the market expects a large move either way.'},
+      {breaking:true, sentiment:'neutral', ticker:'JAZZ', headline:'Jazz Pharma PDUFA decision Aug 25 (Ziihera, HER2 biliary)', source:'FDA calendar', time:'today', body:'Binary regulatory catalyst — but the only listed expiry covering it is Sept 18 (29 DTE), outside the 3–10 DTE window.'}
+    ]
+  },
+  catalysts:[
+    {date:'2026-08-22', ticker:'SVRA', type:'FDA/PDUFA', impact:'high', setup:'Thin options — likely no <$300 3–10 DTE fit', vol:'High'},
+    {date:'2026-08-24', ticker:'PDD', type:'Earnings', impact:'med', setup:'Lower-priced underlying — a few contracts fit under $300', vol:'Elevated'},
+    {date:'2026-08-25', ticker:'JAZZ', type:'FDA/PDUFA', impact:'high', setup:'Only Sept-18 expiry covers it → fails 3–10 DTE rule', vol:'High'},
+    {date:'2026-08-26', ticker:'NVDA', type:'Earnings', impact:'high', setup:'230C 8/28 · $243 · tgt $4.86 / stop $1.22 · enter by 8/25', vol:'High'},
+    {date:'2026-08-26', ticker:'CRM', type:'Earnings', impact:'med', setup:'IV 69% — near-OTM busts $300; watch for cheaper strikes', vol:'Elevated'},
+    {date:'2026-08-26', ticker:'CRWD', type:'Earnings', impact:'med', setup:'Bearish, but IV 79% (IVR 83) — chasing', vol:'High'},
+    {date:'2026-08-27', ticker:'MRVL', type:'Earnings', impact:'high', setup:'IV 104% — premiums >$300 at 2–10% OTM', vol:'Very High'},
+    {date:'2026-08-27', ticker:'GILD', type:'FDA/PDUFA', impact:'low', setup:'Large-cap, low IV — unlikely to pop', vol:'Low'},
+    {date:'2026-08-27', ticker:'SPY', type:'Macro', impact:'high', setup:'Jackson Hole — SPY/rate vol overlay', vol:'High'}
+  ],
+  watchlist:['NVDA','CRWD','MRVL','CRM','MRNA','AMD','AAPL','JAZZ','GILD','PDD','AFRM','DG']
+};
+
+let DATA = window.DASH_DATA || SAMPLE;
+let lastFresh = 0;
+const $ = s => document.querySelector(s);
+const fmt$ = v => (v<0?'-$':'$')+Math.abs(+v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt0 = v => (v<0?'-$':'$')+Math.abs(+v||0).toLocaleString(undefined,{maximumFractionDigits:0});
+const pct = v => ((v>0?'+':'')+(+v||0).toFixed(2)+'%');
+const cls = v => v>0.001?'pos':(v<-0.001?'neg':'');
+const pxDate = d => { try{const [y,m,da]=d.split('-');return {d:da,m:['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][+m-1]};}catch(e){return {d:'--',m:''};} };
+const dteOf = exp => { if(!exp) return null; return Math.ceil((new Date(exp+'T20:00:00Z')-Date.now())/86400000); };
+const dtePill = exp => { const d=dteOf(exp); if(d==null) return ''; const short=d<=7; const c=short?'var(--warn)':'var(--info)', bg=short?'var(--warn-bg)':'var(--info-bg)'; return `<span class="badge" style="color:${c};background:${bg};border-color:${c}">${d} DTE</span>`; };
+const edgeBadge = e => { if(e==null) return ''; const c=e>0?'var(--up)':e<0?'var(--down)':'var(--muted)', bg=e>0?'var(--up-bg)':e<0?'var(--down-bg)':'var(--card2)'; return `<span class="badge" style="color:${c};background:${bg};border-color:${c}" title="Edge: low HV-rank +10, in-band delta +10, volume surge +10, crush risk -10 (separate from Confluence)">EDGE ${e>0?'+':''}${e}</span>`; };
+// work-week boundaries (Mon–Fri) from the client's current date; weeks end Sunday night
+function weekBounds(){ const n=new Date(); n.setHours(0,0,0,0); const thisSun=new Date(n); thisSun.setDate(n.getDate()+((7-n.getDay())%7)); thisSun.setHours(23,59,59,999); const nextSun=new Date(thisSun); nextSun.setDate(thisSun.getDate()+7); return {thisSun,nextSun}; }
+function weekBucket(exp){ if(!exp) return 2; const {thisSun,nextSun}=weekBounds(); const e=new Date(exp+'T16:00:00'); if(e<=thisSun) return 0; if(e<=nextSun) return 1; return 2; }
+const fmtMD = d => d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+const scoreColor = s => s>=70?'var(--up)':s>=50?'var(--warn)':'var(--down)';
+const impactBadge = i => i==='high'?'<span class="badge put">HIGH IMPACT</span>':i==='med'?'<span class="badge wait">MEDIUM</span>':'<span class="badge mut">LOW</span>';
+
+/* ---------- Portfolio page ---------- */
+function renderPortfolio(){
+  const p = DATA.portfolio||{}, tot=(p.capital||0), pv=(p.cash||0)+ (p.positions||[]).reduce((a,x)=>a+(x.value||0),0);
+  const totalPL=(p.realized||0)+(p.unrealized||0);
+  const kpis=[
+    ['Total Capital', fmt0(pv), `started ${fmt0(p.capital||0)} · ${(p.positions||[]).length} open`],
+    ['Realized P&L', `<span class="${cls(p.realized)}">${fmt$(p.realized)}</span>`, `${p.winRateN||0} trades closed`],
+    ['Unrealized P&L', `<span class="${cls(p.unrealized)}">${fmt$(p.unrealized)}</span>`, 'open marks'],
+    ['Win Rate', `${Math.round((p.winRate||0)*100)}%`, `of ${p.winRateN||0} resolved`],
+    ['Active Drawdown', `<span class="${(p.drawdown||0)<0?'neg':''}">${(p.drawdown||0).toFixed(1)}%</span>`, 'from peak equity']
+  ].map(([l,v,s])=>`<div class="card kpi"><div class="lbl">${l}</div><div class="val mono">${v}</div><div class="sub">${s}</div></div>`).join('');
+
+  const posRows=(p.positions||[]).map(x=>`<tr>
+    <td><span class="tk">${x.ticker}</span> <span class="badge ${x.kind==='put'?'put':'call'}">${(x.kind||'call').toUpperCase()}</span> <span class="badge mut">UNCAPPED ▲</span><br><span class="sub2">${x.strategy||''}</span></td>
+    <td>${x.entryDate||''}</td>
+    <td>${x.exp?`<span class="mono">${x.exp}</span><br>${dtePill(x.exp)}`:''}</td>
+    <td class="mono">${fmt$(x.cost)}</td>
+    <td class="mono">${fmt$(x.value)}</td>
+    <td class="mono ${cls(x.peakPct)}"><b>${x.peakPct!=null?pct(x.peakPct):''}</b></td>
+    <td class="mono">${x.trailStop!=null?fmt$(x.trailStop):''}<br><span class="sub2">${x.trailActive?'trailing 20% ↩':'hard −50%'}</span></td>
+    <td class="mono ${cls(x.plPct)}"><b>${pct(x.plPct)}</b></td>
+    <td><button class="btn">Details</button> <button class="btn sell">Close</button></td>
+  </tr>`).join('') || `<tr><td colspan="9" class="empty">No open positions.</td></tr>`;
+
+  const cl=(p.closed||[]);
+  const wins=cl.filter(t=>t.result==='win').length;
+  const closedRows=cl.map(x=>`<tr>
+    <td><span class="tk">${x.ticker}</span><br><span class="sub2">${x.strategy||''}</span></td>
+    <td>${x.entryDate||''}</td><td>${x.exitDate||''}</td>
+    <td class="mono ${cls(x.plPct)}"><b>${pct(x.plPct)}</b></td>
+    <td>${x.result==='win'?'<span class="badge call">WIN</span>':'<span class="badge put">LOSS</span>'}</td>
+    <td class="sub2" style="text-align:right">${x.reason||''}</td>
+  </tr>`).join('') || `<tr><td colspan="6" class="empty">No closed trades yet.</td></tr>`;
+
+  return `<div class="grid kpis" style="margin-bottom:16px">${kpis}</div>
+  <div class="card" style="margin-bottom:16px">
+    <h3>Open Positions <span class="sub2" style="text-transform:none;letter-spacing:0">· uncapped upside — winners run; 20% trailing stop arms at +30%, hard −50% until then</span></h3>
+    <div class="tscroll"><table><thead><tr><th>Ticker / Strategy</th><th>Entry</th><th>Expiration</th><th>Cost Basis</th><th>Current</th><th>Peak Gain</th><th>Trailing Stop</th><th>P&L %</th><th>Actions</th></tr></thead><tbody>${posRows}</tbody></table></div>
+  </div>
+  <div class="card">
+    <h3>Closed Trades Ledger · ${wins}/${cl.length} wins (${cl.length?Math.round(100*wins/cl.length):0}%)</h3>
+    <div class="tscroll"><table><thead><tr><th>Ticker</th><th>Entered</th><th>Exited</th><th>P&L %</th><th>Result</th><th>Reason</th></tr></thead><tbody>${closedRows}</tbody></table></div>
+  </div>`;
+}
+
+/* ---------- Options page ---------- */
+function optionTiming(o){
+  if(o.filtered) return ['FILTERED — over $300 cap','var(--down)','var(--down-bg)'];
+  if(!o.enterFrom || !o.enterTo){
+    if(o.trailActive) return ['TRAILING ARMED — 20% below peak · uncapped ▲','var(--up)','var(--up-bg)'];
+    return ['OPEN — hard −50% until +30% arms the trail'+(o.exitBy?' · time-exit '+o.exitBy:''),'var(--info)','var(--info-bg)'];
+  }
+  const now=new Date(), from=new Date(o.enterFrom+'T00:00:00'), to=new Date(o.enterTo+'T23:59:59');
+  if(now<from) return ['WAIT — entry window opens '+o.enterFrom,'var(--warn)','var(--warn-bg)'];
+  if(now>to) return ['WINDOW PASSED — inside the crush zone','var(--down)','var(--down-bg)'];
+  return ['ENTER — inside the window, before IV ramp peaks','var(--up)','var(--up-bg)'];
+}
+function optionCard(o){
+  const call=o.kind==='call';
+  const [ttxt,tc,tbg]=optionTiming(o);
+  const emCover=(o.em?o.reqMove/o.em:0);
+  return `<div class="card ocard ${call?'call':'put'}"><div class="rail"></div>
+    <div class="ohead">
+      <div><div class="tkr">${o.ticker} <span class="badge ${call?'call':'put'}">${call?'CALL':'PUT'}</span> ${o.exp?dtePill(o.exp):''} ${o.edge!=null?edgeBadge(o.edge):''}</div>
+        <div class="strike mono">$${o.strike} strike · exp ${o.exp} · ${o.contracts}×</div></div>
+      <div class="score" style="border-color:${scoreColor(o.conf)}"><div class="n" style="color:${scoreColor(o.conf)}">${o.conf}</div><div class="l">Confluence</div></div>
+    </div>
+    <div class="okv">${[
+      ['Entry', o.entry!=null?fmt$(o.entry):null],
+      ['Peak Gain', o.peakPct!=null?`<span class="${cls(o.peakPct)}">${pct(o.peakPct)}</span>`:null],
+      ['Trail Stop', o.trailStop!=null?fmt$(o.trailStop):(o.stop!=null?fmt$(o.stop):null)],
+      ['Total Cost', o.cost!=null?fmt0(o.cost):null],
+      ['Spot', o.spot!=null?`<span data-spot="${o.ticker}">${fmt$(o.spot)}</span>`:null],
+      ['Upside', '<span class="pos">Uncapped ▲</span>']
+    ].filter(x=>x[1]!=null).map(([l,v])=>`<div class="b"><span>${l}</span><b class="mono">${v}</b></div>`).join('')}</div>
+    <div class="metrics">
+      ${o.iv!=null?`<span class="m">IV <b>${Math.round(o.iv*100)}%</b></span>`:''}
+      ${o.ivRank!=null?`<span class="m">IV Rank <b style="color:${o.ivRank>=0.7?'var(--down)':o.ivRank>=0.4?'var(--warn)':'var(--up)'}">${Math.round(o.ivRank*100)}</b></span>`:''}
+      ${o.delta!=null?`<span class="m">Δ <b>${(+o.delta).toFixed(2)}</b></span>`:''}
+      ${o.thetaPct!=null?`<span class="m">Θ/day <b class="neg">${o.thetaPct}%</b></span>`:''}
+      ${o.vwapDelta!=null?`<span class="m">VWAP Δ <b class="${cls(o.vwapDelta)}">${pct(o.vwapDelta)}</b></span>`:''}
+      ${o.pctB!=null?`<span class="m">%B <b>${(+o.pctB).toFixed(2)}</b></span>`:''}
+      ${o.oi!=null?`<span class="m">OI <b>${(o.oi||0).toLocaleString()}</b></span>`:''}
+      ${o.spreadPct!=null?`<span class="m">Spread <b>${o.spreadPct}%</b></span>`:''}
+      ${(o.reqMove!=null&&o.em!=null)?`<span class="m">Move need/impl <b style="color:${emCover>1.2?'var(--down)':'var(--warn)'}">${o.reqMove}% / ${o.em}%</b></span>`:''}
+    </div>
+    <div class="thesis"><b>Thesis.</b> ${o.thesis}</div>
+    <div class="timing" style="color:${tc};border-color:${tc};background:${tbg}"><b>${ttxt}</b></div>
+  </div>`;
+}
+function renderOptions(){
+  const t=DATA.technicals||{}, ch=DATA.chain||{};
+  const em=t.em0dte||{};
+  const tech=[
+    ['SPY Spot', `<span class="mono" data-spot="SPY">${fmt$(t.spySpot)}</span>`, `<span class="${cls(t.spyDayPct)}">${pct(t.spyDayPct)} today</span>`],
+    ['VWAP Δ', `<span class="mono ${cls(t.vwapDelta)}">${pct(t.vwapDelta)}</span>`, 'vs session VWAP'],
+    ['Bollinger %B (20)', `<span class="mono">${(t.bollingerPctB!=null?t.bollingerPctB.toFixed(2):'—')}</span>`, t.bollingerPctB>0.8?'upper band':t.bollingerPctB<0.2?'lower band':'mid-range'],
+    ['0DTE Expected Move', `<span class="mono">${em.low!=null?fmt$(em.low)+' – '+fmt$(em.high):'—'}</span>`, em.sd!=null?`±${em.sd} (1σ)`:'']
+  ].map(([l,v,s])=>`<div class="card kpi"><div class="lbl">${l}</div><div class="val" style="font-size:20px">${v}</div><div class="sub">${s}</div></div>`).join('');
+
+  const wallNote = ch.gexNote?`<span class="sub2" title="gamma feed status">${ch.gexNote}</span>`:'—';
+  const chainCtx=[
+    ['ATM Implied Vol', ch.atmIV!=null?(ch.atmIV*100).toFixed(2)+'%':'—'],
+    ['Put/Call Volume', ch.pcRatio!=null?ch.pcRatio.toFixed(2):'—'],
+    ['Call Wall', ch.callWall!=null?fmt0(ch.callWall):wallNote],
+    ['Put Wall', ch.putWall!=null?fmt0(ch.putWall):wallNote],
+    ['Gamma Flip', ch.gammaFlip!=null?fmt0(ch.gammaFlip):wallNote]
+  ].map(([l,v])=>`<div class="b" style="flex:1"><span>${l}</span><b class="mono">${v}</b></div>`).join('');
+
+  const sp=DATA.spy;
+  const spyStrip = sp ? `<div class="card" style="margin-bottom:14px;border-color:${sp.bias==='BULLISH'?'var(--up)':sp.bias==='BEARISH'?'var(--down)':'var(--warn)'}">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span class="badge ${sp.bias==='BULLISH'?'call':sp.bias==='BEARISH'?'put':'wait'}">${sp.bias||'—'}</span>
+      <b style="font-size:15px">${sp.action||''}</b>
+      <span class="chip">Confluence ${sp.conf!=null?sp.conf:'—'}</span>
+      ${sp.exp?`<span class="badge mut">0DTE ${sp.exp}</span>`:''}
+      <span class="sub2" style="margin-left:auto">${sp.dataSource||''}</span>
+    </div>
+    ${sp.factors&&sp.factors.length?`<div class="metrics" style="margin-top:10px">${sp.factors.map(f=>`<span class="m">${f.name} <b class="${cls(f.contribution)}">${f.contribution>0?'+':''}${f.contribution}</b></span>`).join('')}</div>`:''}
+    ${sp.alerts&&sp.alerts.length?`<div class="thesis" style="margin-top:8px"><b>Alerts.</b> ${sp.alerts.join(' · ')}</div>`:''}
+    ${sp.warnings&&sp.warnings.length?`<div class="sub2" style="margin-top:6px">⚠ ${sp.warnings.join(' · ')}</div>`:''}
+  </div>` : '';
+
+  // group open contracts by expiry horizon; sort in-profit by highest %, others closest to breakeven
+  const withDte=(DATA.options||[]).map(o=>({o,dte:dteOf(o.exp),bucket:weekBucket(o.exp)})).filter(x=>x.dte==null||x.dte>=0);
+  const sortGroup=arr=>{
+    const prof=arr.filter(x=>(x.o.plPct||0)>0).sort((a,b)=>(b.o.plPct||0)-(a.o.plPct||0));
+    const rest=arr.filter(x=>(x.o.plPct||0)<=0).sort((a,b)=>(b.o.plPct||0)-(a.o.plPct||0));
+    return prof.concat(rest);
+  };
+  const {thisSun,nextSun}=weekBounds();
+  const thisFri=new Date(thisSun); thisFri.setDate(thisSun.getDate()-2);
+  const nextMon=new Date(thisSun); nextMon.setDate(thisSun.getDate()+1);
+  const nextFri=new Date(nextSun); nextFri.setDate(nextSun.getDate()-2);
+  const groups=[
+    ['This Week', `through Fri ${fmtMD(thisFri)}`, x=>x.bucket===0],
+    ['Next Week', `${fmtMD(nextMon)} – ${fmtMD(nextFri)}`, x=>x.bucket===1],
+    ['Later', 'beyond next week', x=>x.bucket===2]
+  ];
+  const sections=groups.map(([title,sub,fn])=>{
+    const g=sortGroup(withDte.filter(fn));
+    const alloc=g.reduce((a,x)=>a+(x.o.cost||0),0);
+    const body=g.length?`<div class="grid cards2">${g.map(x=>optionCard(x.o)).join('')}</div>`:`<div class="empty">No contracts in this bracket.</div>`;
+    return `<div style="margin-bottom:16px"><div class="grouphdr"><span class="gt">${title}</span><span class="gs">${sub} · ${g.length} open contract${g.length===1?'':'s'} (${fmt0(alloc)} allocated)</span></div>${body}</div>`;
+  }).join('');
+  return `${spyStrip}<div class="grid kpis" style="margin-bottom:14px">${tech}</div>
+  <div class="card" style="margin-bottom:16px"><h3>Options Chain Context — SPY <span class="sub2" style="text-transform:none;letter-spacing:0">· live via /api/spy</span></h3>
+    <div class="okv" style="grid-template-columns:repeat(5,1fr);margin:0">${chainCtx}</div>
+    <div class="sub2" style="margin-top:9px">ATM IV, expected move and P/C are live from the 0DTE chain. Gamma walls come from the GEX feed; when it's rate-limited they show its status instead of a number.</div>
+  </div>
+  ${sections}`;
+}
+
+/* ---------- News page ---------- */
+function renderNews(){
+  const n=DATA.news||{}, s=(n.sentiment!=null?n.sentiment:0.5);
+  const breaking=(n.items||[]).filter(i=>i.breaking);
+  const feed=(n.items||[]);
+  const senthue = s>=0.6?'var(--up)':s<=0.4?'var(--down)':'var(--warn)';
+  const dot=x=>x==='bullish'?'var(--up)':x==='bearish'?'var(--down)':'var(--warn)';
+  const biasLabel=b=>b==='bullish'?'Bullish +':b==='bearish'?'Bearish −':'Neutral •';
+  const impactDD=i=>{
+    if(!i.impact||!i.impact.length) return '';
+    const rows=i.impact.map(x=>`<div class="imrow">
+      <span class="imtk">${x.ticker}${x.sector?`<br><span class="sub2">${x.sector}</span>`:''}</span>
+      <span class="imbias ${x.bias}">${biasLabel(x.bias)}</span>
+      <span class="imreason">${x.reason||''}</span></div>`).join('');
+    return `<details class="impact-dd"><summary>Impact Analysis · ${i.impact.length} ticker${i.impact.length===1?'':'s'} affected</summary><div class="imwrap">${rows}</div></details>`;
+  };
+  const newsCard=(i,brk)=>`<div class="card newscard${brk?' breaking':''}">
+    <span class="dot" style="background:${dot(i.sentiment)}"></span>
+    <div style="flex:1;min-width:0"><div class="h">${i.headline}</div>
+      <div class="meta">${i.ticker?`<b>${i.ticker}</b> · `:''}${i.source||''} · ${i.time||''} · <span class="badge ${i.sentiment==='bullish'?'call':i.sentiment==='bearish'?'put':'wait'}">${(i.sentiment||'neutral').toUpperCase()}</span></div>
+      ${i.body?`<div class="body">${i.body}</div>`:''}
+      ${impactDD(i)}
+      ${i.url?`<a href="${i.url}" target="_blank" rel="noopener" class="sub2" style="display:inline-block;margin-top:7px">read source ↗</a>`:''}
+    </div></div>`;
+  const bcards=breaking.map(i=>newsCard(i,true)).join('') || `<div class="empty">No breaking alerts.</div>`;
+  const feedRows=feed.map(i=>newsCard(i,false)).join('') || `<div class="empty">No headlines.</div>`;
+  return `<div class="card" style="margin-bottom:16px"><h3>Overall Market News Sentiment</h3>
+    <div class="senthero"><div class="big" style="color:${senthue}">${n.sentimentLabel||(s>=0.6?'Bullish':s<=0.4?'Bearish':'Neutral')}</div>
+      <div class="gauge"><div class="pin" style="left:calc(${Math.max(2,Math.min(98,s*100))}% - 2px)"></div></div>
+      <div class="mono" style="color:var(--muted)">${Math.round(s*100)}/100</div></div></div>
+  <h3 style="color:var(--muted);font-size:11px;letter-spacing:.09em;text-transform:uppercase;margin:6px 2px 12px">High-Impact Breaking Alerts</h3>
+  <div class="grid cards2" style="margin-bottom:20px">${bcards}</div>
+  <h3 style="color:var(--muted);font-size:11px;letter-spacing:.09em;text-transform:uppercase;margin:6px 2px 12px">Top Market Drivers</h3>
+  <div class="grid cards2">${feedRows}</div>`;
+}
+
+/* ---------- Calendar page ---------- */
+function renderCalendar(){
+  const wl=DATA.watchlist||[];
+  const opts=['<option value="ALL">All Stocks</option>'].concat(wl.map(t=>`<option value="${t}">${t}</option>`)).join('');
+  const sel = window.__catFilter||'ALL';
+  const rows=(DATA.catalysts||[])
+    .filter(c=>sel==='ALL'||c.ticker===sel)
+    .sort((a,b)=>a.date<b.date?-1:1)
+    .map(c=>{const d=pxDate(c.date);
+      const typeBadge={'Earnings':'info','FDA/PDUFA':'call','Macro':'wait','Product Launch':'mut'}[c.type]||'mut';
+      return `<div class="catrow">
+        <div class="date"><div class="d">${d.d}</div><div class="m">${d.m}</div></div>
+        <div class="main"><div class="t"><span class="tk">${c.ticker}</span> <span class="badge ${typeBadge}">${c.type}</span> ${impactBadge(c.impact)}</div>
+          <div class="setup">${c.setup||''}</div></div>
+        <div class="impact"><div class="sub2">Vol impact</div><div><b>${c.vol||'—'}</b></div></div>
+      </div>`;}).join('') || `<div class="empty">No catalysts for this filter.</div>`;
+  return `<div class="filterbar">
+      <label class="sub2">Filter by ticker</label>
+      <select id="catFilter">${opts}</select>
+      <span class="sub2">${(DATA.catalysts||[]).length} upcoming events</span>
+    </div>${rows}`;
+}
+
+/* ---------- Performance page (week-over-week execution) ---------- */
+function pf(v){ return v==null?'∞':(+v).toFixed(2); }
+function renderPerformance(){
+  const P = DATA.performance||{lifetime:{},weeks:[]};
+  const lt = P.lifetime||{}, weeks = P.weeks||[];
+  const wr = Math.round((lt.winRate||0)*100);
+  // lifetime summary KPI cards
+  const kpis=[
+    ['Lifetime Win Rate', `${wr}%`, `${lt.wins||0}W / ${lt.losses||0}L · ${lt.trades||0} closed`],
+    ['Total Realized P&L', `<span class="${cls(lt.grossPL)}">${fmt$(lt.grossPL)}</span>`, `${(lt.roiPct||0).toFixed(1)}% on ${fmt0(lt.cost)} deployed`],
+    ['Profit Factor', `<span class="${(lt.profitFactor==null||lt.profitFactor>=1)?'pos':'neg'}">${pf(lt.profitFactor)}</span>`, 'gross gains ÷ gross losses'],
+    ['Avg Win / Avg Loss', `<span class="pos">${fmt$(lt.avgWin)}</span> <span class="sub2">/</span> <span class="neg">${fmt$(lt.avgLoss)}</span>`, 'per closed contract line'],
+  ].map(([l,v,s])=>`<div class="card kpi"><div class="lbl">${l}</div><div class="val mono">${v}</div><div class="sub">${s}</div></div>`).join('');
+
+  // week-over-week trajectory pills (chronological L→R), green/red by weekly ROI%
+  const pills = weeks.map(w=>{
+    const up=(w.roiPct||0)>=0;
+    const c=up?'var(--up)':'var(--down)', bg=up?'var(--up-bg)':'var(--down-bg)';
+    return `<span class="badge" style="color:${c};background:${bg};border-color:${c};margin:2px 4px 2px 0" title="${w.weekLabel}: ${(w.roiPct||0).toFixed(1)}% ROI, ${w.trades} trades">${w.weekLabel} · ${(w.roiPct||0)>=0?'+':''}${(w.roiPct||0).toFixed(1)}%</span>`;
+  }).join('') || '<span class="sub2">No closed weeks yet.</span>';
+
+  // week-over-week table (newest week first)
+  const rows = weeks.slice().reverse().map(w=>{
+    const ex=w.exits||{};
+    const chip=(n,lbl,color)=> n>0?`<span class="badge" style="color:${color};background:transparent;border-color:${color};margin-right:4px" title="${lbl}">${lbl} ${n}</span>`:'';
+    const exits=[chip(ex.profitLock,'Lock','var(--up)'),chip(ex.trailing,'Trail','var(--info)'),chip(ex.hardStop,'Hard','var(--down)'),chip(ex.zeroDte,'0DTE','var(--warn)'),chip(ex.timeExit,'Time','var(--muted)'),chip(ex.other,'Other','var(--muted)')].join('')||'<span class="sub2">—</span>';
+    return `<tr>
+      <td><b>${w.weekLabel}</b><br><span class="sub2 mono">${w.weekStart}</span></td>
+      <td class="mono">${w.trades}</td>
+      <td class="mono ${w.winRate>=0.5?'pos':''}"><b>${Math.round((w.winRate||0)*100)}%</b><br><span class="sub2">${w.wins}W/${w.losses}L</span></td>
+      <td class="mono ${cls(w.grossPL)}"><b>${fmt$(w.grossPL)}</b></td>
+      <td class="mono ${cls(w.roiPct)}"><b>${(w.roiPct||0)>=0?'+':''}${(w.roiPct||0).toFixed(1)}%</b></td>
+      <td class="mono ${(w.profitFactor==null||w.profitFactor>=1)?'pos':'neg'}">${pf(w.profitFactor)}</td>
+      <td class="mono"><span class="pos">${fmt$(w.avgWin)}</span> / <span class="neg">${fmt$(w.avgLoss)}</span></td>
+      <td>${exits}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="8" class="empty">No closed trades yet — stats populate as positions exit.</td></tr>`;
+
+  return `<div class="grid kpis" style="margin-bottom:16px">${kpis}</div>
+  <div class="card" style="margin-bottom:16px">
+    <h3>Week-over-Week Trajectory <span class="sub2" style="text-transform:none;letter-spacing:0">· weekly realized ROI — is the structural edge compounding?</span></h3>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;padding:4px 2px">${pills}</div>
+  </div>
+  <div class="card">
+    <h3>Weekly Summary · closed option trades by work-week (Mon–Fri)</h3>
+    <div class="tscroll"><table><thead><tr><th>Work-Week</th><th>Trades</th><th>Win Rate</th><th>Gross P&L</th><th>ROI %</th><th>Profit Factor</th><th>Avg Win / Loss</th><th>Exit Reasons</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="sub2" style="margin-top:8px">Exit tags: <b>Lock</b> 1DTE profit lock · <b>Trail</b> trailing stop · <b>Hard</b> −50% hard stop · <b>0DTE</b> pre-liquidation · <b>Time</b> time/expiry exit. Equity positions excluded — these are option-execution stats.</div>
+  </div>`;
+}
+
+/* ---------- router + polling ---------- */
+const PAGES={portfolio:['Portfolio & Performance','Account summary, open positions and closed-trade ledger',renderPortfolio],
+  options:['Options Scanner','Actionable defined-risk setups with live technical context',renderOptions],
+  news:["Today's Major News",'Aggregated market drivers, sentiment and breaking alerts',renderNews],
+  calendar:['Upcoming Catalyst Calendar','Scheduled earnings, FDA/PDUFA and macro events',renderCalendar],
+  performance:['Week-over-Week Performance','Objective closed-trade execution stats — does the structural edge compound?',renderPerformance]};
+let current='portfolio';
+function route(to){
+  if(!PAGES[to])to='portfolio'; current=to;
+  document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('on',b.dataset.nav===to));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  const [title,sub,fn]=PAGES[to];
+  $('#pageTitle').textContent=title; $('#pageSub').textContent=sub;
+  const el=$('#page-'+to); el.innerHTML=fn(); el.classList.add('on');
+  if(to==='calendar'){ const s=$('#catFilter'); if(s){s.value=window.__catFilter||'ALL'; s.onchange=()=>{window.__catFilter=s.value; route('calendar');};} }
+  location.hash=to;
+  renderBanner();
+}
+let bannerDismissed=new Set();
+function renderBanner(){
+  const el=$('#breakingBanner'); if(!el) return;
+  const brk=((DATA.news&&DATA.news.items)||[]).filter(i=>i.breaking && !bannerDismissed.has(i.headline));
+  if(!brk.length){ el.hidden=true; el.innerHTML=''; return; }
+  const i=brk[0];
+  const tks=(i.impact||[]).slice(0,3).map(x=>`${x.ticker} ${x.bias==='bullish'?'+':x.bias==='bearish'?'−':'•'}`).join('  ·  ');
+  el.hidden=false;
+  el.innerHTML=`<span class="tag">BREAKING</span><span class="htxt">${i.headline}${tks?` — ${tks}`:''}</span><span class="x">Dismiss ✕</span>`;
+  el.querySelector('.x').onclick=()=>{ bannerDismissed.add(i.headline); renderBanner(); };
+}
+document.querySelectorAll('.navbtn').forEach(b=>b.onclick=()=>route(b.dataset.nav));
+
+function updateCounts(){
+  $('#nav-pos').textContent=(DATA.portfolio?.positions||[]).length;
+  $('#nav-opt').textContent=(DATA.options||[]).filter(o=>!o.filtered).length;
+  $('#nav-news').textContent=(DATA.news?.items||[]).length;
+  $('#nav-cat').textContent=(DATA.catalysts||[]).length;
+  $('#nav-perf').textContent=((DATA.performance&&DATA.performance.weeks)||[]).length;
+}
+function setLive(ok,src){
+  const fresh=(Date.now()-lastFresh)<STALE_MS && ok!==false;
+  $('#livedot').className='livedot'+(fresh?'':' stale');
+  $('#livechip').className='chip live'+(fresh?'':' stale');
+  $('#livetxt').textContent=fresh?'Live':'Stale';
+  $('#livechiptxt').textContent=fresh?'LIVE':'STALE';
+  $('#livesrc').textContent=src||'';
+}
+function tickClock(){ $('#clock').textContent=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true}); }
+
+/* Live data: the deployed backend serves ONLY GET /api/spy — the SPY 0DTE payload
+   written to MongoDB by the worker (price/vwap/bollinger/gex/options_chain_context/signal).
+   mapSpy() maps that real schema onto DATA.technicals / DATA.chain / DATA.spy so the SPY
+   tiles and the live signal strip update every 30s. The dashboard STRUCTURE — portfolio,
+   option contracts, news, catalysts — always comes from window.DASH_DATA baked at deploy
+   time; /api/spy never replaces it. */
+function mapSpy(s){
+  if(!s || !s.price) return false;
+  const pr=s.price||{}, vw=s.vwap||{}, bb=s.bollinger||{}, oc=s.options_chain_context||{}, gx=s.gex||{};
+  DATA.technicals=Object.assign({},DATA.technicals||{},{
+    spySpot:pr.last, spyDayPct:pr.session_change_pct,
+    vwapDelta:vw.price_vs_vwap_pct, bollingerPctB:bb.percent_b});
+  if(oc.available){ DATA.technicals.em0dte={low:oc.lower_expected_bound, high:oc.upper_expected_bound, sd:oc.expected_move}; }
+  DATA.chain=Object.assign({},DATA.chain||{},{
+    atmIV:oc.available?oc.atm_iv:(DATA.chain&&DATA.chain.atmIV),
+    pcRatio:oc.available?oc.put_call_ratio:(DATA.chain&&DATA.chain.pcRatio),
+    callWall:gx.available?gx.call_wall:null, putWall:gx.available?gx.put_wall:null,
+    gammaFlip:gx.available?gx.gamma_flip:null, gexNote:gx.available?null:(gx.reason||'unavailable')});
+  DATA.spy={ bias:s.signal&&s.signal.bias, action:s.signal&&s.signal.action,
+    conf:s.signal&&s.signal.confluence_score, factors:(s.signal&&s.signal.factors)||[],
+    alerts:s.alerts||[], warnings:s.warnings||[], dataSource:s.data_source, updatedEpoch:s.updated_epoch,
+    exp:oc['0dte_expiration']};
+  return true;
+}
+async function pollData(){
+  let ok=false, fresh=true, src='';
+  if(location.protocol!=='file:'){
+    try{
+      const r=await fetch(API_BASE+'/api/spy',{cache:'no-store'});
+      if(r.ok){ const s=await r.json(); if(mapSpy(s)){ ok=true;
+        if(s.updated_epoch){ fresh=(Date.now()/1000 - s.updated_epoch) < 300; }
+        src='live /api/spy'+(s.data_source?' · '+s.data_source:''); } }
+    }catch(e){/* offline / CORS / cold Render — fall back to baked */}
+  }
+  lastFresh=Date.now();
+  if(ok){ updateCounts(); route(current); setLive(fresh,src); return; }
+  if(FINNHUB_KEY){ await pollQuotes(); return; }
+  setLive(true, DATA.meta&&DATA.meta.mode==='sample'?'sample data':'baked ledger data');
+}
+async function pollQuotes(){
+  try{
+    const tks=[...new Set(['SPY',...(DATA.options||[]).map(o=>o.ticker),...(DATA.portfolio?.positions||[]).map(p=>p.ticker)])];
+    const qs=await Promise.all(tks.map(t=>fetch('https://finnhub.io/api/v1/quote?symbol='+t+'&token='+FINNHUB_KEY).then(r=>r.json()).catch(()=>null)));
+    const map={}; tks.forEach((t,i)=>{ if(qs[i]&&qs[i].c) map[t]=qs[i].c; });
+    if(DATA.technicals&&map['SPY']) DATA.technicals.spySpot=map['SPY'];
+    (DATA.options||[]).forEach(o=>{ if(map[o.ticker]) o.spot=map[o.ticker]; });
+    document.querySelectorAll('[data-spot]').forEach(el=>{ const t=el.getAttribute('data-spot'); if(map[t]) el.textContent=fmt$(map[t]); });
+    lastFresh=Date.now(); setLive(true,'Finnhub live quotes');
+  }catch(e){ setLive(false,'quote fetch failed'); }
+}
+
+// boot
+updateCounts();
+route((location.hash||'').replace('#','')||'portfolio');
+tickClock(); setInterval(tickClock,1000);
+pollData(); setInterval(pollData,POLL_MS);
+setInterval(()=>setLive(undefined,$('#livesrc').textContent),5000);
+</script>
+</body>
+</html>
