@@ -68,6 +68,14 @@ DEFAULT_POLICY = {
 MARKET_OPEN_MIN = 9 * 60 + 30          # 09:30 ET
 MARKET_CLOSE_MIN = 16 * 60             # 16:00 ET
 SCAN_LOG_KEEP_V3 = SCAN_LOG_KEEP
+# Max observed lag (seconds) for a delayed CBOE snapshot to still count as a CURRENT market-hours
+# quote for ENTRY. provider_quote_ts is CBOE's top-level last_trade_time (the underlying's last
+# print), which during live hours can trail the ~15-min quote delay (observed ~30-40 min on real
+# data). 90 min comfortably covers a current-session snapshot for these liquid names while still
+# firmly rejecting a frozen PRIOR-CLOSE quote (hours/overnight old). A delayed timestamp NEVER makes
+# the workflow "off-hours" (that uses workflow execution time); this only gates whether a WAITING
+# contract may ENTER on this scan.
+MAX_ENTRY_LAG_SEC = 5400
 
 def is_market_hours(now_iso):
     """True iff the scan wall-clock time falls in [09:30, 16:00) ET on a weekday.
@@ -458,6 +466,13 @@ def _paper_init(policy):
         "days_held": 0, "trading_days_remaining": None,
         "exit_ts": None, "exit_reason": None, "exit_price": None, "exit_note": None,
         "observations": [],       # midpoint/bid history, separate from research observations
+        # explicit entry-eligibility diagnostics — a WAITING position is NEVER left unexplained
+        "waiting_reason": "WAITING — NO MARKET-HOURS SCAN YET",
+        "last_entry_evaluation_time": None,
+        "market_session_state": None,          # REGULAR | CLOSED
+        "provider_quote_timestamp": None,
+        "observed_lag": None,
+        "latest_qualification_state": None,    # QUALIFIES | DOES_NOT_QUALIFY | NOT_EVALUATED
     }
 
 def _paper_enter(pp, res, now):
@@ -624,17 +639,62 @@ def paper_update(card, res, now, policy, market_hours):
     card["paper_position"] = pp
     if pp["status"] in ("CLOSED", "NEVER_ENTERED"):
         return pp                                   # terminal; research history continues elsewhere
-    if not market_hours:
-        return pp                                   # never act on off-hours prices
-    if res is None:
-        return pp                                   # no fresh quote this scan -> no action
     if pp["status"] == "WAITING_FOR_ENTRY":
-        if res.get("passed"):
-            _paper_enter(pp, res, now)              # first valid market-hours entry (discovered + qualifying)
-        else:
-            _paper_never_entered(pp, now, "failed the filter before a market-hours entry")
-    elif pp["status"] in ("ACTIVE", "TRAILING_ACTIVE"):
-        _paper_step(pp, res, now)                   # tracks + stops regardless of res["passed"]
+        return _paper_evaluate_entry(pp, res, now, market_hours)   # always records WHY (waiting_reason)
+    # ACTIVE / TRAILING_ACTIVE: track + evaluate stops only on a market-hours quote
+    if not market_hours or res is None:
+        return pp                                   # never act on off-hours / missing prices
+    _paper_step(pp, res, now)                       # tracks + stops regardless of res["passed"]
+    return pp
+
+
+def _paper_evaluate_entry(pp, res, now, market_hours):
+    """Decide whether a WAITING paper position enters THIS scan, and ALWAYS record the reason.
+
+    Entry rule (explicit, per the honesty contract):
+      * eligibility is the WORKFLOW's actual execution time in America/New_York — a delayed quote
+        timestamp NEVER makes the workflow 'off-hours';
+      * it must be a regular trading session (market_hours True);
+      * the contract must still QUALIFY (passing screen this scan — you only buy what the scanner finds);
+      * the quote must be a CURRENT delayed snapshot (observed lag within MAX_ENTRY_LAG_SEC), never a
+        frozen prior-close quote;
+      * entry price = observed midpoint; no backfill, never yesterday's close.
+    Otherwise the position stays WAITING with a precise waiting_reason (or terminates NEVER_ENTERED
+    when it has left the research filter and can never be bought)."""
+    pqt = res.get("provider_quote_ts") if res else None
+    lag = _lag_seconds(pqt, now)
+    passed = bool(res and res.get("passed"))
+    # diagnostics recorded on EVERY evaluation, entered or not
+    pp["last_entry_evaluation_time"] = now
+    pp["market_session_state"] = "REGULAR" if market_hours else "CLOSED"
+    pp["provider_quote_timestamp"] = pqt
+    pp["observed_lag"] = lag
+    pp["latest_qualification_state"] = ("QUALIFIES" if passed
+                                        else ("DOES_NOT_QUALIFY" if res is not None else "NOT_EVALUATED"))
+    if not market_hours:
+        pp["waiting_reason"] = "WAITING — NO MARKET-HOURS SCAN YET"
+        return pp
+    if res is None:
+        pp["waiting_reason"] = "WAITING — PROVIDER FAILED"
+        return pp
+    if not passed:
+        # left the research filter before ever entering — it can never be 'bought'. Terminal.
+        pp["waiting_reason"] = "CONTRACT NO LONGER QUALIFIES"
+        _paper_never_entered(pp, now, "CONTRACT NO LONGER QUALIFIES — left the research filter before a market-hours entry")
+        return pp
+    # qualifies in a regular session: require a CURRENT delayed snapshot, never a frozen prior-close.
+    # (A missing provider timestamp — synthetic fixtures — is not treated as stale.)
+    stale = pqt is not None and (lag is None or lag < -300 or lag > MAX_ENTRY_LAG_SEC)
+    if stale:
+        pp["waiting_reason"] = "WAITING — PROVIDER QUOTE STALE"
+        return pp
+    _paper_enter(pp, res, now)                       # ENTER at the observed midpoint
+    pp["waiting_reason"] = None
+    pp["last_entry_evaluation_time"] = now
+    pp["market_session_state"] = "REGULAR"
+    pp["provider_quote_timestamp"] = pqt
+    pp["observed_lag"] = lag
+    pp["latest_qualification_state"] = "QUALIFIES"
     return pp
 
 
