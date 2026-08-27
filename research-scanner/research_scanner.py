@@ -43,7 +43,7 @@ MAX_THETA_BURDEN_PER_DAY = 0.03        # |theta|/mark <= 3.0%/day
 ALLOWED_RIGHTS = ("call", "put")       # long calls & long puts only
 UNIVERSE = ["KO", "WMT", "UBER", "DIS", "XOM", "SMCI", "HIMS"]
 THRESHOLDS_VERSION = "research-scanner.v1"
-SCHEMA_VERSION = "research-scanner.v3.1"
+SCHEMA_VERSION = "research-scanner.v3.2"
 SCAN_LOG_KEEP = 200                     # rolling scan_log entries kept in active file
 
 # ---- Research paper-trading policy (v3) ---------------------------------
@@ -96,6 +96,31 @@ FORBIDDEN = ("chance_of_profit", "expected_return", "win_probability", "score",
              "rank", "quality_score", "conviction", "alpha", "direction",
              "recommendation", "buy", "sell")
 
+# CBOE is a DELAYED feed (~15 min). Every observation is labelled accordingly.
+CBOE_PROVIDER = "cboe"
+CBOE_PROVIDER_MODE = "DELAYED"
+
+def _lag_seconds(provider_ts, now_iso):
+    """Observed data lag = ingestion time (now, UTC) − provider quote time.
+    provider_ts is CBOE's last_trade_time, a naive US/Eastern stamp. Returns whole
+    seconds, or None if it can't be computed (never fabricated)."""
+    if not provider_ts or not now_iso:
+        return None
+    try:
+        from datetime import datetime as _dt, timezone as _tz
+        try:
+            from zoneinfo import ZoneInfo
+            pt = _dt.fromisoformat(provider_ts).replace(tzinfo=ZoneInfo("America/New_York"))
+        except Exception:
+            from datetime import timedelta
+            pt = _dt.fromisoformat(provider_ts).replace(tzinfo=_tz(timedelta(hours=-4)))
+        nt = _dt.fromisoformat(now_iso.replace("Z", "+00:00"))
+        if nt.tzinfo is None:
+            nt = nt.replace(tzinfo=_tz.utc)
+        return int((nt - pt).total_seconds())
+    except Exception:
+        return None
+
 HDR = {"User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                       "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"),
        "Accept": "application/json", "Referer": "https://www.cboe.com/"}
@@ -104,7 +129,9 @@ HDR = {"User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537
 class Contract:
     __slots__ = ("symbol", "right", "strike", "expiration", "underlying", "bid",
                  "ask", "mark", "iv", "delta", "theta", "open_interest",
-                 "volume", "dte", "hv", "earnings_in_window", "days_to_earnings")
+                 "volume", "dte", "hv", "earnings_in_window", "days_to_earnings",
+                 # provider/feed metadata (Phase 1: delayed-feed timestamps)
+                 "provider", "provider_mode", "provider_quote_ts", "option_quote_ts")
 
     def __init__(self, **k):
         for s in self.__slots__:
@@ -195,6 +222,11 @@ def screen(c):
         "underlying": round(c.underlying, 2) if c.underlying else None,
         "checks": [{"name": n, "passed": p, "detail": d} for n, p, d in checks],
         "passed": passed, "fail_reasons": fails, "descriptors": descriptors,
+        # feed metadata (Phase 1)
+        "provider": getattr(c, "provider", None) or CBOE_PROVIDER,
+        "provider_mode": getattr(c, "provider_mode", None) or CBOE_PROVIDER_MODE,
+        "provider_quote_ts": getattr(c, "provider_quote_ts", None),
+        "option_quote_ts": getattr(c, "option_quote_ts", None),
     }
 
 def exit_reason(res):
@@ -213,10 +245,13 @@ def exit_reason(res):
 
 # ============================== HISTORICAL RECORD =======================
 def _observation(res, now):
-    """One point on a contract's timeline. Only real, scanned values — never fabricated."""
+    """One point on a contract's timeline. Only real, scanned values — never fabricated.
+    ts        = ingestion timestamp (when the workflow observed this), UTC.
+    provider_quote_ts / observed_lag_sec label how delayed the underlying feed was."""
     d = res["descriptors"]
+    pqt = res.get("provider_quote_ts")
     return {
-        "ts": now,
+        "ts": now,                                   # ingestion timestamp (workflow execution)
         "underlying": res.get("underlying"),
         "bid": res.get("bid"), "ask": res.get("ask"), "mid": res.get("mark"),
         "premium": res.get("mark"),
@@ -224,6 +259,13 @@ def _observation(res, now):
         "dte": res.get("dte"), "volume": d.get("volume"),
         "open_interest": d.get("open_interest"), "bid_ask_pct": d.get("bid_ask_pct"),
         "passed": bool(res.get("passed")),
+        # feed metadata
+        "provider": res.get("provider") or CBOE_PROVIDER,
+        "provider_mode": res.get("provider_mode") or CBOE_PROVIDER_MODE,
+        "provider_quote_ts": pqt,                    # CBOE last_trade_time (US/Eastern)
+        "option_quote_ts": res.get("option_quote_ts"),
+        "ingestion_ts": now,
+        "observed_lag_sec": _lag_seconds(pqt, now),
     }
 
 def _pct(cur, base):
@@ -435,12 +477,18 @@ def _paper_enter(pp, res, now):
     return pp
 
 def _paper_observe(pp, res, now):
+    pqt = res.get("provider_quote_ts")
     pp["observations"].append({
         "ts": now, "bid": res.get("bid"), "ask": res.get("ask"), "mid": res.get("mark"),
         "underlying": res.get("underlying"), "dte": res.get("dte"),
         "trailing_active": pp.get("trailing_active", False),
         "stop_level": pp.get("current_stop_level"),
         "in_filter": bool(res.get("passed")),   # research pass/fail at this paper observation
+        # feed metadata (Phase 1 delayed feed; Phase 2 worker will write REALTIME here)
+        "provider": res.get("provider") or CBOE_PROVIDER,
+        "provider_mode": res.get("provider_mode") or CBOE_PROVIDER_MODE,
+        "provider_quote_ts": pqt, "ingestion_ts": now,
+        "observed_lag_sec": _lag_seconds(pqt, now),
     })
 
 def _paper_recompute(pp):
@@ -475,6 +523,27 @@ def _paper_recompute(pp):
         pp["current_stop_level"] = pp.get("trailing_stop_level")
     else:
         pp["current_stop_level"] = pp.get("initial_stop_level")
+    # feed metadata surfaced to the card + a coarse feed-health label (Phase 1: DELAYED).
+    # Phase 2's real-time worker overwrites feed_mode/feed_health/feed_provider with LIVE/STALE/etc.
+    last = obs[-1] if obs else {}
+    pp["feed_provider"] = last.get("provider")
+    pp["feed_mode"] = last.get("provider_mode")
+    pp["quote_ts"] = last.get("provider_quote_ts")
+    pp["last_update_ts"] = last.get("ts")
+    pp["observed_lag_sec"] = last.get("observed_lag_sec")
+    lag = last.get("observed_lag_sec")
+    if not obs:
+        pp["feed_health"] = "NO_DATA"
+    elif last.get("provider_mode") == "DELAYED":
+        pp["feed_health"] = "DELAYED"          # expected for CBOE; not an anomaly
+    elif lag is None:
+        pp["feed_health"] = "UNKNOWN"
+    elif lag <= 120:
+        pp["feed_health"] = "LIVE"
+    elif lag <= 900:
+        pp["feed_health"] = "DELAYED"
+    else:
+        pp["feed_health"] = "STALE"
 
 def _paper_close(pp, reason, now, price, note):
     pp["status"] = "CLOSED"
@@ -926,6 +995,7 @@ def cboe_candidates(symbol, today, want_hv=True):
     else:
         raise last
     underlying = data.get("current_price") or data.get("close")
+    provider_quote_ts = data.get("last_trade_time")   # CBOE snapshot reference time (US/Eastern)
     hv = _yahoo_hv(symbol) if want_hv else None
     out = []
     for o in data["options"]:
@@ -948,7 +1018,9 @@ def cboe_candidates(symbol, today, want_hv=True):
                             underlying=underlying, bid=bid, ask=ask, mark=mark, iv=o.get("iv"),
                             delta=o.get("delta"), theta=o.get("theta"),
                             open_interest=o.get("open_interest"), volume=o.get("volume"),
-                            dte=dte, hv=hv, earnings_in_window=None, days_to_earnings=None))
+                            dte=dte, hv=hv, earnings_in_window=None, days_to_earnings=None,
+                            provider=CBOE_PROVIDER, provider_mode=CBOE_PROVIDER_MODE,
+                            provider_quote_ts=provider_quote_ts, option_quote_ts=o.get("last_trade_time")))
     return out
 
 # Offline fixtures (real 2026-08-26 closing values) for CI dry-run with no network.
@@ -970,7 +1042,9 @@ def sample_candidates(symbol, today, want_hv=False):
         out.append(Contract(symbol=sym, right=right, strike=strike, expiration=exp, underlying=u,
                             bid=bid, ask=ask, mark=round((bid + ask) / 2, 4), iv=iv, delta=delta,
                             theta=theta, open_interest=oi, volume=vol, dte=51, hv=None,
-                            earnings_in_window=None, days_to_earnings=None))
+                            earnings_in_window=None, days_to_earnings=None,
+                            provider=CBOE_PROVIDER, provider_mode=CBOE_PROVIDER_MODE,
+                            provider_quote_ts="2026-08-26T16:00:00", option_quote_ts="2026-08-26T14:28:13"))
     return out
 
 
@@ -990,10 +1064,13 @@ def run(provider, today=None, now=None, root="."):
     # (in the DTE window) and a full contract map used by the Loop 2 tracker.
     discovery, examined, errors, ok_symbols = [], 0, [], set()
     raw = {}   # contract_id -> Contract for EVERY fetched option (any DTE) — the tracking feed
+    quote_tss = []   # provider quote timestamps seen this scan (for scan-level lag)
     for sym in UNIVERSE:
         try:
             for c in cand(sym, today):
                 raw[c.contract_id] = c
+                if getattr(c, "provider_quote_ts", None):
+                    quote_tss.append(c.provider_quote_ts)
                 if DTE_MIN - 3 <= (c.dte if c.dte is not None else -1) <= DTE_MAX + 3:
                     discovery.append(screen(c)); examined += 1
             ok_symbols.add(sym)
@@ -1001,6 +1078,8 @@ def run(provider, today=None, now=None, root="."):
         except Exception as e:
             errors.append(f"{sym}: {e}")
             print(f"[warn] {sym}: {e}", file=sys.stderr)
+    scan_quote_ts = max(quote_tss) if quote_tss else None       # freshest provider stamp this scan
+    scan_lag_sec = _lag_seconds(scan_quote_ts, now)
 
     prev = _load(data_path)
     index = _load_index(index_path, now)
@@ -1010,16 +1089,28 @@ def run(provider, today=None, now=None, root="."):
     # the discovery window / filter.
     track_results = {cid: screen(raw[cid]) for cid in prev.get("active", {}).keys() if cid in raw}
 
-    # FAILURE RULE: if EVERY symbol failed to fetch, do NOT advance the record.
+    # FAILURE RULE: if EVERY symbol failed to fetch, do NOT advance the record and do NOT
+    # overwrite the last valid state. Log the failure to a SEPARATE failed_scans list.
     if provider == "cboe" and errors and examined == 0:
         prev.setdefault("meta", {})
         prev["meta"]["provider_status"] = "OFFLINE"
         prev["meta"]["last_error_at"] = now
         prev["meta"]["errors"] = errors
         prev.setdefault("scan_log", [])
-        prev["scan_log"].append({"ts": now, "status": "OFFLINE", "examined": 0, "errors": errors})
+        prev["scan_log"].append({"ts": now, "status": "OFFLINE", "examined": 0, "errors": errors,
+                                 "market_hours": market_hours})
         prev["scan_log"] = prev["scan_log"][-SCAN_LOG_KEEP:]
+        prev.setdefault("failed_scans", [])
+        prev["failed_scans"].append({"ts": now, "status": "OFFLINE", "errors": errors,
+                                     "market_hours": market_hours})
+        prev["failed_scans"] = prev["failed_scans"][-SCAN_LOG_KEEP:]
+        # fingerprint over PRESERVED state + OFFLINE status: the FIRST offline flips the
+        # status → commit (operator sees the outage); repeated offline scans keep the same
+        # fingerprint → the workflow skips them. Last valid positions are never overwritten.
+        fp = _state_fingerprint(prev, "OFFLINE")
+        prev.setdefault("meta", {})["state_fingerprint"] = fp
         _save(data_path, prev)
+        _write_fingerprint(data_dir, fp)
         print("PROVIDER OFFLINE — kept previous watchlist (last good scan: "
               f"{prev.get('last_scan')})", file=sys.stderr)
         return prev
@@ -1053,7 +1144,9 @@ def run(provider, today=None, now=None, root="."):
     scan_log.append({"ts": now, "status": status, "examined": examined,
                      "errors": errors, "new": len(d["new"]), "exited": len(d["exited"]),
                      "left_filter": len(d.get("left_filter", [])), "returned": len(d.get("returned", [])),
-                     "market_hours": market_hours, "tracked": len(track_results)})
+                     "market_hours": market_hours, "tracked": len(track_results),
+                     "provider_quote_ts": scan_quote_ts, "observed_lag_sec": scan_lag_sec})
+    failed_scans = list(prev.get("failed_scans", []))[-SCAN_LOG_KEEP:]   # preserved separately
     # live tallies (descriptive, over currently-active cards)
     _cards = list(state["active"].values())
     _pp = [c.get("paper_position", {}) for c in _cards]
@@ -1070,9 +1163,27 @@ def run(provider, today=None, now=None, root="."):
         "in_filter": sum(1 for c in _cards if c.get("research_status") == "ACTIVE"),
         "left_filter": sum(1 for c in _cards if c.get("research_status") == "LEFT_FILTER"),
     }
+    # counts of open paper positions by feed mode/health (Phase 1: all DELAYED via CBOE;
+    # Phase 2's real-time worker will move some to REALTIME and flag STALE/DISCONNECTED)
+    _open = [p for p in _pp if p.get("status") in ("ACTIVE", "TRAILING_ACTIVE")]
+    feed = {
+        "discovery_provider": CBOE_PROVIDER, "discovery_mode": CBOE_PROVIDER_MODE,
+        "provider_quote_ts": scan_quote_ts, "workflow_ts": now, "observed_lag_sec": scan_lag_sec,
+        "delayed": True,
+        # Phase 2 real-time tracker — not operational until a provider credential + worker exist
+        "active_position_provider": None, "active_position_status": "NOT_CONFIGURED",
+        "heartbeat_ts": None, "last_realtime_update": None, "last_delayed_update": now,
+        "fallback_active": False,
+        "open_paper_positions": len(_open),
+        "receiving_realtime": 0,
+        "on_delayed_fallback": len(_open),      # Phase 1: every open position is on delayed data
+        "stale_or_disconnected": 0,
+    }
     updated = {
         "active": state["active"], "last_scan": now, "diff": d,
         "scan_log": scan_log[-SCAN_LOG_KEEP:],
+        "failed_scans": failed_scans,
+        "feed": feed,
         "recently_exited": [
             {"contract_id": c["contract_id"], "symbol": c["symbol"], "right": c["right"],
              "strike": c["strike"], "expiration": c["expiration"], "exited_at": c["exited_at"],
@@ -1093,6 +1204,7 @@ def run(provider, today=None, now=None, root="."):
             "market_hours": market_hours,
             "paper_live": paper_live,
             "research_live": research_live,
+            "feed": feed,
             "paper_stats": meta_paper_stats,
             "boundary": ("Research only. Non-predictive structural screen of long calls & puts. "
                          "No ranking, no score, no conviction, no direction, no expected return, "
@@ -1104,7 +1216,12 @@ def run(provider, today=None, now=None, root="."):
                            "max_theta_burden_pct_day": MAX_THETA_BURDEN_PER_DAY * 100},
         },
     }
+    # meaningful-change fingerprint (timestamp-free) → sidecar the workflow diffs to decide
+    # whether this scan is worth a commit (requirement: no identical-state Pages churn).
+    fp = _state_fingerprint(updated, status)
+    updated["meta"]["state_fingerprint"] = fp
     _save(data_path, updated)
+    _write_fingerprint(data_dir, fp)
     print(f"scan {now} [{provider}] examined={examined} active={len(updated['active'])} "
           f"new={len(d['new'])} still={len(d['still'])} exited={len(d['exited'])} "
           f"reentered={len(d['reentered'])} archived_total={index.get('total_archived',0)}")
@@ -1151,6 +1268,42 @@ def _save(p, data):
     with open(tmp, "w") as f:
         json.dump(data, f, indent=2, sort_keys=True)
     os.replace(tmp, p)
+
+def _round(x, d=4):
+    try:
+        return round(float(x), d)
+    except Exception:
+        return None
+
+def _state_fingerprint(watch, provider_status):
+    """Stable hash of MEANINGFUL research/paper state — deliberately EXCLUDES pure
+    timestamps, observed lag, heartbeat, and the scan log. Two scans that differ only by
+    'when they ran' (e.g. weekend/after-hours scans where CBOE data is static) produce the
+    SAME fingerprint, so the workflow can skip an identical-state commit and spare GitHub
+    Pages a needless rebuild. A price move, a new/exited contract, a stop/trailing change,
+    an archive, or a provider-status transition all CHANGE the fingerprint and DO commit."""
+    import hashlib
+    parts = [f"status={provider_status}",
+             f"archived={ (watch.get('meta') or {}).get('total_archived', 0) }"]
+    d = watch.get("diff") or {}
+    parts.append("new=" + ",".join(sorted(d.get("new", []))))
+    parts.append("exited=" + ",".join(sorted(d.get("exited", []))))
+    for cid in sorted((watch.get("active") or {}).keys()):
+        c = watch["active"][cid]
+        pp = c.get("paper_position") or {}
+        parts.append("|".join(str(v) for v in [
+            cid, c.get("research_status"),
+            _round(c.get("current_premium")), _round(c.get("current_underlying")),
+            pp.get("status"), pp.get("exit_reason"),
+            _round(pp.get("current_mid")), _round(pp.get("current_stop_level")),
+            bool(pp.get("trailing_active")),
+        ]))
+    return hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()
+
+def _write_fingerprint(data_dir, fp):
+    """Sidecar the workflow diffs to decide whether to commit. Kept tiny and timestamp-free."""
+    with open(os.path.join(data_dir, "state_fingerprint.txt"), "w") as f:
+        f.write(fp + "\n")
 
 def _append_partition(data_dir, month, cards):
     """Append exited contracts to their month partition. Append-only: never deletes.
