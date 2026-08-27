@@ -1,0 +1,54 @@
+name: Nightly scan (3-week rolling options)
+
+on:
+  schedule:
+    - cron: "0 15 * * 1-5"   # weekdays 15:00 UTC — 11am EDT / 10am EST, always post-open
+    - cron: "0 21 * * 1-5"   # weekdays 21:00 UTC (~5pm ET) — after the close
+    - cron: "0 22 * * 0"     # Sunday 22:00 UTC (~6pm ET) — seed before Monday
+  workflow_dispatch: {}
+
+concurrency:
+  group: nightly-scan
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - run: pip install -r requirements.txt
+      - name: Enforce exit rules + mark positions to market
+        env:
+          FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python3 build_dashboard.py ledger.json _legacy.html
+      - name: Scan market for 3-week rolling options
+        env:
+          FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python3 run_scan.py
+      - name: Re-bake dashboard from updated ledger
+        env:
+          FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python3 bake_dashboard.py scanner_dashboard.template.html ledger.json catalysts.json scanner_dashboard.html
+      - name: Commit updated ledger + dashboard
+        run: |
+          git config user.name  "scanner-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add ledger.json scanner_dashboard.html
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "nightly: exits + scan + bake [skip ci]"
+            git pull --rebase --autostash origin main || true
+            git push origin main
+          fi
