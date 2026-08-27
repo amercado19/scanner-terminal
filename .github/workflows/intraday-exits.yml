@@ -12,11 +12,7 @@ name: Intraday exit engine (1DTE lock / 0DTE force-close)
 #  * This is a PAPER ledger; no real broker orders are placed.
 
 on:
-  schedule:
-    - cron: "0 19 * * 1-5"    # 3:00pm ET during EDT (summer)
-    - cron: "30 19 * * 1-5"   # 3:30pm ET during EDT
-    - cron: "0 20 * * 1-5"    # 3:00pm ET during EST (winter)
-    - cron: "30 20 * * 1-5"   # 3:30pm ET during EST
+  # LEGACY schedule DISABLED by scanner-terminal-research-reset.v1 (2026-08-27) — manual-only (workflow_dispatch). Does not auto-populate the active dashboard.
   workflow_dispatch: {}
 
 concurrency:
