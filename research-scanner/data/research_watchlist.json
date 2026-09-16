@@ -48,13 +48,13 @@
       "current_option_pct": 18.73,
       "current_premium": 1.965,
       "current_status": "ACTIVE",
-      "current_underlying": 107.17,
-      "current_underlying_pct": -0.73,
+      "current_underlying": 107.14,
+      "current_underlying_pct": -0.76,
       "days_qualified": 1,
       "descriptors": {
         "bid_ask_pct": 9.7,
         "break_even": 103.03,
-        "break_even_move_pct": -3.86,
+        "break_even_move_pct": -3.83,
         "days_to_earnings": null,
         "delta": -0.366,
         "earnings_in_window": null,
@@ -109,19 +109,27 @@
           "premium": 1.965,
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 107.17
+        },
+        {
+          "dte": 30,
+          "event": "still",
+          "iv": 0.2468,
+          "premium": 1.965,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 107.14
         }
       ],
       "iv_at_detection": 0.2493,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 1.655,
       "lowest_option_pct": 0.0,
-      "lowest_underlying": 107.17,
-      "lowest_underlying_pct": -0.73,
+      "lowest_underlying": 107.14,
+      "lowest_underlying_pct": -0.76,
       "mae_option": 0.0,
       "mae_underlying": -0.0,
       "mfe_option": 18.73,
-      "mfe_underlying": 0.73,
+      "mfe_underlying": 0.76,
       "observations": [
         {
           "ask": 1.71,
@@ -209,6 +217,28 @@
           "theta": -0.0477,
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 107.17,
+          "volume": 273
+        },
+        {
+          "ask": 2.06,
+          "bid": 1.87,
+          "bid_ask_pct": 9.7,
+          "delta": -0.366,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.2468,
+          "mid": 1.965,
+          "observed_lag_sec": 9614,
+          "open_interest": 3579,
+          "option_quote_ts": "2026-09-16T15:49:11",
+          "passed": true,
+          "premium": 1.965,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.0477,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 107.14,
           "volume": 273
         }
       ],
@@ -319,7 +349,7 @@
         }
       ],
       "right": "put",
-      "scan_count": 4,
+      "scan_count": 5,
       "strike": 105.0,
       "symbol": "DIS",
       "underlying_at_detection": 107.96
@@ -372,13 +402,13 @@
       "current_option_pct": -3.97,
       "current_premium": 1.815,
       "current_status": "ACTIVE",
-      "current_underlying": 107.17,
-      "current_underlying_pct": 0.32,
+      "current_underlying": 107.14,
+      "current_underlying_pct": 0.29,
       "days_qualified": 2,
       "descriptors": {
         "bid_ask_pct": 9.4,
         "break_even": 111.81,
-        "break_even_move_pct": 4.33,
+        "break_even_move_pct": 4.36,
         "days_to_earnings": null,
         "delta": 0.378,
         "earnings_in_window": null,
@@ -504,11 +534,19 @@
           "premium": 1.815,
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 107.17
+        },
+        {
+          "dte": 30,
+          "event": "still",
+          "iv": 0.2363,
+          "premium": 1.815,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 107.14
         }
       ],
       "iv_at_detection": 0.2425,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 1.62,
       "lowest_option_pct": -14.29,
       "lowest_underlying": 106.09,
@@ -803,6 +841,28 @@
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 107.17,
           "volume": 317
+        },
+        {
+          "ask": 1.9,
+          "bid": 1.73,
+          "bid_ask_pct": 9.4,
+          "delta": 0.378,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.2363,
+          "mid": 1.815,
+          "observed_lag_sec": 9614,
+          "open_interest": 5012,
+          "option_quote_ts": "2026-09-16T15:45:48",
+          "passed": true,
+          "premium": 1.815,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.0464,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 107.14,
+          "volume": 317
         }
       ],
       "occ_symbol": "DIS261016C00110000",
@@ -1001,7 +1061,7 @@
         }
       ],
       "right": "call",
-      "scan_count": 13,
+      "scan_count": 14,
       "strike": 110.0,
       "symbol": "DIS",
       "underlying_at_detection": 106.83
@@ -1123,11 +1183,19 @@
           "reason": "bid/ask too wide",
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 28.0
+        },
+        {
+          "dte": 30,
+          "event": "left_filter",
+          "premium": 1.1099999999999999,
+          "reason": "bid/ask too wide",
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 28.0
         }
       ],
       "iv_at_detection": 0.6606,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 1.08,
       "lowest_option_pct": 0.0,
       "lowest_underlying": 27.73,
@@ -1244,6 +1312,28 @@
           "provider_quote_ts": "2026-09-16T15:59:59",
           "theta": -0.0315,
           "ts": "2026-09-16T22:00:00+00:00",
+          "underlying": 28.0,
+          "volume": 138
+        },
+        {
+          "ask": 1.24,
+          "bid": 0.98,
+          "bid_ask_pct": 23.4,
+          "delta": -0.308,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.6464,
+          "mid": 1.1099999999999999,
+          "observed_lag_sec": 9614,
+          "open_interest": 1015,
+          "option_quote_ts": "2026-09-16T15:52:11",
+          "passed": false,
+          "premium": 1.1099999999999999,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.0315,
+          "ts": "2026-09-16T22:40:13+00:00",
           "underlying": 28.0,
           "volume": 138
         }
@@ -1376,7 +1466,7 @@
         }
       ],
       "right": "put",
-      "scan_count": 5,
+      "scan_count": 6,
       "strike": 26.0,
       "symbol": "HIMS",
       "underlying_at_detection": 28.28
@@ -1640,11 +1730,19 @@
           "premium": 2.245,
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 28.0
+        },
+        {
+          "dte": 30,
+          "event": "still",
+          "iv": 0.681,
+          "premium": 2.245,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 28.0
         }
       ],
       "iv_at_detection": 0.6617,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 2.08,
       "lowest_option_pct": -26.5,
       "lowest_underlying": 27.73,
@@ -2159,6 +2257,28 @@
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 28.0,
           "volume": 168
+        },
+        {
+          "ask": 2.31,
+          "bid": 2.18,
+          "bid_ask_pct": 5.8,
+          "delta": 0.549,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.681,
+          "mid": 2.245,
+          "observed_lag_sec": 9614,
+          "open_interest": 1384,
+          "option_quote_ts": "2026-09-16T15:58:58",
+          "passed": true,
+          "premium": 2.245,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.0355,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 28.0,
+          "volume": 168
         }
       ],
       "occ_symbol": "HIMS261016C00028000",
@@ -2446,7 +2566,7 @@
         }
       ],
       "right": "call",
-      "scan_count": 23,
+      "scan_count": 24,
       "strike": 28.0,
       "symbol": "HIMS",
       "underlying_at_detection": 29.02
@@ -2703,11 +2823,19 @@
           "reason": "liquidity failure (volume)",
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 28.0
+        },
+        {
+          "dte": 30,
+          "event": "left_filter",
+          "premium": 2.0949999999999998,
+          "reason": "liquidity failure (volume)",
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 28.0
         }
       ],
       "iv_at_detection": 0.655,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 1.6099999999999999,
       "lowest_option_pct": -5.57,
       "lowest_underlying": 27.73,
@@ -3200,6 +3328,28 @@
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 28.0,
           "volume": 48
+        },
+        {
+          "ask": 2.18,
+          "bid": 2.01,
+          "bid_ask_pct": 8.1,
+          "delta": -0.454,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.6735,
+          "mid": 2.0949999999999998,
+          "observed_lag_sec": 9614,
+          "open_interest": 1734,
+          "option_quote_ts": "2026-09-16T15:46:59",
+          "passed": false,
+          "premium": 2.0949999999999998,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.0358,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 28.0,
+          "volume": 48
         }
       ],
       "occ_symbol": "HIMS261016P00028000",
@@ -3467,7 +3617,7 @@
         }
       ],
       "right": "put",
-      "scan_count": 22,
+      "scan_count": 23,
       "strike": 28.0,
       "symbol": "HIMS",
       "underlying_at_detection": 28.98
@@ -3725,11 +3875,19 @@
           "reason": "liquidity failure (volume)",
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 28.0
+        },
+        {
+          "dte": 30,
+          "event": "left_filter",
+          "premium": 2.655,
+          "reason": "liquidity failure (volume)",
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 28.0
         }
       ],
       "iv_at_detection": 0.6589,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 2.0949999999999998,
       "lowest_option_pct": -5.42,
       "lowest_underlying": 27.73,
@@ -4222,6 +4380,28 @@
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 28.0,
           "volume": 16
+        },
+        {
+          "ask": 2.78,
+          "bid": 2.53,
+          "bid_ask_pct": 9.4,
+          "delta": -0.526,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.6717,
+          "mid": 2.655,
+          "observed_lag_sec": 9614,
+          "open_interest": 1429,
+          "option_quote_ts": "2026-09-16T13:53:15",
+          "passed": false,
+          "premium": 2.655,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.0363,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 28.0,
+          "volume": 16
         }
       ],
       "occ_symbol": "HIMS261016P00029000",
@@ -4480,7 +4660,7 @@
         }
       ],
       "right": "put",
-      "scan_count": 22,
+      "scan_count": 23,
       "strike": 29.0,
       "symbol": "HIMS",
       "underlying_at_detection": 28.98
@@ -4730,11 +4910,19 @@
           "reason": "premium >$3.00",
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 28.0
+        },
+        {
+          "dte": 30,
+          "event": "left_filter",
+          "premium": 3.325,
+          "reason": "premium >$3.00",
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 28.0
         }
       ],
       "iv_at_detection": 0.6695,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 2.6550000000000002,
       "lowest_option_pct": 0.0,
       "lowest_underlying": 27.73,
@@ -5205,6 +5393,28 @@
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 28.0,
           "volume": 40
+        },
+        {
+          "ask": 3.45,
+          "bid": 3.2,
+          "bid_ask_pct": 7.5,
+          "delta": -0.594,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.6829,
+          "mid": 3.325,
+          "observed_lag_sec": 9614,
+          "open_interest": 996,
+          "option_quote_ts": "2026-09-16T15:55:10",
+          "passed": false,
+          "premium": 3.325,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.0358,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 28.0,
+          "volume": 40
         }
       ],
       "occ_symbol": "HIMS261016P00030000",
@@ -5447,7 +5657,7 @@
         }
       ],
       "right": "put",
-      "scan_count": 21,
+      "scan_count": 22,
       "strike": 30.0,
       "symbol": "HIMS",
       "underlying_at_detection": 29.3
@@ -5713,11 +5923,19 @@
           "reason": "bid/ask too wide",
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 28.0
+        },
+        {
+          "dte": 30,
+          "event": "left_filter",
+          "premium": 0.925,
+          "reason": "bid/ask too wide",
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 28.0
         }
       ],
       "iv_at_detection": 0.6786,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 0.885,
       "lowest_option_pct": -30.31,
       "lowest_underlying": 27.73,
@@ -6232,6 +6450,28 @@
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 28.0,
           "volume": 178
+        },
+        {
+          "ask": 0.98,
+          "bid": 0.87,
+          "bid_ask_pct": 11.9,
+          "delta": 0.297,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.693,
+          "mid": 0.925,
+          "observed_lag_sec": 9614,
+          "open_interest": 2159,
+          "option_quote_ts": "2026-09-16T15:59:04",
+          "passed": false,
+          "premium": 0.925,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.0324,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 28.0,
+          "volume": 178
         }
       ],
       "occ_symbol": "HIMS261016C00032000",
@@ -6506,7 +6746,7 @@
         }
       ],
       "right": "call",
-      "scan_count": 23,
+      "scan_count": 24,
       "strike": 32.0,
       "symbol": "HIMS",
       "underlying_at_detection": 29.02
@@ -6559,13 +6799,13 @@
       "current_option_pct": 11.58,
       "current_premium": 2.265,
       "current_status": "LEFT_FILTER",
-      "current_underlying": 88.08,
-      "current_underlying_pct": 0.55,
+      "current_underlying": 87.96,
+      "current_underlying_pct": 0.41,
       "days_qualified": 6,
       "descriptors": {
         "bid_ask_pct": 12.8,
         "break_even": 89.77,
-        "break_even_move_pct": 1.91,
+        "break_even_move_pct": 2.05,
         "days_to_earnings": null,
         "delta": 0.57,
         "earnings_in_window": null,
@@ -6923,11 +7163,19 @@
           "reason": "bid/ask too wide",
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 88.08
+        },
+        {
+          "dte": 30,
+          "event": "left_filter",
+          "premium": 2.265,
+          "reason": "bid/ask too wide",
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 87.96
         }
       ],
       "iv_at_detection": 0.1866,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 2.0300000000000002,
       "lowest_option_pct": 0.0,
       "lowest_underlying": 87.6,
@@ -7860,6 +8108,28 @@
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 88.08,
           "volume": 140
+        },
+        {
+          "ask": 2.41,
+          "bid": 2.12,
+          "bid_ask_pct": 12.8,
+          "delta": 0.57,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.1889,
+          "mid": 2.265,
+          "observed_lag_sec": 9614,
+          "open_interest": 5621,
+          "option_quote_ts": "2026-09-16T15:55:07",
+          "passed": false,
+          "premium": 2.265,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.0305,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 87.96,
+          "volume": 140
         }
       ],
       "occ_symbol": "KO261016C00087500",
@@ -8303,7 +8573,7 @@
         }
       ],
       "right": "call",
-      "scan_count": 42,
+      "scan_count": 43,
       "strike": 87.5,
       "symbol": "KO",
       "underlying_at_detection": 87.6
@@ -8356,13 +8626,13 @@
       "current_option_pct": 12.5,
       "current_premium": 1.485,
       "current_status": "LEFT_FILTER",
-      "current_underlying": 88.08,
-      "current_underlying_pct": -0.37,
+      "current_underlying": 87.96,
+      "current_underlying_pct": -0.51,
       "days_qualified": 1,
       "descriptors": {
         "bid_ask_pct": 15.5,
         "break_even": 86.02,
-        "break_even_move_pct": -2.34,
+        "break_even_move_pct": -2.21,
         "days_to_earnings": null,
         "delta": -0.439,
         "earnings_in_window": null,
@@ -8441,19 +8711,27 @@
           "reason": "bid/ask too wide",
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 88.08
+        },
+        {
+          "dte": 30,
+          "event": "left_filter",
+          "premium": 1.485,
+          "reason": "bid/ask too wide",
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 87.96
         }
       ],
       "iv_at_detection": 0.1841,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 1.29,
       "lowest_option_pct": -2.27,
-      "lowest_underlying": 88.08,
-      "lowest_underlying_pct": -0.37,
+      "lowest_underlying": 87.96,
+      "lowest_underlying_pct": -0.51,
       "mae_option": -2.27,
       "mae_underlying": -0.06,
       "mfe_option": 12.5,
-      "mfe_underlying": 0.37,
+      "mfe_underlying": 0.51,
       "observations": [
         {
           "ask": 1.35,
@@ -8607,6 +8885,28 @@
           "theta": -0.0315,
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 88.08,
+          "volume": 439
+        },
+        {
+          "ask": 1.6,
+          "bid": 1.37,
+          "bid_ask_pct": 15.5,
+          "delta": -0.439,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.1786,
+          "mid": 1.485,
+          "observed_lag_sec": 9614,
+          "open_interest": 2013,
+          "option_quote_ts": "2026-09-16T15:48:25",
+          "passed": false,
+          "premium": 1.485,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.0315,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 87.96,
           "volume": 439
         }
       ],
@@ -8770,7 +9070,7 @@
         }
       ],
       "right": "put",
-      "scan_count": 7,
+      "scan_count": 8,
       "strike": 87.5,
       "symbol": "KO",
       "underlying_at_detection": 88.41
@@ -8823,13 +9123,13 @@
       "current_option_pct": -20.51,
       "current_premium": 1.085,
       "current_status": "ACTIVE",
-      "current_underlying": 88.08,
-      "current_underlying_pct": -0.25,
+      "current_underlying": 87.96,
+      "current_underlying_pct": -0.39,
       "days_qualified": 7,
       "descriptors": {
         "bid_ask_pct": 8.3,
         "break_even": 91.08,
-        "break_even_move_pct": 3.41,
+        "break_even_move_pct": 3.55,
         "days_to_earnings": null,
         "delta": 0.36,
         "earnings_in_window": null,
@@ -9283,11 +9583,19 @@
           "premium": 1.085,
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 88.08
+        },
+        {
+          "dte": 30,
+          "event": "still",
+          "iv": 0.1814,
+          "premium": 1.085,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 87.96
         }
       ],
       "iv_at_detection": 0.1886,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 1.0550000000000002,
       "lowest_option_pct": -22.71,
       "lowest_underlying": 87.6,
@@ -10484,6 +10792,28 @@
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 88.08,
           "volume": 816
+        },
+        {
+          "ask": 1.13,
+          "bid": 1.04,
+          "bid_ask_pct": 8.3,
+          "delta": 0.36,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.1814,
+          "mid": 1.085,
+          "observed_lag_sec": 9614,
+          "open_interest": 7207,
+          "option_quote_ts": "2026-09-16T15:59:43",
+          "passed": true,
+          "premium": 1.085,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.0285,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 87.96,
+          "volume": 816
         }
       ],
       "occ_symbol": "KO261016C00090000",
@@ -11002,7 +11332,7 @@
         }
       ],
       "right": "call",
-      "scan_count": 54,
+      "scan_count": 55,
       "strike": 90.0,
       "symbol": "KO",
       "underlying_at_detection": 88.3
@@ -11055,13 +11385,13 @@
       "current_option_pct": 6.93,
       "current_premium": 1.2349999999999999,
       "current_status": "LEFT_FILTER",
-      "current_underlying": 36.87,
-      "current_underlying_pct": -3.56,
+      "current_underlying": 36.86,
+      "current_underlying_pct": -3.58,
       "days_qualified": 5,
       "descriptors": {
         "bid_ask_pct": 12.1,
         "break_even": 31.77,
-        "break_even_move_pct": -13.85,
+        "break_even_move_pct": -13.82,
         "days_to_earnings": null,
         "delta": -0.254,
         "earnings_in_window": null,
@@ -11386,11 +11716,19 @@
           "reason": "bid/ask too wide",
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 36.87
+        },
+        {
+          "dte": 30,
+          "event": "left_filter",
+          "premium": 1.2349999999999999,
+          "reason": "bid/ask too wide",
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 36.86
         }
       ],
       "iv_at_detection": 0.706,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 0.8,
       "lowest_option_pct": -30.74,
       "lowest_underlying": 35.64,
@@ -12235,6 +12573,28 @@
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 36.87,
           "volume": 514
+        },
+        {
+          "ask": 1.31,
+          "bid": 1.16,
+          "bid_ask_pct": 12.1,
+          "delta": -0.254,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.6988,
+          "mid": 1.2349999999999999,
+          "observed_lag_sec": 9614,
+          "open_interest": 1568,
+          "option_quote_ts": "2026-09-16T15:52:47",
+          "passed": false,
+          "premium": 1.2349999999999999,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.0395,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 36.86,
+          "volume": 514
         }
       ],
       "occ_symbol": "SMCI261016P00033000",
@@ -12671,7 +13031,7 @@
         }
       ],
       "right": "put",
-      "scan_count": 38,
+      "scan_count": 39,
       "strike": 33.0,
       "symbol": "SMCI",
       "underlying_at_detection": 38.23
@@ -12724,13 +13084,13 @@
       "current_option_pct": 51.55,
       "current_premium": 1.955,
       "current_status": "LEFT_FILTER",
-      "current_underlying": 36.87,
-      "current_underlying_pct": -7.64,
+      "current_underlying": 36.86,
+      "current_underlying_pct": -7.67,
       "days_qualified": 4,
       "descriptors": {
         "bid_ask_pct": 4.6,
         "break_even": 33.05,
-        "break_even_move_pct": -10.37,
+        "break_even_move_pct": -10.35,
         "days_to_earnings": null,
         "delta": -0.355,
         "earnings_in_window": null,
@@ -12977,11 +13337,19 @@
           "reason": "liquidity failure (volume)",
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 36.87
+        },
+        {
+          "dte": 30,
+          "event": "left_filter",
+          "premium": 1.955,
+          "reason": "liquidity failure (volume)",
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 36.86
         }
       ],
       "iv_at_detection": 0.6934,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 1.255,
       "lowest_option_pct": -2.71,
       "lowest_underlying": 35.64,
@@ -13606,6 +13974,28 @@
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 36.87,
           "volume": 90
+        },
+        {
+          "ask": 2.0,
+          "bid": 1.91,
+          "bid_ask_pct": 4.6,
+          "delta": -0.355,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.6898,
+          "mid": 1.955,
+          "observed_lag_sec": 9614,
+          "open_interest": 3695,
+          "option_quote_ts": "2026-09-16T15:40:22",
+          "passed": false,
+          "premium": 1.955,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.0455,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 36.86,
+          "volume": 90
         }
       ],
       "occ_symbol": "SMCI261016P00035000",
@@ -13912,7 +14302,7 @@
         }
       ],
       "right": "put",
-      "scan_count": 28,
+      "scan_count": 29,
       "strike": 35.0,
       "symbol": "SMCI",
       "underlying_at_detection": 39.92
@@ -13965,13 +14355,13 @@
       "current_option_pct": 0.0,
       "current_premium": 2.96,
       "current_status": "ACTIVE",
-      "current_underlying": 36.87,
-      "current_underlying_pct": 0.08,
+      "current_underlying": 36.86,
+      "current_underlying_pct": 0.05,
       "days_qualified": 1,
       "descriptors": {
         "bid_ask_pct": 6.1,
         "break_even": 34.04,
-        "break_even_move_pct": -7.68,
+        "break_even_move_pct": -7.65,
         "days_to_earnings": null,
         "delta": -0.464,
         "earnings_in_window": null,
@@ -14010,11 +14400,19 @@
           "premium": 2.96,
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 36.87
+        },
+        {
+          "dte": 30,
+          "event": "still",
+          "iv": 0.6978,
+          "premium": 2.96,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 36.86
         }
       ],
       "iv_at_detection": 0.6978,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 2.96,
       "lowest_option_pct": 0.0,
       "lowest_underlying": 36.84,
@@ -14067,6 +14465,28 @@
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 36.87,
           "volume": 102
+        },
+        {
+          "ask": 3.05,
+          "bid": 2.87,
+          "bid_ask_pct": 6.1,
+          "delta": -0.464,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.6978,
+          "mid": 2.96,
+          "observed_lag_sec": 9614,
+          "open_interest": 1512,
+          "option_quote_ts": "2026-09-16T15:33:42",
+          "passed": true,
+          "premium": 2.96,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.0484,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 36.86,
+          "volume": 102
         }
       ],
       "occ_symbol": "SMCI261016P00037000",
@@ -14098,7 +14518,7 @@
         "highest_underlying": null,
         "highest_underlying_pct": null,
         "initial_stop_level": null,
-        "last_entry_evaluation_time": "2026-09-16T22:00:00+00:00",
+        "last_entry_evaluation_time": "2026-09-16T22:40:13+00:00",
         "latest_qualification_state": "QUALIFIES",
         "lowest_mid": null,
         "lowest_pct": null,
@@ -14108,7 +14528,7 @@
         "market_session_state": "CLOSED",
         "mfe": null,
         "observations": [],
-        "observed_lag": 7201,
+        "observed_lag": 9614,
         "params": {
           "dte_stop": 14,
           "entry_price": "mid",
@@ -14137,7 +14557,7 @@
         }
       ],
       "right": "put",
-      "scan_count": 2,
+      "scan_count": 3,
       "strike": 37.0,
       "symbol": "SMCI",
       "underlying_at_detection": 36.84
@@ -14190,13 +14610,13 @@
       "current_option_pct": -14.92,
       "current_premium": 2.48,
       "current_status": "ACTIVE",
-      "current_underlying": 36.87,
-      "current_underlying_pct": -1.58,
+      "current_underlying": 36.86,
+      "current_underlying_pct": -1.6,
       "days_qualified": 3,
       "descriptors": {
         "bid_ask_pct": 4.8,
         "break_even": 40.48,
-        "break_even_move_pct": 9.79,
+        "break_even_move_pct": 9.82,
         "days_to_earnings": null,
         "delta": 0.485,
         "earnings_in_window": null,
@@ -14403,11 +14823,19 @@
           "premium": 2.48,
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 36.87
+        },
+        {
+          "dte": 30,
+          "event": "still",
+          "iv": 0.6938,
+          "premium": 2.48,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 36.86
         }
       ],
       "iv_at_detection": 0.6968,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 1.98,
       "lowest_option_pct": -32.08,
       "lowest_underlying": 35.64,
@@ -14922,6 +15350,28 @@
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 36.87,
           "volume": 1357
+        },
+        {
+          "ask": 2.54,
+          "bid": 2.42,
+          "bid_ask_pct": 4.8,
+          "delta": 0.485,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.6938,
+          "mid": 2.48,
+          "observed_lag_sec": 9614,
+          "open_interest": 2728,
+          "option_quote_ts": "2026-09-16T15:59:30",
+          "passed": true,
+          "premium": 2.48,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.0484,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 36.86,
+          "volume": 1357
         }
       ],
       "occ_symbol": "SMCI261016C00038000",
@@ -15191,7 +15641,7 @@
         }
       ],
       "right": "call",
-      "scan_count": 23,
+      "scan_count": 24,
       "strike": 38.0,
       "symbol": "SMCI",
       "underlying_at_detection": 37.46
@@ -15244,13 +15694,13 @@
       "current_option_pct": 1.97,
       "current_premium": 1.81,
       "current_status": "ACTIVE",
-      "current_underlying": 36.87,
-      "current_underlying_pct": 0.19,
+      "current_underlying": 36.86,
+      "current_underlying_pct": 0.16,
       "days_qualified": 1,
       "descriptors": {
         "bid_ask_pct": 6.6,
         "break_even": 41.81,
-        "break_even_move_pct": 13.4,
+        "break_even_move_pct": 13.43,
         "days_to_earnings": null,
         "delta": 0.386,
         "earnings_in_window": null,
@@ -15328,11 +15778,19 @@
           "premium": 1.81,
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 36.87
+        },
+        {
+          "dte": 30,
+          "event": "still",
+          "iv": 0.6981,
+          "premium": 1.81,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 36.86
         }
       ],
       "iv_at_detection": 0.6964,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 1.4449999999999998,
       "lowest_option_pct": -18.59,
       "lowest_underlying": 35.91,
@@ -15494,6 +15952,28 @@
           "theta": -0.0467,
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 36.87,
+          "volume": 1128
+        },
+        {
+          "ask": 1.87,
+          "bid": 1.75,
+          "bid_ask_pct": 6.6,
+          "delta": 0.386,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.6981,
+          "mid": 1.81,
+          "observed_lag_sec": 9614,
+          "open_interest": 5904,
+          "option_quote_ts": "2026-09-16T15:58:01",
+          "passed": true,
+          "premium": 1.81,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.0467,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 36.86,
           "volume": 1128
         }
       ],
@@ -15661,7 +16141,7 @@
         }
       ],
       "right": "call",
-      "scan_count": 7,
+      "scan_count": 8,
       "strike": 40.0,
       "symbol": "SMCI",
       "underlying_at_detection": 36.8
@@ -15714,13 +16194,13 @@
       "current_option_pct": 0.0,
       "current_premium": 1.5350000000000001,
       "current_status": "ACTIVE",
-      "current_underlying": 36.87,
-      "current_underlying_pct": 0.08,
+      "current_underlying": 36.86,
+      "current_underlying_pct": 0.05,
       "days_qualified": 1,
       "descriptors": {
         "bid_ask_pct": 8.5,
         "break_even": 42.53,
-        "break_even_move_pct": 15.36,
+        "break_even_move_pct": 15.4,
         "days_to_earnings": null,
         "delta": 0.341,
         "earnings_in_window": null,
@@ -15759,11 +16239,19 @@
           "premium": 1.5350000000000001,
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 36.87
+        },
+        {
+          "dte": 30,
+          "event": "still",
+          "iv": 0.6849,
+          "premium": 1.5350000000000001,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 36.86
         }
       ],
       "iv_at_detection": 0.6849,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 1.5350000000000001,
       "lowest_option_pct": 0.0,
       "lowest_underlying": 36.84,
@@ -15816,6 +16304,28 @@
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 36.87,
           "volume": 129
+        },
+        {
+          "ask": 1.6,
+          "bid": 1.47,
+          "bid_ask_pct": 8.5,
+          "delta": 0.341,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.6849,
+          "mid": 1.5350000000000001,
+          "observed_lag_sec": 9614,
+          "open_interest": 1012,
+          "option_quote_ts": "2026-09-16T15:59:59",
+          "passed": true,
+          "premium": 1.5350000000000001,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.045,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 36.86,
+          "volume": 129
         }
       ],
       "occ_symbol": "SMCI261016C00041000",
@@ -15847,7 +16357,7 @@
         "highest_underlying": null,
         "highest_underlying_pct": null,
         "initial_stop_level": null,
-        "last_entry_evaluation_time": "2026-09-16T22:00:00+00:00",
+        "last_entry_evaluation_time": "2026-09-16T22:40:13+00:00",
         "latest_qualification_state": "QUALIFIES",
         "lowest_mid": null,
         "lowest_pct": null,
@@ -15857,7 +16367,7 @@
         "market_session_state": "CLOSED",
         "mfe": null,
         "observations": [],
-        "observed_lag": 7201,
+        "observed_lag": 9614,
         "params": {
           "dte_stop": 14,
           "entry_price": "mid",
@@ -15886,7 +16396,7 @@
         }
       ],
       "right": "call",
-      "scan_count": 2,
+      "scan_count": 3,
       "strike": 41.0,
       "symbol": "SMCI",
       "underlying_at_detection": 36.84
@@ -15939,13 +16449,13 @@
       "current_option_pct": 4.02,
       "current_premium": 1.295,
       "current_status": "LEFT_FILTER",
-      "current_underlying": 71.13,
-      "current_underlying_pct": -2.04,
+      "current_underlying": 71.18,
+      "current_underlying_pct": -1.97,
       "days_qualified": 5,
       "descriptors": {
         "bid_ask_pct": 5.4,
         "break_even": 66.2,
-        "break_even_move_pct": -6.92,
+        "break_even_move_pct": -6.99,
         "days_to_earnings": null,
         "delta": -0.279,
         "earnings_in_window": null,
@@ -16263,11 +16773,19 @@
           "reason": "theta burden too high",
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 71.13
+        },
+        {
+          "dte": 30,
+          "event": "left_filter",
+          "premium": 1.295,
+          "reason": "theta burden too high",
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 71.18
         }
       ],
       "iv_at_detection": 0.3731,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 1.03,
       "lowest_option_pct": -17.27,
       "lowest_underlying": 70.89,
@@ -17090,6 +17608,28 @@
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 71.13,
           "volume": 439
+        },
+        {
+          "ask": 1.33,
+          "bid": 1.26,
+          "bid_ask_pct": 5.4,
+          "delta": -0.279,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.3513,
+          "mid": 1.295,
+          "observed_lag_sec": 9614,
+          "open_interest": 6460,
+          "option_quote_ts": "2026-09-16T15:58:21",
+          "passed": false,
+          "premium": 1.295,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.04,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 71.18,
+          "volume": 439
         }
       ],
       "occ_symbol": "UBER261016P00067500",
@@ -17501,7 +18041,7 @@
         }
       ],
       "right": "put",
-      "scan_count": 37,
+      "scan_count": 38,
       "strike": 67.5,
       "symbol": "UBER",
       "underlying_at_detection": 72.61
@@ -17554,13 +18094,13 @@
       "current_option_pct": 116.67,
       "current_premium": 2.21,
       "current_status": "ACTIVE",
-      "current_underlying": 71.13,
-      "current_underlying_pct": -9.5,
+      "current_underlying": 71.18,
+      "current_underlying_pct": -9.44,
       "days_qualified": 16,
       "descriptors": {
         "bid_ask_pct": 3.6,
         "break_even": 67.79,
-        "break_even_move_pct": -4.7,
+        "break_even_move_pct": -4.76,
         "days_to_earnings": null,
         "delta": -0.413,
         "earnings_in_window": null,
@@ -18477,11 +19017,19 @@
           "premium": 2.21,
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 71.13
+        },
+        {
+          "dte": 30,
+          "event": "still",
+          "iv": 0.3536,
+          "premium": 2.21,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 71.18
         }
       ],
       "iv_at_detection": 0.3613,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 0.855,
       "lowest_option_pct": -16.18,
       "lowest_underlying": 70.89,
@@ -20930,6 +21478,28 @@
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 71.13,
           "volume": 1098
+        },
+        {
+          "ask": 2.25,
+          "bid": 2.17,
+          "bid_ask_pct": 3.6,
+          "delta": -0.413,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.3536,
+          "mid": 2.21,
+          "observed_lag_sec": 9614,
+          "open_interest": 6485,
+          "option_quote_ts": "2026-09-16T15:59:44",
+          "passed": true,
+          "premium": 2.21,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.0471,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 71.18,
+          "volume": 1098
         }
       ],
       "occ_symbol": "UBER261016P00070000",
@@ -21409,7 +21979,7 @@
         }
       ],
       "right": "put",
-      "scan_count": 112,
+      "scan_count": 113,
       "strike": 70.0,
       "symbol": "UBER",
       "underlying_at_detection": 78.6
@@ -21462,13 +22032,13 @@
       "current_option_pct": -18.47,
       "current_premium": 2.295,
       "current_status": "ACTIVE",
-      "current_underlying": 71.13,
-      "current_underlying_pct": -0.71,
+      "current_underlying": 71.18,
+      "current_underlying_pct": -0.64,
       "days_qualified": 4,
       "descriptors": {
         "bid_ask_pct": 9.2,
         "break_even": 74.8,
-        "break_even_move_pct": 5.15,
+        "break_even_move_pct": 5.08,
         "days_to_earnings": null,
         "delta": 0.456,
         "earnings_in_window": null,
@@ -21738,11 +22308,19 @@
           "premium": 2.295,
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 71.13
+        },
+        {
+          "dte": 30,
+          "event": "still",
+          "iv": 0.3477,
+          "premium": 2.295,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 71.18
         }
       ],
       "iv_at_detection": 0.3434,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 2.255,
       "lowest_option_pct": -19.89,
       "lowest_underlying": 70.89,
@@ -22433,6 +23011,28 @@
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 71.13,
           "volume": 673
+        },
+        {
+          "ask": 2.4,
+          "bid": 2.19,
+          "bid_ask_pct": 9.2,
+          "delta": 0.456,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.3477,
+          "mid": 2.295,
+          "observed_lag_sec": 9614,
+          "open_interest": 1566,
+          "option_quote_ts": "2026-09-16T15:58:52",
+          "passed": true,
+          "premium": 2.295,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.0476,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 71.18,
+          "volume": 673
         }
       ],
       "occ_symbol": "UBER261016C00072500",
@@ -22791,7 +23391,7 @@
         }
       ],
       "right": "call",
-      "scan_count": 31,
+      "scan_count": 32,
       "strike": 72.5,
       "symbol": "UBER",
       "underlying_at_detection": 71.64
@@ -22844,13 +23444,13 @@
       "current_option_pct": 15.0,
       "current_premium": 3.45,
       "current_status": "LEFT_FILTER",
-      "current_underlying": 71.13,
-      "current_underlying_pct": -2.49,
+      "current_underlying": 71.18,
+      "current_underlying_pct": -2.43,
       "days_qualified": 5,
       "descriptors": {
         "bid_ask_pct": 5.8,
         "break_even": 69.05,
-        "break_even_move_pct": -2.92,
+        "break_even_move_pct": -2.99,
         "days_to_earnings": null,
         "delta": -0.552,
         "earnings_in_window": null,
@@ -23176,11 +23776,19 @@
           "reason": "premium >$3.00",
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 71.13
+        },
+        {
+          "dte": 30,
+          "event": "left_filter",
+          "premium": 3.45,
+          "reason": "premium >$3.00",
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 71.18
         }
       ],
       "iv_at_detection": 0.3689,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 2.795,
       "lowest_option_pct": -6.83,
       "lowest_underlying": 70.89,
@@ -24025,6 +24633,28 @@
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 71.13,
           "volume": 179
+        },
+        {
+          "ask": 3.55,
+          "bid": 3.35,
+          "bid_ask_pct": 5.8,
+          "delta": -0.552,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.3388,
+          "mid": 3.45,
+          "observed_lag_sec": 9614,
+          "open_interest": 10633,
+          "option_quote_ts": "2026-09-16T15:49:52",
+          "passed": false,
+          "premium": 3.45,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.0485,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 71.18,
+          "volume": 179
         }
       ],
       "occ_symbol": "UBER261016P00072500",
@@ -24452,7 +25082,7 @@
         }
       ],
       "right": "put",
-      "scan_count": 38,
+      "scan_count": 39,
       "strike": 72.5,
       "symbol": "UBER",
       "underlying_at_detection": 72.95
@@ -24505,13 +25135,13 @@
       "current_option_pct": 2.24,
       "current_premium": 1.595,
       "current_status": "ACTIVE",
-      "current_underlying": 107.52,
-      "current_underlying_pct": -0.15,
+      "current_underlying": 107.56,
+      "current_underlying_pct": -0.11,
       "days_qualified": 1,
       "descriptors": {
         "bid_ask_pct": 9.4,
         "break_even": 103.41,
-        "break_even_move_pct": -3.83,
+        "break_even_move_pct": -3.86,
         "days_to_earnings": null,
         "delta": -0.334,
         "earnings_in_window": null,
@@ -24558,11 +25188,19 @@
           "premium": 1.595,
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 107.52
+        },
+        {
+          "dte": 30,
+          "event": "still",
+          "iv": 0.2304,
+          "premium": 1.595,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 107.56
         }
       ],
       "iv_at_detection": 0.2324,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 1.56,
       "lowest_option_pct": 0.0,
       "lowest_underlying": 107.52,
@@ -24636,6 +25274,28 @@
           "theta": -0.0441,
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 107.52,
+          "volume": 446
+        },
+        {
+          "ask": 1.67,
+          "bid": 1.52,
+          "bid_ask_pct": 9.4,
+          "delta": -0.334,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.2304,
+          "mid": 1.595,
+          "observed_lag_sec": 9614,
+          "open_interest": 5746,
+          "option_quote_ts": "2026-09-16T15:58:47",
+          "passed": true,
+          "premium": 1.595,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.0441,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 107.56,
           "volume": 446
         }
       ],
@@ -24730,7 +25390,7 @@
         }
       ],
       "right": "put",
-      "scan_count": 3,
+      "scan_count": 4,
       "strike": 105.0,
       "symbol": "WMT",
       "underlying_at_detection": 107.68
@@ -24783,13 +25443,13 @@
       "current_option_pct": 13.35,
       "current_premium": 1.9100000000000001,
       "current_status": "ACTIVE",
-      "current_underlying": 107.52,
-      "current_underlying_pct": 3.11,
+      "current_underlying": 107.56,
+      "current_underlying_pct": 3.15,
       "days_qualified": 16,
       "descriptors": {
         "bid_ask_pct": 4.2,
         "break_even": 111.91,
-        "break_even_move_pct": 4.08,
+        "break_even_move_pct": 4.04,
         "days_to_earnings": null,
         "delta": 0.399,
         "earnings_in_window": null,
@@ -25707,11 +26367,19 @@
           "premium": 1.9100000000000001,
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 107.52
+        },
+        {
+          "dte": 30,
+          "event": "still",
+          "iv": 0.2274,
+          "premium": 1.9100000000000001,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 107.56
         }
       ],
       "iv_at_detection": 0.228,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 1.165,
       "lowest_option_pct": -30.86,
       "lowest_underlying": 102.55,
@@ -28160,6 +28828,28 @@
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 107.52,
           "volume": 1156
+        },
+        {
+          "ask": 1.95,
+          "bid": 1.87,
+          "bid_ask_pct": 4.2,
+          "delta": 0.399,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.2274,
+          "mid": 1.9100000000000001,
+          "observed_lag_sec": 9614,
+          "open_interest": 10523,
+          "option_quote_ts": "2026-09-16T15:59:14",
+          "passed": true,
+          "premium": 1.9100000000000001,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.0453,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 107.56,
+          "volume": 1156
         }
       ],
       "occ_symbol": "WMT261016C00110000",
@@ -28550,7 +29240,7 @@
         }
       ],
       "right": "call",
-      "scan_count": 112,
+      "scan_count": 113,
       "strike": 110.0,
       "symbol": "WMT",
       "underlying_at_detection": 104.28
@@ -28603,13 +29293,13 @@
       "current_option_pct": 34.17,
       "current_premium": 4.025,
       "current_status": "LEFT_FILTER",
-      "current_underlying": 107.52,
-      "current_underlying_pct": -1.83,
+      "current_underlying": 107.56,
+      "current_underlying_pct": -1.79,
       "days_qualified": 3,
       "descriptors": {
         "bid_ask_pct": 3.7,
         "break_even": 105.97,
-        "break_even_move_pct": -1.44,
+        "break_even_move_pct": -1.47,
         "days_to_earnings": null,
         "delta": -0.614,
         "earnings_in_window": null,
@@ -28816,11 +29506,19 @@
           "reason": "premium >$3.00",
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 107.52
+        },
+        {
+          "dte": 30,
+          "event": "left_filter",
+          "premium": 4.025,
+          "reason": "premium >$3.00",
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 107.56
         }
       ],
       "iv_at_detection": 0.2263,
-      "last_seen": "2026-09-16T22:00:00+00:00",
-      "last_updated": "2026-09-16T22:00:00+00:00",
+      "last_seen": "2026-09-16T22:40:13+00:00",
+      "last_updated": "2026-09-16T22:40:13+00:00",
       "lowest_option": 2.955,
       "lowest_option_pct": -1.5,
       "lowest_underlying": 107.52,
@@ -29335,6 +30033,28 @@
           "ts": "2026-09-16T22:00:00+00:00",
           "underlying": 107.52,
           "volume": 197
+        },
+        {
+          "ask": 4.1,
+          "bid": 3.95,
+          "bid_ask_pct": 3.7,
+          "delta": -0.614,
+          "dte": 30,
+          "ingestion_ts": "2026-09-16T22:40:13+00:00",
+          "iv": 0.2258,
+          "mid": 4.025,
+          "observed_lag_sec": 9614,
+          "open_interest": 4115,
+          "option_quote_ts": "2026-09-16T15:58:32",
+          "passed": false,
+          "premium": 4.025,
+          "provider": "cboe",
+          "provider_mode": "DELAYED",
+          "provider_quote_ts": "2026-09-16T15:59:59",
+          "theta": -0.0467,
+          "ts": "2026-09-16T22:40:13+00:00",
+          "underlying": 107.56,
+          "volume": 197
         }
       ],
       "occ_symbol": "WMT261016P00110000",
@@ -29609,20 +30329,15 @@
         }
       ],
       "right": "put",
-      "scan_count": 23,
+      "scan_count": 24,
       "strike": 110.0,
       "symbol": "WMT",
       "underlying_at_detection": 109.52
     }
   },
   "diff": {
-    "exited": [
-      "HIMS 30C 2026-10-16"
-    ],
-    "left_filter": [
-      "HIMS 26P 2026-10-16",
-      "HIMS 30C 2026-10-16"
-    ],
+    "exited": [],
+    "left_filter": [],
     "new": [],
     "reentered": [],
     "returned": [],
@@ -29650,17 +30365,17 @@
     "discovery_provider": "cboe",
     "fallback_active": false,
     "heartbeat_ts": null,
-    "last_delayed_update": "2026-09-16T22:00:00+00:00",
+    "last_delayed_update": "2026-09-16T22:40:13+00:00",
     "last_realtime_update": null,
-    "observed_lag_sec": 7201,
+    "observed_lag_sec": 9614,
     "on_delayed_fallback": 19,
     "open_paper_positions": 19,
     "provider_quote_ts": "2026-09-16T15:59:59",
     "receiving_realtime": 0,
     "stale_or_disconnected": 0,
-    "workflow_ts": "2026-09-16T22:00:00+00:00"
+    "workflow_ts": "2026-09-16T22:40:13+00:00"
   },
-  "last_scan": "2026-09-16T22:00:00+00:00",
+  "last_scan": "2026-09-16T22:40:13+00:00",
   "meta": {
     "archive_index": "data/archive_index.json",
     "boundary": "Research only. Non-predictive structural screen of long calls & puts. No ranking, no score, no conviction, no direction, no expected return, no recommendation. This is a historical record of what happened after contracts entered the structural filter \u2014 not a forecast of what will.",
@@ -29674,18 +30389,18 @@
       "discovery_provider": "cboe",
       "fallback_active": false,
       "heartbeat_ts": null,
-      "last_delayed_update": "2026-09-16T22:00:00+00:00",
+      "last_delayed_update": "2026-09-16T22:40:13+00:00",
       "last_realtime_update": null,
-      "observed_lag_sec": 7201,
+      "observed_lag_sec": 9614,
       "on_delayed_fallback": 19,
       "open_paper_positions": 19,
       "provider_quote_ts": "2026-09-16T15:59:59",
       "receiving_realtime": 0,
       "stale_or_disconnected": 0,
-      "workflow_ts": "2026-09-16T22:00:00+00:00"
+      "workflow_ts": "2026-09-16T22:40:13+00:00"
     },
-    "generated_at": "2026-09-16T22:00:00+00:00",
-    "last_successful_scan": "2026-09-16T22:00:00+00:00",
+    "generated_at": "2026-09-16T22:40:13+00:00",
+    "last_successful_scan": "2026-09-16T22:40:13+00:00",
     "market_hours": false,
     "paper_live": {
       "active": 15,
@@ -29743,7 +30458,7 @@
       "left_filter": 12
     },
     "schema_version": "research-scanner.v3.2",
-    "state_fingerprint": "298648a8f56945f5543f0c0984631ff0f66539388d296526f49557efcdf2b98f",
+    "state_fingerprint": "099cd2d255966807b9073b21d5b5dedee3289be23ece910400ad10afc2804df3",
     "thresholds": {
       "dte": [
         21,
@@ -29771,19 +30486,7 @@
       "HIMS"
     ]
   },
-  "recently_exited": [
-    {
-      "contract_id": "HIMS 30C 2026-10-16",
-      "days_qualified": 15,
-      "exit_reason": "bid/ask too wide",
-      "exited_at": "2026-09-16T22:00:00+00:00",
-      "expiration": "2026-10-16",
-      "month": "2026-09",
-      "right": "call",
-      "strike": 30.0,
-      "symbol": "HIMS"
-    }
-  ],
+  "recently_exited": [],
   "scan_log": [
     {
       "errors": [],
@@ -31325,6 +32028,20 @@
       "status": "OK",
       "tracked": 25,
       "ts": "2026-09-16T22:00:00+00:00"
+    },
+    {
+      "errors": [],
+      "examined": 1892,
+      "exited": 0,
+      "left_filter": 0,
+      "market_hours": false,
+      "new": 0,
+      "observed_lag_sec": 9614,
+      "provider_quote_ts": "2026-09-16T15:59:59",
+      "returned": 0,
+      "status": "OK",
+      "tracked": 24,
+      "ts": "2026-09-16T22:40:13+00:00"
     }
   ]
 }
