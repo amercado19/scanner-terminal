@@ -13,12 +13,20 @@ provider quote timestamp, ingestion/published timestamp, observed latency inputs
 successful real-time quote, last successful delayed quote, active-position count, real-time-tracked
 count, fallback count, stale count, disconnected count, and worker status.
 
+It also publishes the **exit-ownership** surface the scanner uses to decide whether to defer:
+`exit_ownership` (`WORKER_REALTIME` / `SCANNER_DELAYED_FALLBACK` / `NO_VALID_EXIT_FEED`),
+`realtime_feed_current` (is the worker actually receiving valid real-time quotes this cycle),
+`closed_position_ids` (positions the worker has simulated-closed — the idempotency set that stops a
+double-close), and `entry_ownership` (always `SCANNER_ONLY` — the worker never opens or backfills
+entries). `tracker_panel.js` renders all of these; it never infers ownership the worker did not report.
+
 ## The LIVE gate
 
 `worker_state.json.badge === "REALTIME"` only after the worker has actually received a real
 real-time quote (`ever_received_realtime === true`). `tracker_panel.js` shows the LIVE / REAL-TIME
 badge **only** in that case; until then it renders NOT CONFIGURED or DELAYED. **Do not** display
-LIVE from any other signal.
+LIVE from any other signal. The exit-ownership badge is green (`WORKER_REALTIME`) only when the
+worker itself reports it owns exits — a stale/dormant worker shows `NO_VALID_EXIT_FEED`.
 
 ## Applying it (only when activating Phase 2)
 
