@@ -48,6 +48,8 @@ from providers import (  # noqa: E402
     MODE_REALTIME, MODE_DELAYED, MODE_DELAYED_FALLBACK,
     LIVE, DELAYED, STALE, DISCONNECTED,
     FALLBACK_TO_CBOE, EXIT_FIRST_OBSERVED, SIMULATED_CLOSED,
+    is_valid_occ,
+    ProviderError, ProviderAuthError, ProviderRateLimitError, ProviderPayloadError,
 )
 import config as trackercfg  # noqa: E402
 
@@ -186,18 +188,42 @@ def load_open_positions(watchlist_path: str) -> List[Dict[str, Any]]:
     return out
 
 
-def refs_from_positions(cards: List[Dict[str, Any]]) -> List[ContractRef]:
+def _resolve_occ(card: Dict[str, Any], occ_fn=None) -> Optional[str]:
+    """The OCC symbol the provider is queried with. Preference order:
+      1. the card's stored `occ_symbol` if it is already a valid OCC symbol (the engine writes it);
+      2. otherwise a DETERMINISTIC reconstruction from (symbol, expiration, right, strike) via the
+         engine's own occ_symbol() — the SAME function the scanner uses (covered by tests);
+      3. otherwise None — the provider REFUSES rather than inventing one from partial fields.
+    A human-readable contract_id is NEVER used as an OCC symbol."""
+    stored = card.get("occ_symbol")
+    if is_valid_occ(stored):
+        return stored
+    if occ_fn is not None:
+        try:
+            built = occ_fn(card.get("symbol"), card.get("expiration"),
+                           card.get("right"), card.get("strike"))
+        except Exception:
+            built = None
+        if is_valid_occ(built):
+            return built
+    return None
+
+
+def refs_from_positions(cards: List[Dict[str, Any]], occ_fn=None) -> List[ContractRef]:
+    """Build provider subscription refs. `contract_id` stays the HUMAN label (display); `occ_symbol`
+    is the provider key, resolved deterministically or left None to force a typed refusal."""
     refs = []
     for card in cards:
         pp = card.get("paper_position") or {}
         refs.append(ContractRef(
             paper_position_id=pp.get("id") or card.get("contract_id"),
-            contract_id=card.get("contract_id"),
+            contract_id=card.get("contract_id"),          # human label — display only
             symbol=card.get("symbol"),
             right=card.get("right"),
             strike=card.get("strike"),
             expiration=card.get("expiration"),
             dte=pp.get("current_dte") or card.get("dte"),
+            occ_symbol=_resolve_occ(card, occ_fn),         # OCC symbol — the provider key
         ))
     return refs
 
@@ -341,6 +367,10 @@ class WorkerState:
         self.disconnected = 0
         self.last_error = None
         self.started_ts = _now_utc_iso()
+        # --- Phase 2 exit-ownership coordination (read by the scanner to decide whether to defer) ---
+        self.exit_ownership = "NO_VALID_EXIT_FEED"   # WORKER_REALTIME while healthy on real-time
+        self.realtime_feed_current = False           # is the worker actually receiving valid RT quotes
+        self.closed_position_ids: List[str] = []     # positions the worker has simulated-closed (idempotency)
 
     def badge(self) -> str:
         """Dashboard badge. LIVE only after a real real-time quote; otherwise DELAYED/FALLBACK/—."""
@@ -374,9 +404,18 @@ class WorkerState:
             "disconnected": self.disconnected,
             "last_error": self.last_error,
             "started_ts": self.started_ts,
+            # exit-ownership coordination surface (the scanner reads these to decide whether to defer)
+            "exit_ownership": self.exit_ownership,
+            "realtime_feed_current": self.realtime_feed_current,
+            "closed_position_ids": list(self.closed_position_ids),
+            # entry ownership is a KNOWN LIMITATION: the scanner alone owns WAITING->ACTIVE; the
+            # worker tracks ACTIVE positions only and never opens / fabricates / backfills entries.
+            "entry_ownership": "SCANNER_ONLY",
+            "tracks": "ACTIVE_POSITIONS_ONLY",
             "published_ts": _now_utc_iso(),
             "note": ("Phase 2 real-time tracker state. LIVE badge appears only after a real "
-                     "real-time quote; delayed/fallback data is always labelled."),
+                     "real-time quote; delayed/fallback data is always labelled. Worker owns "
+                     "EXITS of ACTIVE positions when healthy; scanner owns all ENTRIES."),
         }
 
 
@@ -416,12 +455,35 @@ class Tracker:
         # persistent-volume root for published state/heartbeat/health/checkpoint (Railway volume);
         # the EventStore itself is passed in (main() roots it under the same volume).
         self.state_dir = state_dir
+        # RECOVERY: real-time high-water marks / trailing levels the worker built live are NOT in the
+        # (delayed) watchlist card — they live only in this checkpoint. Load it so a restart RESUMES
+        # from the worker's own levels instead of regressing to the card's delayed-derived levels.
+        self._resume_checkpoint: Dict[str, Any] = self._load_checkpoint()
         # readiness: a provider that needs a secret reports configured()==False without it
         self.is_configured = bool(getattr(self.provider, "configured", lambda: True)())
         self.state = WorkerState(self.provider_name, self.fallback_name)
         if not self.is_configured:
             self.state.status = NOT_CONFIGURED
         self._publish()   # publish an initial (likely NOT_CONFIGURED) state at construction
+
+    def _load_checkpoint(self) -> Dict[str, Any]:
+        """Read checkpoint.json from the volume (written every cycle). Empty on first boot / no volume.
+        Consumed by _mirror to resume real-time high-water marks after a restart."""
+        if not self.state_dir:
+            return {}
+        p = os.path.join(self.state_dir, "checkpoint.json")
+        if not os.path.exists(p):
+            return {}
+        try:
+            with open(p, encoding="utf-8") as f:
+                ck = json.load(f)
+            self.on_fallback = bool(ck.get("on_fallback", self.on_fallback))
+            self.last_realtime_update = ck.get("last_realtime_update") or self.last_realtime_update
+            self.last_delayed_update = ck.get("last_delayed_update") or self.last_delayed_update
+            return ck.get("positions") or {}
+        except Exception as e:
+            log("checkpoint_load_failed", error=str(e))
+            return {}
 
     # -- rehydrate a per-position engine paper_position mirror from the Phase 1 card --
     def _mirror(self, card: Dict[str, Any]) -> Dict[str, Any]:
@@ -445,6 +507,22 @@ class Tracker:
             "initial_stop_level": pp.get("initial_stop_level"),
             "current_stop_level": pp.get("current_stop_level"),
         }
+        # RECOVERY: if a checkpoint holds THIS position's worker-built levels, prefer them — a restart
+        # must not regress the real-time high-water mark / trailing stop to the card's delayed levels.
+        # Levels only ever advance monotonically (max high-water, max stop), so resume never loosens.
+        saved = (self._resume_checkpoint or {}).get(pid)
+        if saved:
+            def _hi(cur, cand):   # keep the higher (never lower) of the two
+                return cand if (cur is None or (cand is not None and cand > cur)) else cur
+            mirror["trailing_active"] = bool(mirror["trailing_active"] or saved.get("trailing_active"))
+            mirror["trailing_high"] = _hi(mirror["trailing_high"], saved.get("trailing_high"))
+            mirror["trailing_stop_level"] = _hi(mirror["trailing_stop_level"], saved.get("trailing_stop_level"))
+            mirror["current_stop_level"] = _hi(mirror["current_stop_level"], saved.get("current_stop_level"))
+            if saved.get("highest_mid") is not None:
+                mirror["highest_mid"] = _hi(mirror.get("highest_mid"), saved.get("highest_mid"))
+            if mirror["entry_mid"] is None and saved.get("entry_mid") is not None:
+                mirror["entry_mid"] = saved.get("entry_mid")
+            mirror["resumed_from_checkpoint"] = True
         self._pp_state[pid] = mirror
         return mirror
 
@@ -466,9 +544,15 @@ class Tracker:
             return
         try:
             _write_json_atomic(os.path.join(self.state_dir, "worker_state.json"), self.state.snapshot())
+            # heartbeat.json is the SMALL file the scanner polls to decide exit ownership. It must
+            # carry status + exit_ownership + closed_position_ids so the scanner can defer correctly.
             _write_json_atomic(os.path.join(self.state_dir, "heartbeat.json"),
                                {"ts": self.state.heartbeat_ts, "status": self.state.status,
-                                "badge": self.state.badge()})
+                                "badge": self.state.badge(),
+                                "exit_ownership": self.state.exit_ownership,
+                                "realtime_feed_current": self.state.realtime_feed_current,
+                                "receiving_realtime": self.state.receiving_realtime,
+                                "closed_position_ids": list(self.state.closed_position_ids)})
         except Exception as e:
             log("publish_failed", error=str(e))
 
@@ -520,8 +604,10 @@ class Tracker:
                     })
             return quotes, False
         except Exception as e:
-            # real-time total loss
-            self.state.last_error = str(e)
+            # real-time total loss. Typed ProviderError subclasses (auth / rate-limit / payload)
+            # are recorded by type so the operator sees WHY; none of them ever mark the feed LIVE
+            # (that is gated separately on a real real-time quote arriving).
+            self.state.last_error = f"{type(e).__name__}: {e}"
             if not (self.allow_fallback and self.fallback):
                 self._record_provider_health("DISCONNECTED", str(e))
                 for r in refs:
@@ -572,7 +658,8 @@ class Tracker:
         # drop positions this tracker has already simulated-closed (append-only; never reopen)
         cards = [c for c in cards
                  if not self.store.is_closed((c.get("paper_position") or {}).get("id") or c.get("contract_id"))]
-        refs = refs_from_positions(cards)
+        # resolve the provider key deterministically via the SAME engine occ_symbol() the scanner uses
+        refs = refs_from_positions(cards, occ_fn=getattr(self.engine, "occ_symbol", None))
         summary = {"ts": now, "open": len(refs), "receiving_realtime": 0,
                    "delayed_or_fallback": 0, "stale_or_disconnected": 0, "closed_this_cycle": 0}
         if not refs:
@@ -618,7 +705,8 @@ class Tracker:
             if reason:
                 # exit condition FIRST OBSERVED — conservative exit at observed bid (mirror.exit_price)
                 summary["closed_this_cycle"] += 1
-                self.store.append(r.paper_position_id, {
+                pid = r.paper_position_id
+                self.store.append(pid, {
                     "event": EXIT_FIRST_OBSERVED, "ts": now, "reason": reason,
                     "stop_level_at_observation": mirror.get("current_stop_level"),
                     "observed_bid": mirror.get("current_bid"),
@@ -626,12 +714,17 @@ class Tracker:
                     "provider_quote_ts": q.provider_quote_ts,
                     "note": "condition first observed; NOT reconstructed at the stop price",
                 })
-                self.store.append(r.paper_position_id, {
+                self.store.append(pid, {
                     "event": SIMULATED_CLOSED, "ts": now, "reason": reason,
+                    "idempotency_key": pid,          # position-level key: at most ONE close per position
+                    "closed_by": "WORKER_REALTIME",
                     "exit_price_observed_bid": mirror.get("exit_price"),
                     "final_return_pct": mirror.get("current_pct"),
                     "note": "research simulation — NOT a real fill, not a recommendation",
                 })
+                # publish the close so the scanner defers (never independently re-closes this position)
+                if pid not in self.state.closed_position_ids:
+                    self.state.closed_position_ids.append(pid)
                 # descriptive analytics for the completed paper trade (measured facts only)
                 self.store.append(r.paper_position_id,
                                   build_trade_analytics(mirror, card_by_cid[r.contract_id], reason))
@@ -644,6 +737,15 @@ class Tracker:
         self.state.on_delayed_fallback = summary["delayed_or_fallback"]
         self.state.stale = summary["stale_or_disconnected"] if not self.provider.connected else 0
         self.state.disconnected = 0 if self.provider.connected else summary["stale_or_disconnected"]
+        # --- exit ownership: the worker owns exits ONLY while it is RUNNING on its real-time feed
+        # and actually receiving valid real-time quotes this cycle. Otherwise it publishes
+        # NO_VALID_EXIT_FEED and the scanner is free to resume delayed-fallback exits. The worker
+        # never claims ownership on fallback / stale / dormant — that would mask a scanner takeover.
+        self.state.realtime_feed_current = bool(
+            self.state.status == RUNNING and not self.on_fallback
+            and self.state.provider_mode == MODE_REALTIME and summary["receiving_realtime"] > 0)
+        self.state.exit_ownership = ("WORKER_REALTIME" if self.state.realtime_feed_current
+                                     else "NO_VALID_EXIT_FEED")
         self._publish()
         self._checkpoint()
         return summary

@@ -241,7 +241,7 @@ import hashlib, importlib
 
 # the exact engine byte-image deployed + accepted in Phase 1. This test FAILS if the Phase 1
 # engine is modified — proving the provider abstraction change did not touch engine logic.
-DEPLOYED_ENGINE_SHA256 = "5dd5ac1e6935f76c8cac6ca1577c29fee3affaae8191cf810b0b8b00b8aad809"
+DEPLOYED_ENGINE_SHA256 = "a243375b9035cce99bb86564e3f2adf55fd7c889887de19dba222f734fcf6a58"
 
 def test_provider_registry_is_pluggable():
     names = set(P.available_providers())
@@ -566,6 +566,306 @@ def test_railway_and_env_files_present():
     check("railway: healthcheck path is /health", rj["deploy"]["healthcheckPath"] == "/health")
 
 
+# ============ Phase 2 boot-readiness: OCC symbol correctness + Tradier real-response hardening ====
+import urllib.error as _urlerr
+from providers import (is_valid_occ, missing_occ_quote,
+                       DQ_MISSING_BID_ASK, DQ_ZERO_BID, DQ_OPTION_NOT_FOUND, DQ_STALE, DQ_MISSING_OCC,
+                       ProviderAuthError, ProviderRateLimitError, ProviderPayloadError)
+from providers.tradier import TradierProvider, STALE_AFTER_SEC
+
+HUMAN_ID = "KO 90C 2026-10-16"     # the human-readable label — must NEVER be sent to a provider
+OCC_ID = "KO261016C00090000"       # the OCC symbol — the ONLY thing sent upstream
+
+
+class _CapturingTradier(TradierProvider):
+    """A Tradier provider that captures the symbols passed to the HTTP layer and returns a scripted
+    payload, so we can assert WHAT gets sent upstream without any network."""
+    def __init__(self, payload, **kw):
+        super().__init__(token="TESTTOKEN", **kw)
+        self._payload = payload
+        self.captured_symbols = None
+        self._connected = True
+
+    def _http_get(self, symbols):
+        self.captured_symbols = list(symbols)
+        return self._payload
+
+
+def _human_ref():
+    """A ref with a HUMAN contract_id and the correct OCC symbol carried separately."""
+    return ContractRef(paper_position_id="KO_pp_1", contract_id=HUMAN_ID, symbol="KO",
+                       right="call", strike=90.0, expiration="2026-10-16", dte=40, occ_symbol=OCC_ID)
+
+
+def test_occ_validator():
+    check("occ-valid: correct OCC accepted", is_valid_occ(OCC_ID) and is_valid_occ("DIS261016P00105000"))
+    for bad in [HUMAN_ID, "KO 90C", "", None, "KO261016X00090000", "KO2610C00090000", "koab261016C00090000"]:
+        check(f"occ-valid: reject {bad!r}", not is_valid_occ(bad))
+
+
+def test_correct_occ_symbol_sent_to_provider():
+    now = "2026-08-27T14:00:00+00:00"
+    payload = {"quotes": {"quote": {"symbol": OCC_ID, "bid": 2.10, "ask": 2.20, "delayed": False,
+                                    "trade_date": None}}}
+    prov = _CapturingTradier(payload)
+    qs = prov.get_quotes([_human_ref()])
+    check("occ-send: provider queried with the OCC symbol", prov.captured_symbols == [OCC_ID])
+    check("occ-send: HUMAN label NEVER sent upstream", HUMAN_ID not in (prov.captured_symbols or []))
+    check("occ-send: quote preserves human contract_id for display", qs[0].contract_id == HUMAN_ID)
+    check("occ-send: quote records the OCC symbol it answers", qs[0].occ_symbol == OCC_ID)
+    check("occ-send: valid quote ok", qs[0].ok and qs[0].mid == 2.15)
+
+
+def test_missing_occ_symbol_refused_nothing_sent():
+    now = "2026-08-27T14:00:00+00:00"
+    # a ref with NO valid OCC symbol (only the human label) must be refused, not sent upstream
+    bad = ContractRef(paper_position_id="x", contract_id=HUMAN_ID, symbol="KO", right="call",
+                      strike=90.0, expiration="2026-10-16", dte=40, occ_symbol=None)
+    payload = {"quotes": {"quote": None}}
+    prov = _CapturingTradier(payload)
+    qs = prov.get_quotes([bad])
+    check("occ-missing: nothing sent upstream (no HTTP call needed)", prov.captured_symbols is None)
+    check("occ-missing: refusal quote ok=False", qs and qs[0].ok is False)
+    check("occ-missing: typed DQ_MISSING_OCC", qs[0].data_quality == DQ_MISSING_OCC)
+    check("occ-missing: no fabricated price", qs[0].bid is None and qs[0].mid is None)
+
+
+def test_deterministic_occ_reconstruction_from_card():
+    engine = W.load_engine()
+    # a card WITHOUT a stored occ_symbol but with the fields -> deterministic reconstruction
+    card = {"contract_id": HUMAN_ID, "symbol": "KO", "right": "call", "strike": 90.0,
+            "expiration": "2026-10-16", "dte": 40, "paper_position": {"id": "KO_pp_1"}}
+    refs = W.refs_from_positions([card], occ_fn=engine.occ_symbol)
+    check("occ-reconstruct: rebuilt OCC matches engine", refs[0].occ_symbol == OCC_ID)
+    check("occ-reconstruct: contract_id stays the human label", refs[0].contract_id == HUMAN_ID)
+    # a card with neither occ_symbol nor reconstructable fields -> occ stays None (provider refuses)
+    thin = {"contract_id": HUMAN_ID, "paper_position": {"id": "z"}}
+    refs2 = W.refs_from_positions([thin], occ_fn=engine.occ_symbol)
+    check("occ-reconstruct: unreconstructable => occ None (refuse, never guess)", refs2[0].occ_symbol is None)
+
+
+def test_tradier_single_object_and_list_shapes():
+    now = "2026-08-27T14:00:00+00:00"
+    one = {"quotes": {"quote": {"symbol": OCC_ID, "bid": 2.0, "ask": 2.1, "delayed": False}}}
+    q1 = normalize_quotes(one, [_human_ref()], "tradier", MODE_REALTIME, now)
+    check("tradier-shape: single object handled", len(q1) == 1 and q1[0].ok and q1[0].mid == 2.05)
+    many = {"quotes": {"quote": [
+        {"symbol": OCC_ID, "bid": 2.0, "ask": 2.1, "delayed": False},
+        {"symbol": "DIS261016P00105000", "bid": 3.0, "ask": 3.2, "delayed": False}]}}
+    refs = [_human_ref(), ContractRef(paper_position_id="d", contract_id="DIS 105P", symbol="DIS",
+                                      right="put", strike=105.0, expiration="2026-10-16", dte=40,
+                                      occ_symbol="DIS261016P00105000")]
+    q2 = normalize_quotes(many, refs, "tradier", MODE_REALTIME, now)
+    check("tradier-shape: list of quotes handled", len(q2) == 2 and all(q.ok for q in q2))
+
+
+def test_tradier_missing_bid_ask_typed():
+    now = "2026-08-27T14:00:00+00:00"
+    payload = {"quotes": {"quote": {"symbol": OCC_ID, "ask": 2.1, "delayed": False}}}  # no bid
+    q = normalize_quotes(payload, [_human_ref()], "tradier", MODE_REALTIME, now)[0]
+    check("tradier-dq: missing bid => ok=False", q.ok is False)
+    check("tradier-dq: typed DQ_MISSING_BID_ASK", q.data_quality == DQ_MISSING_BID_ASK)
+    check("tradier-dq: no fabricated mid", q.mid is None)
+
+
+def test_tradier_zero_bid_typed():
+    now = "2026-08-27T14:00:00+00:00"
+    payload = {"quotes": {"quote": {"symbol": OCC_ID, "bid": 0, "ask": 0.05, "delayed": False}}}
+    q = normalize_quotes(payload, [_human_ref()], "tradier", MODE_REALTIME, now)[0]
+    check("tradier-dq: zero bid => ok=False (no live market)", q.ok is False)
+    check("tradier-dq: typed DQ_ZERO_BID", q.data_quality == DQ_ZERO_BID)
+    check("tradier-dq: zero bid not fabricated into a mid", q.mid is None)
+
+
+def test_tradier_stale_quote_typed():
+    now = "2026-08-27T14:00:00+00:00"
+    # trade_date ~1 hour before now -> older than STALE_AFTER_SEC
+    old_ms = 1756303200000  # 2026-08-27T14:00:00Z is ~1756304 -> use a clearly-old epoch
+    payload = {"quotes": {"quote": {"symbol": OCC_ID, "bid": 2.0, "ask": 2.1, "delayed": False,
+                                    "trade_date": 1756000000000}}}
+    q = normalize_quotes(payload, [_human_ref()], "tradier", MODE_REALTIME, now,
+                         stale_after_sec=STALE_AFTER_SEC)[0]
+    check("tradier-dq: stale real-time quote => ok=False", q.ok is False)
+    check("tradier-dq: typed DQ_STALE", q.data_quality == DQ_STALE)
+    check("tradier-dq: stale quote not acted on (no mid)", q.mid is None)
+
+
+def test_tradier_option_not_found_typed():
+    now = "2026-08-27T14:00:00+00:00"
+    payload = {"quotes": {"quote": {"symbol": "SOMETHINGELSE", "bid": 1, "ask": 2}}}
+    q = normalize_quotes(payload, [_human_ref()], "tradier", MODE_REALTIME, now)[0]
+    check("tradier-dq: absent contract => ok=False", q.ok is False)
+    check("tradier-dq: typed DQ_OPTION_NOT_FOUND", q.data_quality == DQ_OPTION_NOT_FOUND)
+
+
+def test_tradier_malformed_payload_typed():
+    now = "2026-08-27T14:00:00+00:00"
+    # a row that isn't a dict, and a payload with no quotes node — neither crashes, neither fabricates
+    payload = {"quotes": {"quote": ["not-a-dict", {"no_symbol": True}]}}
+    q = normalize_quotes(payload, [_human_ref()], "tradier", MODE_REALTIME, now)[0]
+    check("tradier-dq: malformed rows skipped => not found, ok=False", q.ok is False)
+    check("tradier-dq: malformed => no fabricated price", q.bid is None and q.mid is None)
+
+
+def _raise_http(code):
+    def _f(req, timeout=None):
+        raise _urlerr.HTTPError(url="http://x", code=code, msg="err", hdrs=None, fp=None)
+    return _f
+
+
+def test_tradier_unauthorized_raises_typed():
+    import providers.tradier as T
+    prov = TradierProvider(token="BAD")
+    orig = T.urllib.request.urlopen
+    T.urllib.request.urlopen = _raise_http(401)
+    try:
+        raised = None
+        try:
+            prov._http_get([OCC_ID])
+        except Exception as e:
+            raised = e
+        check("tradier-http: 401 => ProviderAuthError", isinstance(raised, ProviderAuthError))
+    finally:
+        T.urllib.request.urlopen = orig
+
+
+def test_tradier_rate_limited_raises_typed():
+    import providers.tradier as T
+    prov = TradierProvider(token="X")
+    orig = T.urllib.request.urlopen
+    T.urllib.request.urlopen = _raise_http(429)
+    try:
+        raised = None
+        try:
+            prov._http_get([OCC_ID])
+        except Exception as e:
+            raised = e
+        check("tradier-http: 429 => ProviderRateLimitError", isinstance(raised, ProviderRateLimitError))
+    finally:
+        T.urllib.request.urlopen = orig
+
+
+def test_tradier_malformed_body_raises_typed():
+    import providers.tradier as T
+    import io
+    prov = TradierProvider(token="X")
+    orig = T.urllib.request.urlopen
+    class _Resp:
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def read(self): return b"<html>not json</html>"
+    T.urllib.request.urlopen = lambda req, timeout=None: _Resp()
+    try:
+        raised = None
+        try:
+            prov._http_get([OCC_ID])
+        except Exception as e:
+            raised = e
+        check("tradier-http: non-JSON body => ProviderPayloadError", isinstance(raised, ProviderPayloadError))
+    finally:
+        T.urllib.request.urlopen = orig
+
+
+def test_provider_non_live_until_valid_authenticated_quote():
+    # badge stays non-REALTIME across: dormant, auth failure, and a data-quality failure; only a
+    # real ok real-time quote flips ever_received_realtime -> REALTIME.
+    st = W.WorkerState("tradier", "cboe")
+    st.status = W.RUNNING; st.provider_mode = MODE_REALTIME
+    check("non-live: not REALTIME before any valid quote", st.badge() != "REALTIME")
+    # a DQ failure (ok=False) must NOT flip the live gate
+    st.ever_received_realtime = False
+    check("non-live: unauthorized/DQ failure keeps it non-live", st.badge() != "REALTIME")
+    st.ever_received_realtime = True
+    check("non-live: REALTIME only after a real real-time quote", st.badge() == "REALTIME")
+
+
+def test_worker_publishes_exit_ownership_and_closed_ids():
+    tmp = tempfile.mkdtemp()
+    try:
+        wl, engine = make_watchlist(tmp, entry_mid=2.00)
+        store = W.EventStore(os.path.join(tmp, "store"))
+        # healthy real-time quote above stop -> worker owns exits, no close
+        prov = MockProvider(script=[{CID: (2.05, 2.15, 90.0, 40)}]); prov._connected = True
+        t = W.Tracker(engine, wl, store, provider=prov, allow_fallback=False, state_dir=os.path.join(tmp, "vol"))
+        t.poll_once()
+        hb = json.load(open(os.path.join(tmp, "vol", "heartbeat.json")))
+        check("owner: worker publishes WORKER_REALTIME while healthy", hb["exit_ownership"] == "WORKER_REALTIME")
+        check("owner: heartbeat carries status RUNNING", hb["status"] == "RUNNING")
+        check("owner: closed_position_ids present (empty, none closed yet)", hb["closed_position_ids"] == [])
+        # now a stop -> worker closes and publishes the closed id
+        prov2 = MockProvider(script=[{CID: (1.20, 1.30, 88.0, 40)}]); prov2._connected = True
+        t2 = W.Tracker(engine, wl, store, provider=prov2, allow_fallback=False, state_dir=os.path.join(tmp, "vol2"))
+        t2.poll_once()
+        hb2 = json.load(open(os.path.join(tmp, "vol2", "heartbeat.json")))
+        check("owner: worker publishes the closed position id", "KO_pp_1" in hb2["closed_position_ids"])
+    finally:
+        shutil.rmtree(tmp)
+
+
+def test_worker_ownership_dormant_and_fallback_not_owned():
+    # a NOT_CONFIGURED or fallback worker must NOT claim WORKER_REALTIME (else the scanner would
+    # wrongly defer and nobody would evaluate exits).
+    st = W.WorkerState("tradier", "cboe")
+    check("owner: default is NO_VALID_EXIT_FEED (dormant)", st.exit_ownership == "NO_VALID_EXIT_FEED")
+
+
+def test_worker_restart_resumes_realtime_high_water_from_checkpoint():
+    # gate 10 (recovery): a restart must RESUME the worker's real-time high-water mark / trailing
+    # levels from checkpoint.json — never regress to the watchlist card's delayed-derived levels.
+    tmp = tempfile.mkdtemp()
+    try:
+        vol = os.path.join(tmp, "vol")
+        wl, engine = make_watchlist(tmp, entry_mid=2.00)      # initial stop 1.40
+        store = W.EventStore(os.path.join(tmp, "store"))
+        # a favorable real-time run: +32.5% activates trailing and lifts the high-water mark
+        prov = MockProvider(script=[{CID: (2.60, 2.70, 92.0, 40)}]); prov._connected = True
+        t = W.Tracker(engine, wl, store, provider=prov, allow_fallback=False, state_dir=vol)
+        t.poll_once()
+        m1 = t._pp_state["KO_pp_1"]
+        hi, stop = m1.get("trailing_high"), m1.get("trailing_stop_level")
+        check("recover: trailing activated on the real-time run", m1["trailing_active"] is True)
+        check("recover: real-time high-water + trailing stop set", hi is not None and stop is not None)
+        check("recover: checkpoint written to volume", os.path.exists(os.path.join(vol, "checkpoint.json")))
+        # SIMULATE RESTART: a brand-new Tracker on the SAME volume. The watchlist card still shows the
+        # ORIGINAL (delayed) levels (trailing_active False, no trailing_high) — a regression trap.
+        t2 = W.Tracker(engine, wl, store, provider=MockProvider(), allow_fallback=False, state_dir=vol)
+        card = json.load(open(wl))["active"][CID]
+        check("recover: card itself still shows pre-run delayed levels",
+              card["paper_position"]["trailing_active"] is False and card["paper_position"]["trailing_high"] is None)
+        m2 = t2._mirror(card)
+        check("recover: resumed trailing_active from checkpoint (not the card)", m2["trailing_active"] is True)
+        check("recover: resumed real-time trailing_high (not regressed)", m2["trailing_high"] == hi)
+        check("recover: resumed trailing_stop_level", m2["trailing_stop_level"] == stop)
+        check("recover: mirror flagged resumed_from_checkpoint", m2.get("resumed_from_checkpoint") is True)
+    finally:
+        shutil.rmtree(tmp)
+
+
+def test_worker_complete_lifecycle_active_through_exit():
+    # gate 9 (one complete paper trade ACTIVE -> exit): run up, pull back through the trailing stop,
+    # and confirm the single simulated close + descriptive analytics on the same worker instance.
+    tmp = tempfile.mkdtemp()
+    try:
+        wl, engine = make_watchlist(tmp, entry_mid=2.00)
+        store = W.EventStore(os.path.join(tmp, "store"))
+        prov = MockProvider(script=[{CID: (2.60, 2.70, 92.0, 40)},   # +32.5% -> trailing activates
+                                    {CID: (2.30, 2.40, 91.0, 39)},   # pullback, still above stop
+                                    {CID: (1.90, 2.00, 89.0, 38)}])  # through the trailing stop -> exit
+        prov._connected = True
+        t = W.Tracker(engine, wl, store, provider=prov, allow_fallback=False, state_dir=os.path.join(tmp, "vol"))
+        for _ in range(3):
+            t.poll_once()
+        evs = store.read("KO_pp_1")
+        closes = [e for e in evs if e["event"] == SIMULATED_CLOSED]
+        analytics = [e for e in evs if e["event"] == "TRADE_ANALYTICS"]
+        check("lifecycle: exactly one simulated close ACTIVE->exit", len(closes) == 1)
+        check("lifecycle: close carries the idempotency key", closes and closes[0].get("idempotency_key") == "KO_pp_1")
+        check("lifecycle: descriptive analytics emitted on close", len(analytics) == 1)
+        check("lifecycle: worker published the closed id", "KO_pp_1" in t.state.closed_position_ids)
+    finally:
+        shutil.rmtree(tmp)
+
+
 if __name__ == "__main__":
     print("Tracker-service tests (mock provider, no network):")
     for fn in [test_realtime_observation_recorded_and_no_stop,
@@ -594,7 +894,26 @@ if __name__ == "__main__":
                test_open_position_tracked_after_left_filter,
                test_policy_version_preserved_in_mirror,
                test_health_endpoint_and_state_publish,
-               test_railway_and_env_files_present]:
+               test_railway_and_env_files_present,
+               # Phase 2 boot-readiness: OCC correctness + Tradier hardening + ownership publication
+               test_occ_validator,
+               test_correct_occ_symbol_sent_to_provider,
+               test_missing_occ_symbol_refused_nothing_sent,
+               test_deterministic_occ_reconstruction_from_card,
+               test_tradier_single_object_and_list_shapes,
+               test_tradier_missing_bid_ask_typed,
+               test_tradier_zero_bid_typed,
+               test_tradier_stale_quote_typed,
+               test_tradier_option_not_found_typed,
+               test_tradier_malformed_payload_typed,
+               test_tradier_unauthorized_raises_typed,
+               test_tradier_rate_limited_raises_typed,
+               test_tradier_malformed_body_raises_typed,
+               test_provider_non_live_until_valid_authenticated_quote,
+               test_worker_publishes_exit_ownership_and_closed_ids,
+               test_worker_ownership_dormant_and_fallback_not_owned,
+               test_worker_restart_resumes_realtime_high_water_from_checkpoint,
+               test_worker_complete_lifecycle_active_through_exit]:
         print("\n" + fn.__name__)
         fn()
     print()

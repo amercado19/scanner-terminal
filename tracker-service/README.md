@@ -26,6 +26,43 @@ at ~15-minute granularity, and **must not hold a socket open**. So the two phase
 The worker **reads** the Phase 1 watchlist to learn which positions are open; it **never
 writes back** into it. The two lifecycles stay independent and never race.
 
+## Exit ownership — who may close a paper position (no double-close)
+
+Both systems can *observe* an open position; only **one** may **close** it, or it double-closes.
+The persistent worker is the **primary owner of exits** whenever it is healthy and receiving valid
+real-time quotes. The scanner is a **delayed fallback** that resumes exit evaluation only while the
+worker is down. Three explicit states (defined once in the engine, reused by both sides):
+
+| State | When | Who closes |
+|---|---|---|
+| `WORKER_REALTIME` | worker heartbeat fresh **and** it reports a current real-time feed | **worker only**; scanner defers |
+| `SCANNER_DELAYED_FALLBACK` | worker heartbeat stale/absent/degraded, scanner has a usable delayed quote | **scanner**, every such exit labelled `DELAYED FALLBACK` + `STOP FIRST OBSERVED` |
+| `NO_VALID_EXIT_FEED` | worker down **and** scanner has no usable quote | **nobody** — hold |
+
+Coordination is one-directional and cheap: the worker publishes `heartbeat.json`
+(`status`, `exit_ownership`, `closed_position_ids`, `ts`); the scanner fetches it (opt-in via
+`WORKER_HEARTBEAT_URL`) and, only while the worker is healthy, **skips its own exit evaluation**.
+When the worker recovers, ownership returns to it automatically on the next scan.
+
+**Idempotency (a position can never receive two simulated closes):** the position id is the
+idempotency key. The worker stamps each `SIMULATED_CLOSED` with `idempotency_key` and publishes the
+id in `closed_position_ids`. If the scanner sees a position the worker already closed, it appends an
+**acknowledgement** (`closed_by: WORKER`, `close_acknowledged: true`) mirroring that close and takes
+**no** further exit action. The worker, conversely, only ever tracks positions still `ACTIVE` in the
+watchlist and never re-closes its own `SIMULATED_CLOSED` position (append-only store).
+
+**Rollout safety:** when no worker heartbeat is available (today — Railway not deployed), the scanner
+runs its **unchanged Phase 1** path as the sole tracker. Coordination activates only once the worker
+is live and `WORKER_HEARTBEAT_URL` is set, so there is **no behaviour change until the worker exists**.
+
+## Entry ownership — unchanged, scanner only (a known limitation)
+
+Entries stay entirely with the **scanner**: it owns `WAITING → ACTIVE`, an entry requires a
+qualifying contract during a valid **regular-market** scan, and the worker tracks **only** `ACTIVE`
+positions. The worker never opens, fabricates, or backfills a missed entry — if the scanner misses an
+entry window (e.g. a skipped scan), that entry is simply not taken. This is a deliberate limitation
+for now, surfaced in the worker status and here.
+
 ## Provider abstraction — the worker knows NO broker
 
 The tracker engine is completely provider-agnostic. Providers are **swappable by configuration
@@ -60,7 +97,31 @@ delayed floor) so nothing configured never silently pretends to be real-time.
 export TRACKER_PROVIDER=tradier      # or set it in the file, or pass --provider tradier
 ```
 
-## Honesty invariants (enforced by `test_tracker.py`, 61 checks)
+## Provider identity — OCC symbol, never the human label
+
+The provider is queried on the **OCC option symbol** (`KO261016C00090000`), never the human-readable
+label (`KO 90C 2026-10-16`). A `ContractRef` carries **both**: `contract_id` (display) and
+`occ_symbol` (the provider key). The worker resolves `occ_symbol` from the card's stored value, or
+**deterministically** reconstructs it from `(symbol, expiration, right, strike)` via the engine's own
+`occ_symbol()` (the same function the scanner uses, covered by tests). If neither yields a valid OCC
+symbol, the provider **refuses** — it returns `ok=false / data_quality=MISSING_OCC` and sends nothing
+upstream. It never guesses a symbol from partial fields. (`is_valid_occ` regex: `^[A-Z]{1,6}\d{6}[CP]\d{8}$`.)
+
+## Tradier real-response hardening
+
+`normalize_quotes` is a pure, unit-tested function that handles the **real** Tradier response shapes,
+never fabricating a midpoint. Every unusable quote is `ok=false` with a **typed** `data_quality`:
+
+- one quote as an **object** or many as a **list** — both handled;
+- **missing bid/ask** → `MISSING_BID_ASK`; **zero bid** → `ZERO_BID`; **stale** (older than the
+  tolerance) → `STALE`; **contract absent** → `OPTION_NOT_FOUND`; **unparseable row** skipped.
+
+Transport/HTTP failures raise **typed exceptions**: `ProviderAuthError` (401/403), `ProviderRateLimitError`
+(429), `ProviderPayloadError` (non-JSON body), `ProviderError` (transport). None of them ever mark the
+feed live: the LIVE badge is gated on a **real authenticated real-time quote actually arriving**
+(`ever_received_realtime`), so an auth failure or a data-quality failure can never show REALTIME.
+
+## Honesty invariants (enforced by `test_tracker.py`)
 
 - Never fabricates a quote. A missing/stale contract is `ok=false` with no price.
 - Never evaluates stops on a `STALE` or `DISCONNECTED` feed.
