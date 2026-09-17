@@ -129,6 +129,85 @@ def _lag_seconds(provider_ts, now_iso):
     except Exception:
         return None
 
+# ============================== EXIT OWNERSHIP (Phase 1 scanner <-> Phase 2 worker) =====
+# Two systems can observe an open paper position: the GitHub-Actions scanner (DELAYED CBOE) and
+# the persistent Railway worker (REAL-TIME). Only ONE may CLOSE a position, or it double-closes.
+# The persistent worker is the PRIMARY owner of exits whenever it is healthy and receiving valid
+# real-time quotes; the scanner is a DELAYED FALLBACK that resumes exit evaluation only while the
+# worker is stale/disconnected. These three states name who owns exits on a given scan.
+EXIT_OWNER_WORKER = "WORKER_REALTIME"          # worker healthy + real-time current -> worker closes
+EXIT_OWNER_SCANNER = "SCANNER_DELAYED_FALLBACK"  # worker stale/down -> scanner delayed fallback closes
+EXIT_OWNER_NONE = "NO_VALID_EXIT_FEED"         # neither has a usable feed -> nobody closes; hold
+
+# a worker heartbeat older than this (seconds) is treated as the worker being DOWN -> the scanner
+# may resume delayed-fallback exits. Sized well above the worker's poll interval + publish latency.
+WORKER_HEARTBEAT_STALE_SEC = 180
+
+
+def _iso_age_seconds(ts, now_iso):
+    """Whole seconds between a tz-aware/UTC ISO timestamp `ts` and `now_iso`. Distinct from
+    _lag_seconds (which assumes a naive US/Eastern CBOE stamp): the worker heartbeat is UTC."""
+    if not ts or not now_iso:
+        return None
+    try:
+        from datetime import datetime as _dt, timezone as _tz
+        pt = _dt.fromisoformat(str(ts).replace("Z", "+00:00"))
+        nt = _dt.fromisoformat(str(now_iso).replace("Z", "+00:00"))
+        if pt.tzinfo is None:
+            pt = pt.replace(tzinfo=_tz.utc)
+        if nt.tzinfo is None:
+            nt = nt.replace(tzinfo=_tz.utc)
+        return int((nt - pt).total_seconds())
+    except Exception:
+        return None
+
+
+def worker_heartbeat_healthy(hb, now_iso, stale_sec=WORKER_HEARTBEAT_STALE_SEC):
+    """True iff the persistent worker currently OWNS real-time exits. Requires ALL of:
+      * a heartbeat exists and is FRESH (age within stale_sec — tolerates minor clock skew);
+      * the worker reports status RUNNING (not NOT_CONFIGURED / DEGRADED / SHUTTING_DOWN);
+      * the worker itself declares its real-time exit feed current (exit_ownership WORKER_REALTIME,
+        i.e. it is actually receiving valid real-time quotes — not merely alive).
+    A missing / old / degraded / dormant heartbeat => False => the scanner may resume fallback."""
+    if not isinstance(hb, dict):
+        return False
+    if str(hb.get("status")) != "RUNNING":
+        return False
+    if str(hb.get("exit_ownership")) != EXIT_OWNER_WORKER:
+        return False
+    ts = hb.get("ts") or hb.get("heartbeat_ts")
+    age = _iso_age_seconds(ts, now_iso)
+    if age is None:
+        return False
+    return -stale_sec <= age <= stale_sec
+
+
+def resolve_exit_ownership(worker_hb, now_iso, scanner_feed_usable):
+    """Decide who owns exits for a position THIS scan. worker healthy -> worker; else if the
+    scanner has a usable (market-hours) delayed quote -> scanner fallback; else nobody."""
+    if worker_heartbeat_healthy(worker_hb, now_iso):
+        return EXIT_OWNER_WORKER
+    return EXIT_OWNER_SCANNER if scanner_feed_usable else EXIT_OWNER_NONE
+
+
+def _fetch_worker_heartbeat(url=None, timeout=8):
+    """Fetch the persistent worker's published heartbeat.json so the scanner can defer exits while
+    the worker is healthy. OPT-IN: reads WORKER_HEARTBEAT_URL when no url is passed. Returns None on
+    any failure or when unset — and None means 'no worker' => the scanner keeps its Phase 1 behaviour
+    (sole tracker). It NEVER raises into the scan and never blocks scanning on the worker."""
+    url = url or os.environ.get("WORKER_HEARTBEAT_URL")
+    if not url:
+        return None
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "scanner-terminal-scanner"})
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            hb = json.loads(r.read().decode("utf-8"))
+        return hb if isinstance(hb, dict) else None
+    except Exception as e:
+        print(f"[warn] worker heartbeat fetch failed ({url}): {e}", file=sys.stderr)
+        return None
+
+
 HDR = {"User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                       "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"),
        "Accept": "application/json", "Referer": "https://www.cboe.com/"}
@@ -626,7 +705,21 @@ def _paper_never_entered(pp, now, note):
     pp["exit_reason"] = "NEVER ENTERED"
     pp["exit_note"] = note
 
-def paper_update(card, res, now, policy, market_hours):
+def _paper_ack_worker_close(pp, now, note):
+    """Mirror an authoritative simulated close performed by the PERSISTENT WORKER (real-time feed).
+    The scanner does NOT re-run the stop rule or invent an exit price — it reflects the worker's
+    close so the watchlist/dashboard agree, and records an idempotency acknowledgement. This is the
+    cross-system guard that a position can never receive two simulated closes."""
+    pp["status"] = "CLOSED"
+    pp["exit_ts"] = now
+    pp["exit_reason"] = "CLOSED_BY_WORKER"
+    pp["exit_note"] = note
+    pp["exit_ownership"] = EXIT_OWNER_WORKER
+    pp["closed_by"] = "WORKER"
+    pp["close_acknowledged"] = True
+
+
+def paper_update(card, res, now, policy, market_hours, exit_ownership=None, worker_closed_ids=None):
     """Advance a card's paper position by one scan, INDEPENDENTLY of the research filter.
 
     Entry still requires the contract to be discovered (passing) at a market-hours scan —
@@ -634,17 +727,57 @@ def paper_update(card, res, now, policy, market_hours):
     its stops evaluated on every market-hours scan REGARDLESS of whether the contract still
     passes the filter. It closes ONLY on a paper rule: initial / trailing / time / DTE stop,
     or expiration. Leaving the research filter never closes it.
-    `res` is this scan's screen() result for the contract (None if not quotable this scan)."""
+    `res` is this scan's screen() result for the contract (None if not quotable this scan).
+
+    EXIT OWNERSHIP (Phase 2 coordination): when `exit_ownership` is provided (a Phase 2 worker
+    heartbeat was available this scan), the scanner CLOSES a position only when it owns exits:
+      * EXIT_OWNER_WORKER  -> the worker is healthy on real-time; the scanner DEFERS (no close);
+      * EXIT_OWNER_SCANNER -> the worker is stale/down; the scanner runs the delayed FALLBACK exit,
+                              labelled DELAYED FALLBACK + STOP FIRST OBSERVED;
+      * EXIT_OWNER_NONE    -> no usable exit feed anywhere; hold, evaluate nothing.
+    When `exit_ownership` is None (no worker deployed — today's Phase 1) behaviour is UNCHANGED:
+    the scanner is the sole tracker and closes on its own delayed observations, exactly as before.
+    Entries are NEVER gated by ownership — the scanner always owns WAITING -> ACTIVE."""
     pp = card.get("paper_position") or _paper_init(policy)
     card["paper_position"] = pp
     if pp["status"] in ("CLOSED", "NEVER_ENTERED"):
         return pp                                   # terminal; research history continues elsewhere
     if pp["status"] == "WAITING_FOR_ENTRY":
         return _paper_evaluate_entry(pp, res, now, market_hours)   # always records WHY (waiting_reason)
-    # ACTIVE / TRAILING_ACTIVE: track + evaluate stops only on a market-hours quote
+
+    # ACTIVE / TRAILING_ACTIVE below. First: cross-system idempotency. If the persistent worker has
+    # already simulated-closed this position, mirror that close and take NO further exit action.
+    pid = pp.get("id") or card.get("contract_id")
+    if worker_closed_ids and pid in worker_closed_ids:
+        _paper_ack_worker_close(pp, now, "worker (real-time) simulated-closed this position; "
+                                         "scanner acknowledged — no second close")
+        return pp
+
+    # track + evaluate stops only on a market-hours quote
     if not market_hours or res is None:
         return pp                                   # never act on off-hours / missing prices
-    _paper_step(pp, res, now)                       # tracks + stops regardless of res["passed"]
+
+    if exit_ownership is None:
+        # Phase 1 legacy path (no worker coordination): scanner is the sole tracker — unchanged.
+        _paper_step(pp, res, now)                   # tracks + stops regardless of res["passed"]
+        return pp
+
+    # Phase 2 coordination active — record who owns exits this scan.
+    pp["exit_ownership"] = exit_ownership
+    if exit_ownership == EXIT_OWNER_WORKER:
+        pp["exit_owner_note"] = "worker healthy on real-time feed — scanner deferring exits"
+        return pp                                   # worker owns exits; scanner does NOT close
+    if exit_ownership == EXIT_OWNER_NONE:
+        pp["exit_owner_note"] = "no valid exit feed (worker down + scanner data unusable) — holding"
+        return pp
+    # EXIT_OWNER_SCANNER — worker is stale/down; scanner runs the DELAYED FALLBACK exit.
+    reason = _paper_step(pp, res, now)
+    if reason:
+        pp["exit_delayed_fallback"] = True
+        pp["closed_by"] = "SCANNER_FALLBACK"
+        base = pp.get("exit_note") or ""
+        pp["exit_note"] = ("DELAYED FALLBACK — STOP FIRST OBSERVED — " + base).rstrip(" —")
+        pp["exit_owner_note"] = "worker stale/disconnected — scanner delayed-fallback exit (labelled)"
     return pp
 
 
@@ -920,7 +1053,7 @@ def _advance_research(card, res, now):
     return card
 
 def update_watchlist(prev, discovery_results, now, track_results=None, ok_symbols=None,
-                     seen_ids=None, policy=None, market_hours=None):
+                     seen_ids=None, policy=None, market_hours=None, worker_heartbeat=None):
     """Advance both lifecycles by one scan.
 
     Two independent loops:
@@ -940,6 +1073,20 @@ def update_watchlist(prev, discovery_results, now, track_results=None, ok_symbol
     policy = policy or DEFAULT_POLICY
     if market_hours is None:
         market_hours = is_market_hours(now)
+    # Phase 2 exit-ownership coordination. `worker_heartbeat` is the persistent worker's published
+    # heartbeat (or None when no worker is deployed — today). `coord` gates whether the scanner
+    # defers exits at all; when None, paper_update runs its unchanged Phase 1 path.
+    coord = worker_heartbeat is not None
+    worker_owns = worker_heartbeat_healthy(worker_heartbeat, now) if coord else False
+    worker_closed_ids = set((worker_heartbeat or {}).get("closed_position_ids") or []) if coord else None
+
+    def _ownership_for(res_):
+        if not coord:
+            return None
+        if worker_owns:
+            return EXIT_OWNER_WORKER
+        return EXIT_OWNER_SCANNER if (market_hours and res_ is not None) else EXIT_OWNER_NONE
+
     if track_results is None:
         # convenience default: every screened contract is available to the tracker
         track_results = {r["contract_id"]: r for r in discovery_results}
@@ -971,7 +1118,8 @@ def update_watchlist(prev, discovery_results, now, track_results=None, ok_symbol
             elif prev_rs != "LEFT_FILTER":
                 diff["left_filter"].append(cid)
             # paper position advances independently (entry needs a passing quote; tracking does not)
-            paper_update(card, tr, now, policy, market_hours)
+            paper_update(card, tr, now, policy, market_hours,
+                         exit_ownership=_ownership_for(tr), worker_closed_ids=worker_closed_ids)
         elif ok is not None and sym not in ok:
             card["last_updated"] = now                     # data gap — hold, no fabrication
         else:
@@ -1007,7 +1155,10 @@ def update_watchlist(prev, discovery_results, now, track_results=None, ok_symbol
         if r["passed"] and cid not in active:
             reentered = cid in seen_ids
             card = _new_card(r, now, reentered=reentered)
-            paper_update(card, r, now, policy, market_hours)
+            # new cards are WAITING (entry path) — ownership is irrelevant, but thread it for
+            # consistency; entries are never gated by exit ownership.
+            paper_update(card, r, now, policy, market_hours,
+                         exit_ownership=_ownership_for(r), worker_closed_ids=worker_closed_ids)
             active[cid] = card
             (diff["reentered"] if reentered else diff["new"]).append(cid)
 
@@ -1176,9 +1327,13 @@ def run(provider, today=None, now=None, root="."):
         return prev
 
     seen_ids = set(index.get("seen_contract_ids", []))
+    # Phase 2 coordination (OPT-IN): if WORKER_HEARTBEAT_URL is set AND the worker is healthy, the
+    # scanner defers exits to it. Unset (today, no Railway) => None => Phase 1 behaviour unchanged.
+    worker_hb = _fetch_worker_heartbeat()
     state, archived = update_watchlist(prev, discovery, now, track_results=track_results,
                                        ok_symbols=ok_symbols, seen_ids=seen_ids,
-                                       policy=policy, market_hours=market_hours)
+                                       policy=policy, market_hours=market_hours,
+                                       worker_heartbeat=worker_hb)
 
     # write archive partitions (append-only), then reindex
     months_touched = []

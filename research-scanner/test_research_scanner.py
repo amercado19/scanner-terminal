@@ -648,6 +648,134 @@ def test_state_fingerprint_ignores_timestamps_but_tracks_price():
     # a provider-status transition is meaningful too
     assert R._state_fingerprint(w1, "OFFLINE") != f1, "status transition must change fingerprint"
 
+# ======================= Phase 2 coordination: exit ownership (scanner <-> worker) ===========
+from datetime import datetime as _dt, timedelta as _td
+
+def _shift(now_iso, secs):
+    d = _dt.fromisoformat(now_iso.replace("Z", "+00:00"))
+    return (d + _td(seconds=secs)).isoformat()
+
+def _hb(now_iso, status="RUNNING", ownership="WORKER_REALTIME", closed=None, age_sec=30):
+    """A worker heartbeat as the scanner would fetch it. age_sec>threshold => the worker looks DOWN."""
+    return {"status": status, "exit_ownership": ownership, "ts": _shift(now_iso, -age_sec),
+            "receiving_realtime": 1, "closed_position_ids": list(closed or [])}
+
+def owscan(state, mid, now, hb=None, mh=True, **kw):
+    r = R.screen(mkp(mid, **kw))
+    st, arch = R.update_watchlist(state, [r], now, track_results={r["contract_id"]: r},
+                                  ok_symbols={"KO"}, policy=POL, market_hours=mh, worker_heartbeat=hb)
+    return st, arch, r["contract_id"]
+
+def _active_position(now=DAYS[0]):
+    """Enter one ACTIVE position (entry_mid 2.0 => initial stop 1.40)."""
+    st, _, cid = owscan({"active": {}}, 2.0, now, hb=None)   # no coordination for the entry itself
+    assert st["active"][cid]["paper_position"]["status"] == "ACTIVE"
+    return st, cid
+
+def test_worker_heartbeat_health_predicate():
+    now = "2026-08-27T14:05:00+00:00"
+    assert R.worker_heartbeat_healthy(_hb(now), now) is True
+    assert R.worker_heartbeat_healthy(_hb(now, age_sec=1000), now) is False, "old heartbeat => down"
+    assert R.worker_heartbeat_healthy(_hb(now, status="DEGRADED"), now) is False
+    assert R.worker_heartbeat_healthy(_hb(now, ownership="NO_VALID_EXIT_FEED"), now) is False
+    assert R.worker_heartbeat_healthy(None, now) is False, "no heartbeat => down"
+
+def test_resolve_exit_ownership_three_states():
+    now = "2026-08-27T14:05:00+00:00"
+    assert R.resolve_exit_ownership(_hb(now), now, True) == R.EXIT_OWNER_WORKER
+    assert R.resolve_exit_ownership(_hb(now, age_sec=1000), now, True) == R.EXIT_OWNER_SCANNER
+    assert R.resolve_exit_ownership(_hb(now, age_sec=1000), now, False) == R.EXIT_OWNER_NONE
+
+def test_worker_owns_exits_scanner_defers_while_healthy():
+    st, cid = _active_position()
+    now = DAYS[1]
+    # a stop-triggering delayed quote (mid 1.30 <= 1.40), but the worker is HEALTHY -> scanner DEFERS
+    st, arch, cid = owscan(st, 1.30, now, hb=_hb(now), bid=1.25, ask=1.35)
+    pp = st["active"][cid]["paper_position"]
+    assert pp["status"] == "ACTIVE", "scanner must NOT close while the worker owns exits"
+    assert pp["exit_ownership"] == R.EXIT_OWNER_WORKER
+    assert pp.get("exit_reason") is None, "no scanner exit recorded"
+
+def test_scanner_fallback_owns_exits_while_worker_stale():
+    st, cid = _active_position()
+    now = DAYS[1]
+    # worker heartbeat is STALE (down) -> scanner resumes DELAYED FALLBACK exit on the same quote
+    st, arch, cid = owscan(st, 1.30, now, hb=_hb(now, age_sec=1000), bid=1.25, ask=1.35)
+    # position archived on close (paper terminal + research still active? research still ACTIVE, so
+    # it stays in active with a CLOSED paper position). Find it either place.
+    card = st["active"].get(cid) or (arch.get(now[:7], [{}])[0])
+    pp = card["paper_position"]
+    assert pp["status"] == "CLOSED", "scanner fallback must close while the worker is down"
+    assert pp["exit_delayed_fallback"] is True
+    assert pp["closed_by"] == "SCANNER_FALLBACK"
+    assert "DELAYED FALLBACK" in pp["exit_note"] and "STOP FIRST OBSERVED" in pp["exit_note"]
+    assert pp["exit_ownership"] == R.EXIT_OWNER_SCANNER
+
+def test_ownership_returns_to_worker_after_recovery():
+    st, cid = _active_position()
+    # 1) worker down, but quote ABOVE stop (mid 2.05) -> scanner owns, no close
+    st, _, cid = owscan(st, 2.05, DAYS[1], hb=_hb(DAYS[1], age_sec=1000), bid=2.0, ask=2.1)
+    assert st["active"][cid]["paper_position"]["exit_ownership"] == R.EXIT_OWNER_SCANNER
+    # 2) worker recovers -> ownership returns to the worker; scanner defers again
+    st, _, cid = owscan(st, 2.05, DAYS[2], hb=_hb(DAYS[2]), bid=2.0, ask=2.1)
+    assert st["active"][cid]["paper_position"]["exit_ownership"] == R.EXIT_OWNER_WORKER
+
+def test_duplicate_close_prevented_scanner_acks_worker_close():
+    st, cid = _active_position()
+    now = DAYS[1]
+    # the worker already simulated-closed this position (idempotency key = cid). Even though the
+    # delayed quote (mid 1.30) WOULD trigger the scanner's own stop, the scanner must ACK, not re-close.
+    hb = _hb(now, closed=[cid])
+    st, arch, cid = owscan(st, 1.30, now, hb=hb, bid=1.25, ask=1.35)
+    card = st["active"].get(cid) or (arch.get(now[:7], [{}])[0])
+    pp = card["paper_position"]
+    assert pp["status"] == "CLOSED"
+    assert pp["closed_by"] == "WORKER" and pp["close_acknowledged"] is True
+    assert pp["exit_reason"] == "CLOSED_BY_WORKER", "scanner must mirror the worker close, not run its own stop"
+    assert pp["exit_reason"] != "INITIAL_STOP", "no second (scanner) close"
+
+def test_no_valid_exit_feed_holds_no_close():
+    st, cid = _active_position()
+    # direct: ownership NONE (worker down + scanner feed unusable). Even a stop-price quote holds.
+    card = st["active"][cid]
+    res = R.screen(mkp(1.30, bid=1.25, ask=1.35))
+    R.paper_update(card, res, DAYS[1], POL, True,
+                   exit_ownership=R.EXIT_OWNER_NONE, worker_closed_ids=set())
+    pp = card["paper_position"]
+    assert pp["status"] == "ACTIVE", "NO_VALID_EXIT_FEED must hold — nobody closes"
+    assert pp["exit_ownership"] == R.EXIT_OWNER_NONE
+
+def test_phase1_legacy_unchanged_when_no_worker():
+    # when NO worker heartbeat is supplied (today), the scanner is the sole tracker and closes on
+    # its own delayed observation, EXACTLY as before — no ownership annotations, no deferral.
+    st, cid = _active_position()
+    st, arch, cid = owscan(st, 1.30, DAYS[1], hb=None, bid=1.25, ask=1.35)   # no coordination
+    card = st["active"].get(cid) or (arch.get(DAYS[1][:7], [{}])[0])
+    pp = card["paper_position"]
+    assert pp["status"] == "CLOSED" and pp["exit_reason"] == "INITIAL_STOP"
+    assert "exit_ownership" not in pp, "legacy path must not annotate ownership"
+    assert "exit_delayed_fallback" not in pp
+
+def test_entries_never_gated_by_ownership():
+    # entries stay with the scanner regardless of worker ownership: a WAITING contract enters on a
+    # market-hours scan even while the worker owns EXITS.
+    now = DAYS[0]
+    st, _, cid = owscan({"active": {}}, 2.0, now, hb=_hb(now))    # worker healthy, owns exits
+    pp = st["active"][cid]["paper_position"]
+    assert pp["status"] == "ACTIVE" and pp["entry_mid"] == 2.0, "scanner still owns WAITING -> ACTIVE"
+
+def test_discovery_and_entry_behaviour_unchanged_with_coordination():
+    # coordination must not perturb DISCOVERY or ENTRY: same discovery diff + same entry as the
+    # no-worker path, for an identical scan.
+    now = DAYS[0]
+    st_a, _, cid_a = owscan({"active": {}}, 2.0, now, hb=_hb(now))
+    st_b, _, cid_b = owscan({"active": {}}, 2.0, now, hb=None)
+    assert cid_a == cid_b
+    pa = st_a["active"][cid_a]["paper_position"]; pb = st_b["active"][cid_b]["paper_position"]
+    assert pa["status"] == pb["status"] == "ACTIVE"
+    assert pa["entry_mid"] == pb["entry_mid"] and pa["entry_ts"] == pb["entry_ts"]
+
+
 if __name__ == "__main__":
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     ok = 0
