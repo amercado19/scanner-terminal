@@ -19,6 +19,7 @@ Design invariants (enforced by tests):
     not stream or poll the entire options market.
 """
 from __future__ import annotations
+import re
 from dataclasses import dataclass, field, asdict
 from typing import Optional, Iterable, List, Dict, Any
 
@@ -35,6 +36,51 @@ DISCONNECTED = "DISCONNECTED"
 FALLBACK_TO_CBOE = "FALLBACK_TO_CBOE"   # canonical status when the primary feed falls to the delayed floor
 EXIT_FIRST_OBSERVED = "EXIT_FIRST_OBSERVED"
 SIMULATED_CLOSED = "SIMULATED_CLOSED"
+
+
+# ------------------------------------------------------------------ OCC symbol validation
+# The tracker subscribes to the provider on the OCC option symbol, NOT the human-readable
+# contract label. An OCC symbol is: root (1-6 letters) + YYMMDD + C|P + 8-digit strike
+# (strike*1000, zero-padded). e.g. DIS261016P00105000 -> DIS 2026-10-16 put 105.0.
+OCC_RE = re.compile(r"^[A-Z]{1,6}\d{6}[CP]\d{8}$")
+
+
+def is_valid_occ(sym: Optional[str]) -> bool:
+    """True iff `sym` is a well-formed OCC option symbol. Used to REFUSE a quote request
+    rather than send the provider a human-readable label (the Phase 2 boot bug)."""
+    return bool(sym) and bool(OCC_RE.match(sym))
+
+
+# ------------------------------------------------------------------ data-quality reasons (typed)
+# A missing / unusable quote is NEVER fabricated into a midpoint. It is returned as ok=False
+# with one of these TYPED data_quality reasons so the worker records WHY, precisely.
+DQ_OK = "OK"
+DQ_MISSING_BID_ASK = "MISSING_BID_ASK"      # row present but no bid and/or no ask
+DQ_ZERO_BID = "ZERO_BID"                    # bid is 0 (no live market) — not a real price
+DQ_OPTION_NOT_FOUND = "OPTION_NOT_FOUND"    # contract absent from the provider response
+DQ_STALE = "STALE"                          # quote timestamp older than tolerated
+DQ_MALFORMED_ROW = "MALFORMED_ROW"          # row could not be parsed into a quote
+DQ_MISSING_OCC = "MISSING_OCC"              # ref carried no valid OCC symbol — never requested
+
+
+# ------------------------------------------------------------------ typed provider exceptions
+class ProviderError(Exception):
+    """Base for a TOTAL feed failure on one poll (the worker marks DISCONNECTED / may fall back).
+    Distinct from a single unusable contract, which is ok=False with a data_quality reason."""
+
+
+class ProviderAuthError(ProviderError):
+    """The provider rejected the credential (HTTP 401/403). The token is missing/invalid/lacks
+    entitlement. The worker must NOT mark the feed LIVE and must not retry-fabricate."""
+
+
+class ProviderRateLimitError(ProviderError):
+    """The provider rate-limited this poll (HTTP 429). Transient; back off — never fabricate."""
+
+
+class ProviderPayloadError(ProviderError):
+    """The provider returned a non-JSON / structurally invalid body. Treated as a total loss for
+    this poll; no quotes are fabricated from an unparseable payload."""
 
 
 # ------------------------------------------------------------------ provider registry
@@ -73,24 +119,34 @@ def create_provider(name: str, **kwargs) -> "Provider":
 @dataclass
 class ContractRef:
     """The minimal identity the tracker subscribes on. Sourced from an open paper
-    position in the research watchlist — never invented."""
+    position in the research watchlist — never invented.
+
+    TWO identifiers are preserved and NOT interchangeable:
+      * `contract_id` — the HUMAN-READABLE label ("KO 90C 2026-10-16"). Display only.
+      * `occ_symbol`  — the OCC option symbol ("KO261016C00090000"). This, and ONLY this,
+        is what a provider is queried with. The Phase 2 boot bug was sending contract_id
+        (the human label) as the provider symbol; providers must key on occ_symbol."""
     paper_position_id: str
-    contract_id: str          # OCC symbol, e.g. KO261016C00090000
+    contract_id: str          # HUMAN-READABLE label, e.g. "KO 90C 2026-10-16" — display only
     symbol: str
     right: str                # "call" | "put"
     strike: float
     expiration: str           # YYYY-MM-DD
     dte: Optional[int] = None
+    occ_symbol: Optional[str] = None   # OCC symbol, e.g. KO261016C00090000 — the PROVIDER key
+
+    def has_valid_occ(self) -> bool:
+        return is_valid_occ(self.occ_symbol)
 
 
 @dataclass
 class Quote:
     """A single observation for one contract. Raw and preserved verbatim by the
     worker's append-only event log; the worker never rewrites a stored Quote."""
-    contract_id: str
+    contract_id: str                  # HUMAN-READABLE label carried through for display
     provider: str
     mode: str                         # MODE_REALTIME | MODE_DELAYED | MODE_DELAYED_FALLBACK
-    ok: bool                          # False => no fresh data; bid/ask stay None
+    ok: bool                          # False => no usable price; bid/ask stay None
     provider_quote_ts: Optional[str] = None   # feed's own timestamp (ISO)
     ingestion_ts: Optional[str] = None        # set by the worker when received (ISO, UTC)
     bid: Optional[float] = None
@@ -102,6 +158,8 @@ class Quote:
     theta: Optional[float] = None
     dte: Optional[int] = None
     note: Optional[str] = None
+    occ_symbol: Optional[str] = None          # the OCC symbol this quote answers (provider key)
+    data_quality: Optional[str] = None        # DQ_* reason; DQ_OK when ok=True, a TYPED reason when not
 
     def to_res(self) -> Dict[str, Any]:
         """Adapt to the shape the engine's paper simulation consumes (_paper_observe).
@@ -121,6 +179,25 @@ class Quote:
 
     def as_dict(self) -> Dict[str, Any]:
         return asdict(self)
+
+
+def missing_occ_quote(ref: "ContractRef", provider_name: str, default_mode: str,
+                      now: Optional[str] = None) -> "Quote":
+    """A REFUSAL quote for a ref without a valid OCC symbol. The provider never sends a
+    human-readable label upstream; it returns ok=False / DQ_MISSING_OCC instead of guessing."""
+    return Quote(contract_id=ref.contract_id, provider=provider_name, mode=default_mode,
+                 ok=False, ingestion_ts=now, dte=ref.dte, occ_symbol=ref.occ_symbol,
+                 data_quality=DQ_MISSING_OCC,
+                 note="ref carried no valid OCC symbol — quote request refused, nothing sent upstream")
+
+
+def split_refs_by_occ(refs: "Iterable[ContractRef]"):
+    """Partition refs into (valid_occ, invalid_occ). Only valid_occ symbols are ever sent to a
+    provider; invalid_occ become DQ_MISSING_OCC refusals — never queried with a display label."""
+    valid, invalid = [], []
+    for r in refs:
+        (valid if is_valid_occ(r.occ_symbol) else invalid).append(r)
+    return valid, invalid
 
 
 class Provider:

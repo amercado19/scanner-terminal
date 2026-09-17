@@ -11,6 +11,11 @@ from .base import (
     LIVE, DELAYED, STALE, DISCONNECTED,
     FALLBACK_TO_CBOE, EXIT_FIRST_OBSERVED, SIMULATED_CLOSED,
     PROVIDERS, register, available_providers, create_provider,
+    # OCC validation + typed data-quality / exceptions (Phase 2 boot-readiness)
+    OCC_RE, is_valid_occ, missing_occ_quote, split_refs_by_occ,
+    DQ_OK, DQ_MISSING_BID_ASK, DQ_ZERO_BID, DQ_OPTION_NOT_FOUND, DQ_STALE,
+    DQ_MALFORMED_ROW, DQ_MISSING_OCC,
+    ProviderError, ProviderAuthError, ProviderRateLimitError, ProviderPayloadError,
 )
 
 # import adapters for their side-effect: registration. Order does not matter.
@@ -25,6 +30,10 @@ __all__ = [
     "FALLBACK_TO_CBOE", "EXIT_FIRST_OBSERVED", "SIMULATED_CLOSED",
     "PROVIDERS", "register", "available_providers", "create_provider",
     "get_provider",
+    "OCC_RE", "is_valid_occ", "missing_occ_quote", "split_refs_by_occ",
+    "DQ_OK", "DQ_MISSING_BID_ASK", "DQ_ZERO_BID", "DQ_OPTION_NOT_FOUND", "DQ_STALE",
+    "DQ_MALFORMED_ROW", "DQ_MISSING_OCC",
+    "ProviderError", "ProviderAuthError", "ProviderRateLimitError", "ProviderPayloadError",
 ]
 
 
